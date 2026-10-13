@@ -1,0 +1,3397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avatar Quiz</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Jersey 10 (SIL Open Font License), bundled so the game works offline */
+    @font-face { font-family: 'Jersey 10'; src: url('fonts/Jersey10-Regular.ttf') format('truetype'); }
+    html { font-size: 21px; }   /* the pixel font is narrow, so everything is set a size up */
+    body {
+      font-family: 'Jersey 10', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-synthesis: none;
+      background: #1b2a5c url('art/bg-default.png') center / cover no-repeat fixed;
+      image-rendering: pixelated;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 16px 24px;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: linear-gradient(160deg, rgba(8,6,18,.82) 0%, rgba(8,6,18,.62) 45%, rgba(8,6,18,.80) 100%);
+      transition: background 2s;
+    }
+    body.comet::before {
+      background: linear-gradient(160deg, rgba(90,10,0,.78) 0%, rgba(160,40,0,.55) 45%, rgba(60,0,0,.85) 100%);
+    }
+
+    .screen { display: none; width: 100%; max-width: 560px; animation: fadeIn .25s ease; position: relative; z-index: 1; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+    .screen.wide { max-width: 880px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* custom artwork dropped into art/ replaces the emoji placeholders */
+    .art-img { height: 1.15em; width: auto; display: block; pointer-events: none; -webkit-user-drag: none; }
+
+    /* ── PIXEL FRAMES ──
+       Buttons and panels get a hard-edged frame with notched corners: four
+       offset shadows draw the outline, two inset ones the bevel.
+       --px is the size of one "pixel". */
+    .btn, .hud-btn, .option, .card, .dpad, .pad-el, .progress-badge, .toast, .stage, .bar, .tug, .pin span, input[type=text] {
+      --px: 4px; --ink: #1a1420; --hi: rgba(255,255,255,.2); --lo: rgba(0,0,0,.32);
+      border: 0; border-radius: 0;
+      box-shadow:
+        0 calc(var(--px) * -1) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink),
+        calc(var(--px) * -1) 0 0 0 var(--ink), var(--px) 0 0 0 var(--ink),
+        inset var(--px) var(--px) 0 0 var(--hi),
+        inset calc(var(--px) * -1) calc(var(--px) * -1) 0 0 var(--lo);
+    }
+    .btn:hover, .option:hover, .hud-btn:hover { filter: brightness(1.12); }
+    .btn:active, .hud-btn:active, .option:active, .dpad:active, .pad-el:active {
+      --hi: rgba(0,0,0,.3); --lo: rgba(255,255,255,.14); transform: translateY(2px);
+    }
+    .rot-r, .rot-l, .rot-d { display: inline-block; }
+    .rot-r { transform: rotate(90deg); }
+    .rot-l { transform: rotate(-90deg); }
+    .rot-d { transform: rotate(180deg); }
+
+    /* ── HUD ── */
+    #hud {
+      position: fixed; top: 16px; left: 16px; right: 16px; z-index: 50;
+      display: flex; justify-content: space-between; pointer-events: none;
+    }
+    #hud > div { display: flex; gap: 16px; }
+    .hud-btn {
+      pointer-events: auto; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #1e293b; color: #f1f5f9;
+      padding: 7px 14px; font-size: 1.05rem; font-weight: 700; font-family: inherit;
+    }
+    .hud-btn .art-img { height: 22px; }
+    .hud-btn.off { color: #64748b; text-decoration: line-through; }
+    #hud-num { display: inline-flex; align-items: center; gap: 5px; }
+    .hud-btn.bump { animation: bump .5s steps(5); }
+    @keyframes bump { 40% { transform: scale(1.3); } }
+
+    /* ── START ── */
+    .start-hero { text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .start-logo {
+      font-size: 64px; line-height: 1;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { filter: drop-shadow(0 0 14px rgba(249,115,22,.6)); }
+      50%      { filter: drop-shadow(0 0 28px rgba(249,115,22,.95)); }
+    }
+    .start-title {
+      font-size: 2.8rem; font-weight: 900; color: #f97316;
+      line-height: 1; text-align: center;
+      text-shadow: 4px 4px 0 #7c2d12;
+      margin: 10px 0 4px;
+    }
+    .start-sub { font-size: 1rem; color: #cbd5e1; letter-spacing: .04em; }
+    .intro-line { font-size: .8rem; color: #64748b; letter-spacing: .3em; text-transform: uppercase; text-align: center; }
+
+    .card { background: #1e293b; padding: 28px; width: 100%; }
+    .card.soft { background: #172033; text-align: center; line-height: 1.3; color: #cbd5e1; }
+    .progress-badge { --px: 3px; background: #1e293b; padding: 6px 16px; font-size: .9rem; color: #94a3b8; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      cursor: pointer; font-family: inherit;
+      font-size: 1.15rem; font-weight: 700; padding: 14px 24px; width: 100%;
+    }
+    .btn .art-img { height: 18px; }
+    .btn-primary { background: #f97316; color: #fff; text-shadow: 2px 2px 0 #9a3412; }
+    .btn-ghost { background: #26324a; color: #e2e8f0; padding: 10px 16px; font-size: 1rem; width: auto; }
+    .btn-row { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+
+    /* ── QUIZ ── */
+    #quiz-card { transition: transform .2s; }
+    #quiz-card.smashed { animation: smashed 1.7s cubic-bezier(.5,0,1,.6) forwards; }
+    @keyframes smashed {
+      15% { transform: rotate(-4deg) translateY(-12px); }
+      100% { transform: rotate(48deg) translate(60vw, 110vh); opacity: .2; }
+    }
+    .question-label { font-size: .78rem; color: #f97316; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+    .question-text { font-size: 1.2rem; font-weight: 600; line-height: 1.25; margin-bottom: 4px; }
+    .options { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+    .options.locked { pointer-events: none; }
+    .option {
+      padding: 12px 16px; text-align: left; cursor: pointer;
+      background: #16203a; color: #f1f5f9;
+      font-size: 1.05rem; line-height: 1.2; font-family: inherit;
+    }
+    .option .letter { font-weight: 700; color: #94a3b8; margin-right: 8px; }
+    .option.correct { background: #166534; color: #dcfce7; }
+    .option.wrong   { background: #991b1b; color: #fee2e2; }
+    .option.burn    { animation: burn .9s ease forwards; }
+    @keyframes burn { 30% { background: #f97316; color: #fff; } 100% { opacity: 0; transform: scale(.9) translateY(10px); filter: blur(4px); } }
+    #q-feedback { min-height: 1.4em; margin-top: 14px; font-size: .9rem; color: #fbbf24; text-align: center; }
+    #q-note { font-size: .85rem; color: #64748b; text-align: center; }
+    input[type=text] {
+      --hi: rgba(0,0,0,.4); --lo: rgba(255,255,255,.08);
+      background: #0f172a; color: #f1f5f9; padding: 12px 14px; font-size: 1.05rem; font-family: inherit; width: 100%;
+    }
+    input[type=text]:focus { outline: none; --ink: #f97316; }
+    .shakeit { animation: shakeit .35s; }
+    @keyframes shakeit { 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-5px); } }
+
+    body.shake { animation: quake .12s linear infinite; }
+    @keyframes quake { 25% { transform: translate(5px,-4px); } 50% { transform: translate(-5px,3px); } 75% { transform: translate(3px,5px); } }
+    body.glitch { animation: glitch .15s steps(2) infinite; }
+    @keyframes glitch { 0% { filter: invert(1) hue-rotate(90deg); transform: translateX(6px); } 100% { filter: none; transform: translateX(-6px); } }
+
+    /* --flip mirrors the bison emoji (it faces left); custom art should face right */
+    .appa-fly {
+      --flip: -1;
+      position: fixed; top: 22vh; left: 0; z-index: 800; font-size: 46vh; line-height: 1;
+      pointer-events: none; animation: appafly 1.9s cubic-bezier(.4,0,.7,1) forwards;
+    }
+    @keyframes appafly {
+      from { transform: translateX(-70vw) scaleX(var(--flip)) rotate(8deg); }
+      to   { transform: translateX(150vw) scaleX(var(--flip)) rotate(-6deg); }
+    }
+
+    /* ── STAGES (mini-scenes) ── */
+    .scene-title { font-size: 1.8rem; font-weight: 700; color: #f97316; text-align: center; text-shadow: 3px 3px 0 #431407; }
+    .scene-text { text-align: center; color: #e2e8f0; line-height: 1.25; min-height: 2.6em; max-width: 620px; font-size: 1.05rem; text-shadow: 2px 2px 0 rgba(0,0,0,.85); white-space: pre-line; }
+    .stage {
+      position: relative; width: 100%; height: min(58vh, 480px); min-height: 340px;
+      --hi: transparent; --lo: transparent; overflow: hidden;
+      user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    .loot {
+      position: absolute; font-size: 54px; line-height: 1; cursor: pointer;
+      filter: drop-shadow(0 0 14px #fde68a); animation: lootbob 1.6s ease-in-out infinite;
+    }
+    @keyframes lootbob { 50% { transform: translateY(-8px) rotate(5deg); } }
+
+    /* flight */
+    #flight-stage { background: linear-gradient(#38bdf8, #bae6fd 70%, #fef3c7); cursor: none; }
+    #flight-stage.hit { animation: hitflash .25s; }
+    @keyframes hitflash { 50% { background: #f97316; } }
+    .cloud { position: absolute; font-size: 70px; opacity: .85; animation: drift linear infinite; pointer-events: none; }
+    .cloud.has-art { font-size: 30px !important; opacity: .95; }
+    @keyframes drift { from { left: 105%; } to { left: -20%; } }
+    #appa, .fo { position: absolute; left: 0; top: 0; line-height: 1; pointer-events: none; will-change: transform; }
+    #appa { font-size: 84px; }
+    #appa.has-art { font-size: 100px; }
+    .fo { font-size: 40px; }
+    .fo.goal { font-size: 64px; filter: drop-shadow(0 0 16px #fde047); }
+    #flight-lives, #play-lives { position: absolute; left: 12px; top: 10px; z-index: 2; display: flex; gap: 6px; font-size: 24px; }
+
+    /* swamp (where a crashed flight ends up) */
+    #swamp-stage { background: #24452f; }
+    #swamp-appa { position: absolute; left: 56%; bottom: 7%; transform: rotate(-8deg); font-size: 120px; line-height: 1; }
+    #swamp-loot { left: 21%; bottom: 26%; }
+
+    /* map */
+    .map {
+      background:
+        radial-gradient(ellipse 24% 15% at 50% 3%, #e0f2fe 0 60%, transparent 62%),
+        radial-gradient(ellipse 22% 12% at 46% 99%, #e0f2fe 0 60%, transparent 62%),
+        radial-gradient(ellipse 30% 36% at 72% 48%, #a3b18a 0 60%, transparent 62%),
+        radial-gradient(ellipse 14% 20% at 54% 56%, #b5bd8f 0 60%, transparent 62%),
+        radial-gradient(ellipse 13% 22% at 15% 50%, #c2705f 0 60%, transparent 62%),
+        radial-gradient(ellipse 7% 9% at 29% 62%, #c2705f 0 60%, transparent 62%),
+        radial-gradient(ellipse 4% 6% at 34% 22%, #e9d8a6 0 60%, transparent 62%),
+        radial-gradient(ellipse 4% 6% at 90% 86%, #e9d8a6 0 60%, transparent 62%),
+        #6f9bb0;
+      transition: filter 2s;
+    }
+    body.comet .map { filter: sepia(.5) hue-rotate(-25deg) saturate(1.6) brightness(.85); }
+    .pin {
+      position: absolute; transform: translate(-50%,-50%); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      background: none; border: none; font-family: inherit; font-size: 34px; line-height: 1;
+      transition: transform .15s;
+    }
+    .pin:hover { transform: translate(-50%,-50%) scale(1.15); }
+    .pin i { font-style: normal; }
+    .pin i.has-art { font-size: 32px; }
+    .pin span {
+      --px: 2px; --hi: transparent; --lo: transparent;
+      font-size: .8rem; font-weight: 700; color: #1e293b; white-space: nowrap;
+      background: #fffbeb; padding: 1px 7px; margin-top: 4px;
+    }
+    .pin.done span::after {
+      content: ''; display: inline-block; width: 11px; height: 10px; margin-left: 5px;
+      background: url('art/check.png') center / contain no-repeat;
+    }
+    .pin.comet-pin { display: none; font-size: 46px; animation: pulse 1.2s ease-in-out infinite; }
+    .pin.ember-pin { display: none; }
+    .pin.comet-pin.show, .pin.ember-pin.show { display: flex; }
+    /* two children out fishing by the southern ice: small, and easy to miss */
+    #map-canoe { position: absolute; left: 40%; top: 85%; z-index: 2; font-size: 20px; line-height: 1; cursor: pointer; animation: canoebob 2.6s ease-in-out infinite; }
+    @keyframes canoebob { 50% { transform: translateY(3px) rotate(-2deg); } }
+    #cart {
+      position: absolute; bottom: 3%; left: -14%; cursor: pointer; z-index: 3;
+      font-size: 30px; line-height: .85; text-align: center; white-space: nowrap;
+      animation: cartbob .4s ease-in-out infinite;
+    }
+    #cart.has-art { font-size: 64px; }
+    #cart.gone { visibility: hidden; }
+    @keyframes cartbob { 50% { margin-bottom: 3px; } }
+    .cabp { position: absolute; font-size: 28px; pointer-events: none; z-index: 4; animation: cabfly 1.2s ease-out forwards; }
+    @keyframes cabfly { to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; } }
+    .shout {
+      position: absolute; left: 50%; top: 45%; transform: translate(-50%,-50%); z-index: 5;
+      font-size: clamp(2rem, 8vw, 4.2rem); font-weight: 900; color: #fff; white-space: nowrap;
+      text-shadow: 5px 5px 0 #14532d; pointer-events: none;
+      animation: shoutin .3s cubic-bezier(.175,.885,.32,1.5);
+    }
+    @keyframes shoutin { from { transform: translate(-50%,-50%) scale(.2) rotate(-8deg); } }
+
+    .pads { display: flex; gap: 20px; justify-content: center; }
+    .pad-el {
+      width: 56px; height: 56px; cursor: pointer; font-size: 26px;
+      display: flex; align-items: center; justify-content: center;
+      background: #64748b; filter: grayscale(.85) brightness(.8);
+    }
+    .pad-el .art-img { height: 32px; }
+    .pad-el:hover { --ink: #94a3b8; }
+    .pad-el.lit { filter: none; background: #0c4a6e; --ink: #7dd3fc; }
+
+    body.avatar-state::after {
+      content: ''; position: fixed; inset: 0; z-index: 900; pointer-events: none;
+      background: radial-gradient(circle, rgba(224,250,255,.95), rgba(56,189,248,.55));
+      animation: avglow 2.6s ease forwards;
+    }
+    @keyframes avglow { 0% { opacity: 0; } 25% { opacity: 1; } 60% { opacity: .8; } 100% { opacity: 0; } }
+
+    /* desert */
+    #desert-stage { background: linear-gradient(#fcd34d, #fdba74 55%, #d4a257 55%, #b98a45); }
+    #desert-stage .sun { position: absolute; top: 6%; right: 8%; font-size: 80px; }
+    #desert-stage.has-art .sun { display: none; }
+    #cactus { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); font-size: 130px; line-height: 1; cursor: pointer; transition: transform .15s; }
+    #cactus:hover { transform: translateX(-50%) scale(1.06) rotate(-3deg); }
+    .floater { position: absolute; line-height: 1; cursor: pointer; animation: floaty ease-in-out infinite alternate; }
+    @keyframes floaty {
+      from { transform: translate(0,0) rotate(-12deg) scale(1); }
+      to   { transform: translate(var(--fx), var(--fy)) rotate(14deg) scale(1.25); }
+    }
+    body.trip { animation: trip 3.5s linear infinite; }
+    @keyframes trip { from { filter: hue-rotate(0deg) saturate(2.2); } to { filter: hue-rotate(360deg) saturate(2.2); } }
+    body.trip .screen.active { animation: wobble 2.6s ease-in-out infinite; }
+    @keyframes wobble { 0%,100% { transform: skew(2deg,1deg) scale(1); } 50% { transform: skew(-4deg,-2deg) scale(1.05); } }
+
+    /* cave */
+    #cave-stage { background: radial-gradient(ellipse at 50% 12%, #6b4a2b, #2a1c12 55%, #120b07); transition: background 1s; }
+    #cave-stage.dark { background: #020403; }
+    /* in the dark one tunnel glows; following the glow is the secret route */
+    .tunnel-glow {
+      position: absolute; top: 31%; width: 14.5%; height: 44%; transform: translateX(-50%);
+      display: flex; align-items: flex-end; justify-content: center; gap: 2px; font-size: 30px;
+      background: rgba(74,222,128,.22); border-radius: 50% 50% 0 0 / 36% 36% 0 0;
+      opacity: 0; transition: opacity .8s; pointer-events: none; filter: drop-shadow(0 0 10px #4ade80);
+    }
+    .tunnel-glow.on { opacity: 1; animation: glowpulse 1.6s ease-in-out infinite; }
+    @keyframes glowpulse { 50% { filter: drop-shadow(0 0 22px #86efac); } }
+    #cave-stage.deep .crystal, #cave-stage.deep #cave-loot { opacity: 0 !important; pointer-events: none !important; }
+    #mole {
+      position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); font-size: 170px; line-height: 1;
+      cursor: pointer; display: none; filter: drop-shadow(0 0 18px #4ade80);
+    }
+    #cave-stage.chamber #mole { display: block; animation: breathe 3s ease-in-out infinite; }
+    @keyframes breathe { 50% { transform: translateX(-50%) scale(1.04); } }
+    #cave-stage.unfold { animation: unfold 1.3s ease-in forwards; }
+    @keyframes unfold { to { transform: perspective(600px) rotateX(58deg) scale(1.7); filter: brightness(3) saturate(0); } }
+
+    /* labyrinth (first person) */
+    #maze-stage { background: #000; }
+    #maze { display: block; width: 100%; height: 100%; }
+    #torch { position: absolute; top: 7%; left: 50%; transform: translateX(-50%); font-size: 60px; cursor: pointer; animation: flicker .35s infinite alternate; z-index: 3; }
+    @keyframes flicker { from { filter: drop-shadow(0 0 18px #f97316); } to { filter: drop-shadow(0 0 34px #fbbf24); } }
+    #cave-stage.dark #torch { animation: none; filter: grayscale(1) brightness(.35); }
+    .crystal { position: absolute; font-size: 26px; opacity: 0; transition: opacity 1.2s; filter: hue-rotate(110deg) drop-shadow(0 0 12px #4ade80); pointer-events: none; }
+    .crystal.has-art { filter: drop-shadow(0 0 12px #4ade80); }
+    #cave-stage.dark .crystal { opacity: 1; }
+    #cave-loot { right: 9%; bottom: 12%; opacity: 0; pointer-events: none; transition: opacity 1.5s 1.2s; filter: drop-shadow(0 0 18px #4ade80); }
+    #cave-stage.dark #cave-loot { opacity: 1; pointer-events: auto; }
+
+    /* tea */
+    .teapot { font-size: 110px; line-height: 1; }
+    .teapot.brewing { animation: steam 1.6s ease-in-out infinite; }
+    @keyframes steam { 50% { transform: translateY(-5px) rotate(-2deg); filter: drop-shadow(0 -8px 14px rgba(255,255,255,.5)); } }
+    .bar { --px: 3px; --hi: rgba(0,0,0,.4); --lo: transparent; width: 100%; height: 18px; background: #0f172a; overflow: hidden; }
+    .bar > div { height: 100%; width: 0; background: #84cc16; box-shadow: inset 0 -5px 0 0 #4d7c0f; }
+
+    /* water */
+    #water-stage { background: linear-gradient(#0b1437, #1e3a8a 80%); }
+    #water-stage .star { position: absolute; color: #fff; font-size: 10px; opacity: .7; }
+    #moon { position: absolute; font-size: 78px; line-height: 1; transform: translate(-50%,-50%); cursor: grab; z-index: 1; filter: drop-shadow(0 0 22px #e0f2fe); }
+    #moon:active { cursor: grabbing; }
+    #sea {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; pointer-events: none; overflow: hidden;
+      background: linear-gradient(#38bdf8, #0c4a6e 70%, #082f49);
+      border-top: 3px solid rgba(255,255,255,.55); transition: height .15s linear;
+    }
+    #sea .koi { position: absolute; left: 22%; top: 30px; font-size: 40px; animation: spin 6s linear infinite; }
+    #sea .koi.has-art { font-size: 90px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #seabed { position: absolute; left: 0; right: 0; bottom: 0; height: 4%; background: #d6c08a; z-index: 2; }
+    #water-loot { left: 64%; bottom: 3%; z-index: 2; animation: none; filter: none; }
+    #water-loot.exposed { animation: lootbob 1.6s ease-in-out infinite; filter: drop-shadow(0 0 14px #fde68a); }
+
+    /* dragon dance */
+    .dragons { font-size: 64px; display: flex; gap: 40px; }
+    .dragons span:first-child:not(.has-art) { filter: hue-rotate(-40deg) saturate(2); }
+    .dragons span:last-child:not(.has-art) { filter: hue-rotate(160deg) saturate(1.6); transform: scaleX(-1); }
+    .dragons .has-art { font-size: 110px; }
+    .dance { display: grid; grid-template-columns: 110px 110px; gap: 16px; }
+    /* The masters at full size, rising on either side for the last round. They are
+       pinned to the window rather than placed on the page, and do not exist until
+       then, so there is nothing to scroll down to beforehand. */
+    .epic {
+      display: none;   /* not there at all until the last dance */
+      position: fixed; bottom: -20px; z-index: 0; pointer-events: none; font-size: min(480px, 62vh); line-height: 1;
+    }
+    .epic-shaw { right: 50%; margin-right: 110px; }
+    .epic-ran { left: 50%; margin-left: 110px; }
+    body.epic-on .epic { display: block; animation: rise 2.8s steps(28) backwards; }
+    @keyframes rise { from { transform: translateY(130%); } }
+    body.epic-on .epic.roar { animation: roar .45s steps(4) 3; }
+    @keyframes roar { 50% { transform: translateY(-16px) scale(1.05); } }
+    body.epic-on .epic.beat { filter: brightness(1.6); }
+    body.epic-on .dragons { visibility: hidden; }
+    .quake { animation: quake .12s linear infinite; }
+    #rainbow { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 850; pointer-events: none; display: none; }
+    .dance { margin: 4px 0; }
+    .dpad {
+      height: 110px; cursor: pointer; font-size: 40px; color: #fff; opacity: .5;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dpad .art-img { height: 44px; }
+    .dpad.on { opacity: 1; --ink: #fff; transform: scale(1.06); }
+    .dpad:nth-child(1) { background: #dc2626; color: #fca5a5; }
+    .dpad:nth-child(2) { background: #2563eb; color: #93c5fd; }
+    .dpad:nth-child(3) { background: #ca8a04; color: #fde68a; }
+    .dpad:nth-child(4) { background: #16a34a; color: #86efac; }
+
+    /* spirit world */
+    body.spirit::before { background: linear-gradient(160deg, rgba(4,24,30,.88), rgba(30,10,50,.8)); }
+    body.spirit-shift { animation: spiritshift 1.7s steps(10) forwards; }
+    @keyframes spiritshift { to { filter: invert(1) hue-rotate(160deg) saturate(.6); } }
+    #koh-stage { background: #0b1512; height: min(42vh, 340px); min-height: 250px; }   /* shorter, so the answers stay on screen */
+    #koh {
+      position: absolute; left: 50%; top: 52%; transform: translate(-50%,-50%); font-size: 150px; line-height: 1;
+      transition: transform .25s steps(4); animation: kohsway 4s ease-in-out infinite;
+    }
+    #koh.lunge { transform: translate(-50%,-42%) scale(1.7); animation: none; }
+    @keyframes kohsway { 50% { margin-left: 14px; margin-top: -6px; } }
+    #koh-opts, #play-opts { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 560px; margin-top: 0; }
+    #koh-opts .option, #play-opts .option { text-align: center; }
+    #koh-opts .option:only-child, #play-opts .option:only-child { grid-column: 1 / -1; }
+    #koh-opts.chase .option { transition: transform .12s; }
+
+    /* The newer secret scenes size their sprites as a share of the scene box, so
+       that they keep lining up with what is drawn on the backdrop. */
+    #play-actor, .kp, #kuai-ball, .netfire, #canoe, .swim, #spear { position: absolute; line-height: 1; pointer-events: none; }
+    :is(#play-actor, .kp, #kuai-ball, .netfire, #canoe, .swim, #spear) .art-img { height: 100%; }
+
+    /* ember island theater */
+    #play-stage { background: #150c12; height: min(42vh, 340px); min-height: 250px; }
+    #play-actor { left: 50%; bottom: 23%; height: 58%; transform: translateX(-50%); font-size: 130px; }
+    #play-lives { top: auto; bottom: 8px; }
+    #play-opts { max-width: 640px; }
+
+    /* ember island beach: kuai ball */
+    #beach-stage { background: linear-gradient(#8fd3ee 36%, #e8c986 36%); cursor: crosshair; }
+    .kp { bottom: 43%; height: 21%; transform: translateX(-50%); transition: left .42s ease-out; font-size: 80px; animation: kpbob .5s steps(2) infinite alternate; }
+    .kp:nth-of-type(odd) { animation-delay: -.25s; }
+    @keyframes kpbob { to { margin-bottom: 4px; } }
+    .kp.late { transition-delay: .32s; }   /* "the slightest hesitation of her left foot" */
+    #kuai-ball { left: 50%; top: 88%; height: 12%; transform: translate(-50%,-50%); z-index: 3; font-size: 46px; transition: transform .5s; }
+    #kuai-ball.boom { transform: translate(-50%,-50%) scale(2.4); }
+    .netfire { top: 46%; height: 24%; transform: translateX(-50%); z-index: 2; font-size: 90px; animation: flicker .35s infinite alternate; }
+    #beach-score { position: absolute; left: 14px; top: 12px; z-index: 4; color: #f1f5f9; }
+    /* "The beach has a special way of smoothing even the most ragged edges":
+       while you are on Ember Island's beach, every pixel frame is rounded off. */
+    body.smooth :is(.btn, .hud-btn, .option, .card, .stage, .toast, .progress-badge) { border-radius: 18px; }
+
+    /* south pole: fishing */
+    #fish-stage { background: linear-gradient(#c9e6f2 31.25%, #235a9c 31.25%); cursor: crosshair; }
+    #canoe { left: 22%; top: 7%; height: 31.5%; z-index: 2; font-size: 120px; animation: canoebob 2.6s ease-in-out infinite; }
+    .swim { left: 0; top: 0; height: 11.5%; font-size: 44px; will-change: transform; }
+    #bubble {
+      position: absolute; width: 17%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%);
+      display: none; pointer-events: none; z-index: 3; background: rgba(143,211,238,.4);
+      box-shadow: inset 0 0 0 4px #d6f1fa, inset -12px -12px 0 0 rgba(35,90,156,.3);
+    }
+    #spear { height: 25%; display: none; z-index: 3; font-size: 100px; transform: translate(-50%,-100%) rotate(180deg); }
+    #spear.throw { display: block; animation: spearin .2s ease-out; }
+    @keyframes spearin { from { transform: translate(-50%,-190%) rotate(180deg); } }
+
+    /* ozai */
+    body.blackout::after {
+      content: ''; position: fixed; inset: 0; z-index: 900; pointer-events: none;
+      background: #000; animation: blackout 1.5s steps(8) forwards;
+    }
+    @keyframes blackout { from { opacity: 0; } }
+    .ozai { font-size: 110px; line-height: 1; filter: drop-shadow(0 0 30px #ef4444); animation: ozai 2s ease-in-out infinite; }
+    .ozai.has-art { font-size: 190px; }
+    @keyframes ozai { 50% { transform: scale(1.07) translateY(-6px); } }
+    .tug { --ink: #fff; --hi: transparent; --lo: transparent; width: 100%; height: 34px; overflow: hidden; background: #dc2626; }
+    .tug > div { height: 100%; width: 30%; background: #38bdf8; box-shadow: inset 0 -8px 0 0 #0284c7, 4px 0 0 0 #fff; transition: width .08s linear; }
+    #s-ozai.surge { animation: surge .5s ease 3; }
+    @keyframes surge { 50% { filter: sepia(1) saturate(6) hue-rotate(-30deg); transform: scale(1.03); } }
+    .btn-bend { background: #0ea5e9; color: #fff; font-size: 1.5rem; padding: 26px; text-shadow: 2px 2px 0 #075985; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+
+    /* ── CARDS ── */
+    .tcg {
+      font-size: 16px; width: 13em; height: 18.4em; padding: .6em;
+      display: flex; flex-direction: column; position: relative; flex-shrink: 0;
+      background: linear-gradient(160deg, var(--c1), var(--c2)); border: .2em solid var(--c3);
+      box-shadow: 0 -.25em 0 0 #1a1420, 0 .25em 0 0 #1a1420, -.25em 0 0 0 #1a1420, .25em 0 0 0 #1a1420, 0 0 2.2em .5em var(--glow);
+      color: #fff;
+    }
+    .tcg-num  { font-size: .85em; font-weight: 700; opacity: .8; letter-spacing: .08em; }
+    .tcg-art  { flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 5.2em; background: rgba(0,0,0,.28); margin: .08em 0 .1em; }
+    .tcg-art img { width: 100%; height: 100%; object-fit: cover; }
+    .tcg-name { font-weight: 800; font-size: 1.3em; text-align: center; line-height: 1.2; }
+    .tcg-text { font-size: .95em; text-align: center; color: rgba(255,255,255,.85); margin-top: .5em; min-height: 4em; line-height: 1.35; }
+    .tcg.air    { --c1:#f59e0b; --c2:#92400e; --c3:#fde68a; --glow:rgba(251,191,36,.45); }
+    .tcg.water  { --c1:#0ea5e9; --c2:#1e3a8a; --c3:#bae6fd; --glow:rgba(56,189,248,.45); }
+    .tcg.earth  { --c1:#16a34a; --c2:#14532d; --c3:#bbf7d0; --glow:rgba(74,222,128,.4); }
+    .tcg.fire   { --c1:#dc2626; --c2:#7f1d1d; --c3:#fecaca; --glow:rgba(248,113,113,.45); }
+    .tcg.spirit { --c1:#a855f7; --c2:#1e1b4b; --c3:#f5d0fe; --glow:rgba(192,132,252,.6); }
+    .tcg.secret { --c1:#0f766e; --c2:#042f2e; --c3:#fde68a; --glow:rgba(45,212,191,.55); }
+    .tcg.locked { --c1:#1e293b; --c2:#0f172a; --c3:#334155; --glow:transparent; color: #475569; }
+    .tcg.locked .tcg-art { filter: grayscale(1) brightness(.4); }
+    .tcg.small { font-size: 9.5px; }
+    .tcg-grid { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; }
+
+    /* ── OVERLAYS ── */
+    .overlay {
+      position: fixed; inset: 0; z-index: 700; display: none;
+      align-items: center; justify-content: center; padding: 20px;
+      background: rgba(4,3,12,.86); backdrop-filter: blur(4px); overflow-y: auto;
+    }
+    .overlay.show { display: flex; }
+    .overlay-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 620px; width: 100%; margin: auto; }
+    .unlock-title { font-size: 1.7rem; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: .08em; text-shadow: 3px 3px 0 #92400e; text-align: center; }
+    #unlock-card .tcg { animation: flipIn .8s cubic-bezier(.175,.885,.32,1.275); }
+    @keyframes flipIn { from { transform: perspective(700px) rotateY(180deg) scale(.3); opacity: 0; } }
+    #unlock-prize { text-align: center; color: #cbd5e1; line-height: 1.5; }
+    #unlock-prize b { color: #fbbf24; }
+    .say-emoji { font-size: 84px; line-height: 1; }
+    .say-emoji .art-img { width: 204px; height: auto; }
+    .say-name { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: #f97316; }
+    .say-text { font-size: 1.15rem; line-height: 1.3; text-align: center; white-space: pre-line; }
+    #say { z-index: 720; }
+    #unlock { z-index: 740; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 950;
+      --ink: #f97316; background: #1e293b; color: #fff; padding: 12px 24px;
+      font-weight: 700; opacity: 0; transition: opacity .3s; pointer-events: none; text-align: center; max-width: 90vw;
+    }
+    .toast.show { opacity: 1; }
+    #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+  </style>
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <div>
+    <button class="hud-btn" id="hud-map" style="display:none"><span data-art="world"></span>Map</button>
+    <button class="hud-btn" id="hud-hint" style="display:none" title="Ask Uncle Iroh for advice"><span data-art="pin-tea"></span>Advice</button>
+  </div>
+  <div>
+    <button class="hud-btn" id="hud-music" title="Music on / off">Music</button>
+    <button class="hud-btn" id="hud-count" title="Card binder"><span data-art="card"></span><span id="hud-num">0 / 12</span></button>
+  </div>
+</div>
+
+<!-- START -->
+<div id="s-start" class="screen active">
+  <div class="start-hero">
+    <div class="start-logo" data-art="logo"></div>
+    <div class="start-title">Avatar Quiz</div>
+    <div class="start-sub" id="start-sub">Birthday Edition</div>
+  </div>
+  <div class="card soft">
+    Answer the questions. Win cards for your master set.<br>
+    A perfectly ordinary quiz. Absolutely nothing can go wrong.
+  </div>
+  <span class="progress-badge" id="start-progress"></span>
+  <button class="btn btn-primary" id="btn-start" style="font-size:1.3rem;padding:16px 32px">Start the quiz</button>
+  <div class="intro-line">Water · Earth · Fire · Air</div>
+</div>
+
+<!-- QUIZ (act 1, and later Ba Sing Se University) -->
+<div id="s-quiz" class="screen">
+  <div class="card" id="quiz-card">
+    <div class="question-label" id="q-label">Question</div>
+    <div class="question-text" id="q-text"></div>
+    <div class="options" id="q-opts"></div>
+    <div id="q-feedback"></div>
+    <div id="q-note"></div>
+  </div>
+</div>
+
+<!-- FLIGHT -->
+<div id="s-flight" class="screen wide">
+  <div class="scene-title">YIP YIP!</div>
+  <div class="stage" id="flight-stage">
+    <div class="cloud" data-art="cloud" style="top:8%;animation-duration:14s"></div>
+    <div class="cloud" data-art="cloud" style="top:38%;animation-duration:9s;animation-delay:-4s;font-size:110px"></div>
+    <div class="cloud" data-art="cloud" style="top:66%;animation-duration:12s;animation-delay:-8s"></div>
+    <div id="flight-lives"></div>
+    <div id="appa" data-art="appa"></div>
+  </div>
+  <div class="scene-text" id="flight-status"></div>
+</div>
+
+<!-- WORLD MAP -->
+<div id="s-map" class="screen wide">
+  <div class="scene-title" id="map-title">The Four Nations</div>
+  <div class="stage map" id="map">
+    <button class="pin" style="left:50%;top:12%" data-go="s-water" data-cards="moon"><i data-art="pin-water"></i><span>Northern Water Tribe</span></button>
+    <button class="pin" style="left:79%;top:27%" data-go="s-quiz" data-cards="rough nowar"><i data-art="pin-university"></i><span>Ba Sing Se University</span></button>
+    <button class="pin" style="left:86%;top:55%" data-go="s-tea" data-cards="tea"><i data-art="pin-tea"></i><span>The Jasmine Dragon</span></button>
+    <button class="pin" style="left:66%;top:72%" data-go="s-desert" data-cards="cactus"><i data-art="pin-desert"></i><span>Si Wong Desert</span></button>
+    <button class="pin" style="left:54%;top:46%" data-go="s-cave" data-cards="tunnel"><i data-art="pin-cave"></i><span>Cave of Two Lovers</span></button>
+    <button class="pin" style="left:15%;top:48%" data-go="s-dragon" data-cards="dragon"><i data-art="pin-sun"></i><span>Sun Warriors</span></button>
+    <button class="pin" style="left:31%;top:23%" data-go="s-flight" data-cards="yipyip"><i data-art="appa"></i><span>Fly with Appa</span></button>
+    <button class="pin comet-pin" style="left:13%;top:15%" data-go="s-ozai" data-cards="energy"><i data-art="comet"></i><span>Sozin's Comet</span></button>
+    <button class="pin ember-pin" style="left:21%;top:30%" data-go="s-beach" data-cards="beach"><i data-art="pin-ember"></i><span>Ember Island</span></button>
+    <div id="map-canoe" data-art="canoe"></div>
+    <div id="cart" data-art="cart" title="Fresh cabbages!"></div>
+  </div>
+  <div class="pads" id="map-pads"></div>
+</div>
+
+<!-- SWAMP (secret: crash the flight) -->
+<div id="s-swamp" class="screen wide">
+  <div class="scene-title">The Foggy Swamp</div>
+  <div class="stage" id="swamp-stage">
+    <div id="swamp-appa" data-art="appa"></div>
+    <div class="loot" id="swamp-loot" data-art="card"></div>
+  </div>
+  <div class="scene-text" id="swamp-text"></div>
+</div>
+
+<!-- SPIRIT WORLD (secret: light the stones under the map in reverse) -->
+<div id="s-koh" class="screen wide">
+  <div class="scene-title">The Spirit World</div>
+  <div class="stage" id="koh-stage">
+    <div id="koh" data-art="koh-1"></div>
+  </div>
+  <div class="scene-text" id="koh-text"></div>
+  <div class="bar" id="koh-barwrap" style="max-width:560px;display:none"><div id="koh-bar"></div></div>
+  <div class="options" id="koh-opts"></div>
+</div>
+
+<!-- EMBER ISLAND THEATER (secret: click the first card in the binder, which is named after the play) -->
+<div id="s-play" class="screen wide">
+  <div class="scene-title">The Boy in the Iceberg</div>
+  <div class="stage" id="play-stage">
+    <div id="play-actor"></div>
+    <div id="play-lives"></div>
+  </div>
+  <div class="scene-text" id="play-text"></div>
+  <div class="options" id="play-opts"></div>
+</div>
+
+<!-- EMBER ISLAND BEACH (secret: stop playing for a while) -->
+<div id="s-beach" class="screen wide">
+  <div class="scene-title">Ember Island</div>
+  <div class="stage" id="beach-stage">
+    <div class="progress-badge" id="beach-score"></div>
+    <div id="kuai-ball" data-art="ball"></div>
+  </div>
+  <div class="scene-text" id="beach-text"></div>
+</div>
+
+<!-- SOUTH POLE (secret: the canoe at the bottom of the map) -->
+<div id="s-fish" class="screen wide">
+  <div class="scene-title">The South Pole</div>
+  <div class="stage" id="fish-stage">
+    <div id="canoe" data-art="canoe"></div>
+    <div id="bubble"></div>
+    <div id="spear" data-art="spear"></div>
+  </div>
+  <div class="scene-text" id="fish-text"></div>
+</div>
+
+<!-- DESERT -->
+<div id="s-desert" class="screen wide">
+  <div class="scene-title">Si Wong Desert</div>
+  <div class="stage" id="desert-stage">
+    <div class="sun">☀️</div>
+    <div id="cactus" data-art="cactus"></div>
+  </div>
+  <div class="scene-text" id="desert-text"></div>
+</div>
+
+<!-- CAVE -->
+<div id="s-cave" class="screen wide">
+  <div class="scene-title">Cave of Two Lovers</div>
+  <div class="stage" id="cave-stage">
+    <div id="torch" data-art="torch" title="Torch"></div>
+    <div class="tunnel-glow" style="left:17%"></div>
+    <div class="tunnel-glow" style="left:50%"></div>
+    <div class="tunnel-glow" style="left:83%"></div>
+    <div id="mole" data-art="badgermole" title="A badgermole"></div>
+    <div class="loot" id="cave-loot" data-art="card"></div>
+  </div>
+  <div class="scene-text" id="cave-text"></div>
+  <div class="btn-row" id="cave-btns">
+    <button class="btn btn-ghost" data-dir="left"><span class="rot-l" data-art="arrow"></span>Left</button>
+    <button class="btn btn-ghost" data-dir="straight on"><span data-art="arrow"></span>Straight on</button>
+    <button class="btn btn-ghost" data-dir="right">Right<span class="rot-r" data-art="arrow"></span></button>
+  </div>
+</div>
+
+<!-- LABYRINTH (secret: in the dark cave, follow the glowing tunnel) -->
+<div id="s-maze" class="screen wide">
+  <div class="scene-title">The Labyrinth</div>
+  <div class="stage" id="maze-stage"><canvas id="maze" width="176" height="96"></canvas></div>
+  <div class="scene-text" id="maze-text"></div>
+  <div class="btn-row" id="maze-btns">
+    <button class="btn btn-ghost" data-key="left"><span class="rot-l" data-art="arrow"></span>Turn</button>
+    <button class="btn btn-ghost" data-key="up"><span data-art="arrow"></span>Walk</button>
+    <button class="btn btn-primary" data-key="stomp" style="width:auto;padding:10px 18px;font-size:1rem">Stomp</button>
+    <button class="btn btn-ghost" data-key="down"><span class="rot-d" data-art="arrow"></span>Back</button>
+    <button class="btn btn-ghost" data-key="right">Turn<span class="rot-r" data-art="arrow"></span></button>
+  </div>
+</div>
+
+<!-- TEA -->
+<div id="s-tea" class="screen">
+  <div class="scene-title">The Jasmine Dragon</div>
+  <div class="teapot" id="teapot" data-art="teapot"></div>
+  <div class="scene-text" id="tea-text"></div>
+  <div class="bar"><div id="tea-bar"></div></div>
+  <button class="btn btn-primary" id="tea-btn">Brew tea</button>
+</div>
+
+<!-- WATER TRIBE -->
+<div id="s-water" class="screen wide">
+  <div class="scene-title">Northern Water Tribe</div>
+  <div class="stage" id="water-stage">
+    <div id="moon" data-art="moon"></div>
+    <div id="seabed"></div>
+    <div class="loot" id="water-loot" data-art="card"></div>
+    <div id="sea"><div class="koi" data-art="koi"></div></div>
+  </div>
+  <div class="scene-text" id="water-text"></div>
+</div>
+
+<!-- SUN WARRIORS -->
+<div id="s-dragon" class="screen">
+  <div class="scene-title">The Sun Warriors</div>
+  <div class="dragons"><span data-art="ran"></span><span data-art="shaw"></span></div>
+  <div class="scene-text" id="dragon-text"></div>
+  <div class="dance" id="dance">
+    <button class="dpad" data-p="0"><span data-art="arrow"></span></button>
+    <button class="dpad" data-p="1"><span class="rot-r" data-art="arrow"></span></button>
+    <button class="dpad" data-p="2"><span class="rot-l" data-art="arrow"></span></button>
+    <button class="dpad" data-p="3"><span class="rot-d" data-art="arrow"></span></button>
+  </div>
+  <button class="btn btn-primary" id="dragon-btn">Begin the dance</button>
+</div>
+
+<!-- FINALE -->
+<div id="s-ozai" class="screen">
+  <div class="ozai" data-art="ozai"></div>
+  <div class="say-name">Phoenix King Ozai</div>
+  <div id="ozai-box" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:16px"></div>
+</div>
+
+<!-- THE END -->
+<div id="s-end" class="screen wide">
+  <div class="start-logo" data-art="cake"></div>
+  <div class="start-title" id="end-title">Happy Birthday!</div>
+  <div class="scene-text" id="end-text"></div>
+  <div class="tcg-grid" id="end-grid"></div>
+  <div class="scene-text" id="end-tease"></div>
+  <div class="tcg-grid" id="end-secrets"></div>
+  <button class="btn btn-ghost" id="end-back">Back to the world map</button>
+</div>
+
+<!-- OVERLAYS -->
+<div class="overlay" id="binder">
+  <div class="overlay-inner" style="max-width:720px">
+    <div class="unlock-title" style="font-size:1.3rem">Card Binder</div>
+    <div class="tcg-grid" id="binder-grid"></div>
+    <div class="tcg-grid" id="binder-secrets"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="binder-close" style="width:auto">Close</button>
+      <button class="btn btn-ghost" id="binder-reset">Erase everything</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="say">
+  <div class="overlay-inner">
+    <div class="say-emoji" id="say-emoji"></div>
+    <div class="say-name" id="say-name"></div>
+    <div class="say-text" id="say-text"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="say-ok" style="width:auto;min-width:160px"></button>
+      <button class="btn btn-ghost" id="say-alt" style="display:none"></button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="unlock">
+  <div class="overlay-inner">
+    <div class="unlock-title" id="unlock-title">Card unlocked!</div>
+    <div id="unlock-card"></div>
+    <div id="unlock-prize"></div>
+    <button class="btn btn-primary" id="unlock-ok" style="width:auto;min-width:160px">Continue</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<!-- the dragon masters at full size; hidden until the last dance -->
+<div class="epic epic-shaw" data-art="shaw-epic"></div>
+<div class="epic epic-ran" data-art="ran-epic"></div>
+<canvas id="rainbow" width="96" height="54"></canvas>
+<canvas id="confetti"></canvas>
+
+<script>
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+
+const CONFIG = {
+  name: 'Rik',                    // the birthday boy
+  quizmaster: 'the quizmaster',   // who hands over the real cards
+};
+
+// One line per card to find. `prize` is optional: the real card he wins for it
+// (e.g. 'Foil Appa'). Leave empty to just say "collect your card".
+const CARDS = [
+  { id: 'iceberg',  el: 'air',    emoji: '🧊', name: 'The Boy in the Iceberg',        text: 'A hundred years on ice, and still got the first one right.', prize: '' },
+  { id: 'nowar',    el: 'earth',  emoji: '🏯', name: 'There Is No War in Ba Sing Se', text: 'Joo Dee is smiling. Joo Dee is always smiling.', prize: '' },
+  { id: 'yipyip',   el: 'air',    emoji: '🦬', name: 'Yip Yip!',                      text: 'Six legs, one enormous tail, zero traffic laws.', prize: '' },
+  { id: 'cabbages', el: 'earth',  emoji: '🥬', name: 'My Cabbages!',                  text: 'This cart survived the entire war. Then you came along.', prize: '' },
+  { id: 'rough',    el: 'fire',   emoji: '🌙', name: "That's Rough, Buddy",           text: '“My first girlfriend turned into the moon.”', prize: '' },
+  { id: 'cactus',   el: 'earth',  emoji: '🌵', name: 'The Quenchiest',                text: "“It'll quench ya! Nothing's quenchier.”", prize: '' },
+  { id: 'tunnel',   el: 'earth',  emoji: '💎', name: 'Secret Tunnel',                 text: '“Love is brightest in the dark.”', prize: '' },
+  { id: 'tea',      el: 'fire',   emoji: '🍵', name: 'The Jasmine Dragon',            text: "“Sharing tea with a fascinating stranger is one of life's true delights.”", prize: '' },
+  { id: 'moon',     el: 'water',  emoji: '🎏', name: 'Tui and La',                    text: 'Push and pull. Moon and ocean. Circling each other for all time.', prize: '' },
+  { id: 'dragon',   el: 'fire',   emoji: '🐉', name: 'The Dancing Dragon',            text: '“Fire is life, not just destruction.”', prize: '' },
+  { id: 'avatar',   el: 'water',  emoji: '🌀', name: 'The Avatar State',              text: 'Water. Earth. Fire. Air. All four, at once.', prize: '' },
+  { id: 'energy',   el: 'spirit', emoji: '✋', name: 'Energybending',                 text: '“In the era before the Avatar, we bent not the elements but the energy within ourselves.”', prize: '' },
+];
+
+// Secret cards. They are not counted in the total above and stay out of sight
+// until one is found, or until all the normal cards are in.
+const SECRETS = [
+  { id: 'swamp', el: 'secret', emoji: '🌳', name: 'The Foggy Swamp',      text: '“Time is an illusion and so is death.”', prize: '' },
+  { id: 'melon', el: 'secret', emoji: '🍉', name: 'The Melon Lord',       text: '“I am not Toph. I am Melon Lord!”', prize: '' },
+  { id: 'koh',   el: 'secret', emoji: '🎭', name: 'Koh the Face Stealer', text: '“Show no fear. Show no emotion at all.”', prize: '' },
+  { id: 'lovers', el: 'secret', emoji: '💞', name: 'Oma and Shu',         text: '“The two lovers learned earthbending from the badgermoles; they became the first earthbenders.”', prize: '' },
+  { id: 'owl',   el: 'secret', emoji: '🦉', name: 'He Who Knows Ten Thousand Things', text: '“I am Wan Shi Tong, He Who Knows Ten Thousand Things.”', prize: '' },
+  { id: 'players', el: 'secret', emoji: '🎟️', name: 'The Ember Island Players', text: '“That... wasn\'t a good play.” “But the effects were decent.”', prize: '' },
+  { id: 'beach', el: 'secret', emoji: '🏖️', name: 'The Beach',            text: '“The beach has a special way of smoothing even the most ragged edges.”', prize: '' },
+  { id: 'fish',  el: 'secret', emoji: '🐟', name: 'Magic Water',          text: '“Why is it that every time you play with magic water, I get soaked?”', prize: '' },
+  // keep this one last: Uncle Iroh hints at the secrets in this order, and it erases all the others
+  { id: 'cycle', el: 'secret', emoji: '♻️', name: 'The Avatar Cycle',     text: 'Everything was erased. One memory came along anyway.', prize: '' },
+];
+
+// Uncle Iroh's advice: three hints per card, from vague to literal.
+const HINTS = {
+  iceberg: ['Every journey begins with a first question.', 'Answer the first quiz question correctly.', 'The answer is Appa.'],
+  yipyip:  ['Some words can lift a sky bison into the air.', 'Type what Aang says to make Appa take off.', 'Type "yip yip" and catch the card during the flight.'],
+  rough: [
+    'Getting it wrong is just another way of learning something.',
+    'Not every card is won by being right. Ba Sing Se University also rewards… other achievements.',
+    'Deliberately give a wrong answer in the quiz at Ba Sing Se University.',
+  ],
+  nowar: [
+    'Some answers do not want to be given. That is what makes them interesting.',
+    'At Ba Sing Se University they sometimes ask whether there is a war. One answer keeps running away. Why would that be?',
+    'In the Ba Sing Se quiz, keep chasing the answer "Yes" until it gets tired, then click it.',
+  ],
+  cabbages: [
+    'An honest merchant travels the whole world. He deserves peace. He never gets it.',
+    'Watch the bottom edge of the world map. Every so often, something rolls by.',
+    'Click the cabbage cart that rolls along the bottom of the world map.',
+  ],
+  cactus: [
+    'In the desert, thirst is a poor advisor. But a fun one.',
+    'Drink from the cactus in the Si Wong Desert. After that, trust only what is truly friendly.',
+    'Click the cactus in the desert, then click the giant mushroom.',
+  ],
+  tunnel: [
+    'Sometimes you only see the path once you stop looking.',
+    'The two lovers found each other in the dark. Your torch is in the way.',
+    'In the cave, click the torch to put it out, then grab the card at the end of the crystals.',
+  ],
+  tea: [
+    'Sometimes the best thing you can do is nothing.',
+    'Brew tea at the Jasmine Dragon and be patient. Truly patient. Your hands, too.',
+    'Click "Brew tea", then do not touch your mouse or keyboard for 15 seconds.',
+  ],
+  moon: [
+    'The legends say the moon was the first waterbender. The water still follows her.',
+    'Something lies on the seabed at the Northern Water Tribe. The water goes where the moon goes.',
+    'Drag the moon all the way down, below the horizon. Then click what is lying on the seabed.',
+  ],
+  dragon: [
+    'The first firebenders learned not by fighting, but by watching.',
+    'The masters of the Sun Warriors dance first. Remember the order.',
+    'It is a memory game: repeat the sequence of glowing pads, four rounds in a row.',
+  ],
+  avatar: [
+    'Long ago, the four nations lived together in harmony. In a very particular order.',
+    'Four stones lie beneath the world map. The opening line of every episode knows their order.',
+    'Below the world map, click: Water, Earth, Fire, Air.',
+  ],
+  energy: [
+    'The end comes when everything else has been found. Then look to the sky.',
+    "Sozin's Comet is on the world map. You will need everything you have learned — especially the four elements.",
+    'Go to the comet, pick an answer, click Water-Earth-Fire-Air, then click as fast as you can.',
+  ],
+  // the secrets — Iroh only talks about these once every normal card is found
+  swamp: [
+    'Not every landing is a good one. Some are better.',
+    'Appa can only take so many fireballs. What happens when he has taken them all?',
+    'Fly with Appa from the map and get hit three times.',
+  ],
+  melon: [
+    'There is no shame in losing to the Fire Lord. Especially when he turns out to be a fruit.',
+    'Face the comet again. This time, find out what happens if you do not win.',
+    'In the fight against Ozai, start clicking, then stop and let the red bar take over.',
+  ],
+  koh: [
+    'The living world turns one way. The Spirit World lies the other way.',
+    'You know the order of the four stones under the map. Now walk it backwards.',
+    'Click the stones in reverse: Air, Fire, Earth, Water. Then show Koh no emotion: pick the answer with no feeling in it, and at the end click nothing at all.',
+  ],
+  lovers: [
+    'Love is brightest in the dark. It also knows the way.',
+    'With the torch out, one tunnel in the cave glows. Trust it. More than once.',
+    'In the dark cave, walk into the glowing tunnel four times in a row. Touch the badgermole, then find the tomb in the labyrinth.',
+  ],
+  owl: [
+    'Knowing one answer is luck. Knowing many, one after another, gets you noticed.',
+    'Ba Sing Se University keeps count of how many you get right in a row. Someone else is counting too.',
+    'Answer ten questions in a row correctly at Ba Sing Se University.',
+  ],
+  players: [
+    'A good story gets told again. A great one gets told badly.',
+    'Your very first card shares its name with a play. A card binder is not only for looking at.',
+    'Open the card binder and click card 1, "The Boy in the Iceberg". In the theater, answer the way the play tells it, not the way it happened. (When in doubt: it was really unclear.)',
+  ],
+  beach: [
+    'Prince Zuko thinks that doing nothing is a waste of time. Prince Zuko is young.',
+    'There is a place you can only reach by not playing. Leave the world map alone and go look at something else for a while. The game will notice.',
+    'On the world map, switch to another tab or window for ten seconds, then come back. On the beach, serve to the left of the girl with the pigtails: her left, not yours.',
+  ],
+  fish: [
+    'Not every place on the map has a pin. This whole story began at the bottom of the world.',
+    'Two children are out fishing by the southern ice. One of them has a spear. Watch the other one.',
+    'Click the little canoe at the bottom of the world map. The spear never works: press and hold on the water instead, wait for a fish to swim into it, and lift it out of the sea.',
+  ],
+  cycle: [
+    'When everything has been found, only one thing is left to do: let it all go.',
+    'The Avatar is never truly gone. Whatever is erased comes back. Have you tried erasing?',
+    'Open the card binder and press "Erase everything". Yes, really. You lose your progress, and gain a card.',
+  ],
+};
+
+// ══════════════════════════════════════════════
+// ART — optional custom artwork
+// ══════════════════════════════════════════════
+// Every picture in the game has a name and an emoji fallback. The image at
+// art/<name>.png is used when it exists; anything missing stays an emoji.
+// The current pixel art is drawn by tools/make_art.py and can be edited by
+// hand in any pixel editor (keep the file names).
+//   sprites below:   transparent PNG
+//   card-<card id>:  illustration for a card face (about 6:5, gets cropped)
+//   stage-<scene>:   backdrop inside a scene box — map, flight, desert, cave, water,
+//                    swamp, koh, play, beach, fish
+//   bg-<scene>:      full-page backdrop — start, quiz, flight, map, desert,
+//                    cave, tea, water, dragon, ozai, end
+const ART = {
+  // dialogue portraits
+  iroh: '🍵', zuko: '😤', sokka: '🪃', daili: '🕴️', longfeng: '🕴️', ozai: '👹',
+  // sprites (appa and island: side view, facing right)
+  appa: '🦬', fireball: '🔥', card: '🎴', island: '🏝️', cloud: '☁️',
+  cart: '🥬🥬<br>🛒', cabbage: '🥬', cactus: '🌵', mushroom: '🍄',
+  torch: '🔥', crystal: '💎', moon: '🌕', koi: '🐟<br>🐠', teapot: '🫖',
+  ran: '🐉', shaw: '🐉', comet: '☄️', world: '🗺️', logo: '🌀', cake: '🎂', arrow: '↑', heart: '❤️',
+  // things that float past during the cactus-juice trip
+  eye: '👁️', lizard: '🦎', 'shroom-bad': '🍄', 'shroom-bad2': '🍄',
+  // secrets
+  melon: '🍉', noface: '😶', 'koh-1': '🎭', 'koh-2': '🎭', 'koh-3': '🎭', 'koh-4': '🎭', badgermole: '🦡', roku: '🧙', owl: '🦉', 'shaw-epic': '🐉', 'ran-epic': '🐉',
+  // the Ember Island Players, the beach and the fishing trip
+  azula: '😏', katara: '🌊', loli: '👵👵', 'actress-aang': '💃', 'actor-toph': '💪', 'actor-zuko': '😤',
+  ball: '🏐', 'kuai-1': '👧', 'kuai-2': '🧒', 'kuai-3': '👦', canoe: '🛶', fish: '🐟', spear: '🔱',
+  // the four element stones
+  'el-water': '💧', 'el-earth': '⛰️', 'el-fire': '🔥', 'el-air': '🌪️',
+  // map pins
+  'pin-water': '❄️', 'pin-university': '🏯', 'pin-tea': '🍵', 'pin-desert': '🌵', 'pin-cave': '⛰️', 'pin-sun': '🐉', 'pin-ember': '🏖️',
+};
+const STAGES = { map: 'map', flight: 'flight-stage', desert: 'desert-stage', cave: 'cave-stage', water: 'water-stage', swamp: 'swamp-stage', koh: 'koh-stage', play: 'play-stage', beach: 'beach-stage', fish: 'fish-stage' };
+const SCENE_NAMES = ['start', 'quiz', 'flight', 'map', 'desert', 'cave', 'tea', 'water', 'dragon', 'ozai', 'end', 'swamp', 'koh', 'play', 'beach', 'fish'];
+const ART_URL = {};   // name → url, for every image that actually exists
+
+const art = key => ART_URL[key] ? `<img class="art-img" src="${ART_URL[key]}" alt="" draggable="false">` : ART[key];
+
+// How a backdrop fills its scene box. The map, the cave, the beach and the
+// fishing spot are stretched to fit exactly, because what sits on top of them
+// (the pins, the glowing tunnel, the net, the waterline) has to line up with
+// what is drawn; the other backdrops are cropped to fit instead.
+const stageBg = (name, url) => `url("${url}") center / ${['map', 'cave', 'beach', 'fish'].includes(name) ? '100% 100%' : 'cover'} no-repeat`;
+
+function probeArt(key) {
+  const img = new Image();
+  img.onload = () => {
+    ART_URL[key] = img.src;
+    document.querySelectorAll(`[data-art="${key}"]`).forEach(e => { e.innerHTML = art(key); e.classList.add('has-art'); });
+    const st = key.startsWith('stage-') && document.getElementById(STAGES[key.slice(6)]);
+    if (st) {
+      st.style.background = stageBg(key.slice(6), img.src);
+      st.classList.add('has-art');
+    }
+    if (key.startsWith('bg-')) pageBg();
+  };
+  img.src = `art/${key}.png`;
+}
+function pageBg() {
+  const url = ART_URL['bg-' + cur.slice(2)];
+  document.body.style.backgroundImage = url ? `url("${url}")` : '';
+}
+
+// ══════════════════════════════════════════════
+// BASICS
+// ══════════════════════════════════════════════
+
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+
+const LS_KEY = 'ax_state_v2';
+if (location.search.includes('reset')) {   // a complete wipe, for the quizmaster
+  [LS_KEY, LS_KEY + '_reborn', LS_KEY + '_lives'].forEach(k => localStorage.removeItem(k));
+  history.replaceState(null, '', location.pathname);
+}
+// stage: 'quiz' (act 1) or 'map'; step: progress within act 1
+const S = Object.assign({ found: [], stage: 'quiz', step: 0, hints: {}, comet: false, mapIntro: false },
+  JSON.parse(localStorage.getItem(LS_KEY) || '{}'));
+let erasing = false;
+const save = () => { if (!erasing) localStorage.setItem(LS_KEY, JSON.stringify(S)); };
+const has = id => S.found.includes(id);
+const ALL_CARDS = [...CARDS, ...SECRETS];
+const mainFound = () => CARDS.filter(c => has(c.id)).length;
+const secretsFound = () => SECRETS.filter(c => has(c.id)).length;
+
+// ── sound ──
+const SFX = {
+  correct: () => chip([[83, .7], [90, 1.8]], .09),                 // two quick rising notes
+  wrong:   () => chip([[58, 1.3], [51, 2.6]], .1, 'sawtooth'),     // a low falling buzz
+};
+
+let actx;
+function beep(freq, dur = .18, type = 'sine') {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(.15, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + dur);
+    o.connect(g).connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + dur);
+  } catch (e) {}
+}
+
+// ── chiptune jingles ──
+// Notes are MIDI numbers (or a chord as a list), each with a length in steps; 0 is a rest.
+// Everything stays on a pentatonic scale to keep the flavour of the show's music.
+const JINGLES = [
+  [[74], [78], [81], [86], [83], [[62, 86, 90, 93], 5]],
+  [[81], [86], [88], [93], [90], [[62, 86, 90, 93], 5]],
+  [[76], [81], [83], [88], [86], [[57, 81, 85, 88], 5]],
+  [[86], [83], [81], [78], [81], [[62, 78, 81, 86], 5]],
+];
+const FANFARE = [
+  [74, .5], [74, .5], [74, .5], [0, .5], [74], [81, 2], [83], [81], [78], [81, 2],
+  [[62, 74, 78, 81]], [[62, 78, 81, 86]], [[62, 81, 86, 90]], [[50, 62, 86, 90, 93, 98], 8],
+];
+function chip(notes, step = .1, wave) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    let t = actx.currentTime + .03;
+    for (const [n, len = 1] of notes) {
+      const dur = step * len;
+      for (const m of [].concat(n || [])) {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = wave || (m < 70 ? 'triangle' : 'square');   // soft bass under a square-wave lead
+        o.frequency.value = 440 * 2 ** ((m - 69) / 12);
+        const vol = wave ? .1 : m < 70 ? .16 : .07;
+        g.gain.setValueAtTime(vol, t);
+        g.gain.setValueAtTime(vol, t + dur * .6);
+        g.gain.exponentialRampToValueAtTime(.001, t + dur);
+        o.connect(g).connect(actx.destination);
+        o.start(t); o.stop(t + dur + .02);
+      }
+      t += dur;
+    }
+    if (t - actx.currentTime > .6) Music.duck(t - actx.currentTime);   // a jingle, not a blip: the music makes room for it
+  } catch (e) {}
+}
+
+// ── background music ──
+// A looping chiptune for every scene, played by a small step sequencer. A voice
+// is a line of steps, each an eighth note long: a note name starts a note, "-"
+// holds it, "." is a rest, and "|" only marks the bars for whoever is reading.
+// Notes joined by "+" sound together, and a number after ":" says how many
+// steps something lasts: "d4+a4:4" is the same as "d4+a4 - - -".
+// (A track with `div: 4` counts in sixteenth notes instead: four steps to the beat.)
+// Drum lines use k (kick), t (tom), s (snare) and h (hat) instead of notes.
+// Each voice loops on its own, so a short bass line can repeat under a longer
+// tune. Two tunes (the tea shop and the cave) follow sheet music written out by
+// the game's maker, "Happy Birthday to You" is public domain, and everything
+// else was written for this game.
+const MUSIC_VOL = .5;   // how loud the music is next to the sound effects
+// The same line again with every note doubled an octave lower.
+const octaves = line => line.replace(/[a-g][#b]?\d/g, n => n.slice(0, -1) + (n.slice(-1) - 1) + '+' + n);
+const TRACKS = {
+  // title screen: calm and hopeful
+  start: { bpm: 96, voices: [
+    { wave: 'pulse', notes: `
+      a4 - b4 d5 e5 - d5 b4   | a4 - - f#4 a4 - - . | b4 - d5 e5 f#5 - e5 d5 | e5 - - d5 b4 - a4 .
+      d5 - e5 f#5 a5 - f#5 e5 | d5 - - b4 d5 - - .  | e5 - f#5 e5 d5 - b4 a4 | d5 - - - - - . .` },
+    { wave: 'triangle', notes: `
+      d3 . a3 . d3 . a3 .   | d3 . a3 . d3 . a3 . | g2 . d3 . g2 . d3 . | a2 . e3 . a2 . e3 .
+      b2 . f#3 . b2 . f#3 . | g2 . d3 . g2 . d3 . | a2 . e3 . a2 . e3 . | d3 . a3 . d3 - - .` },
+  ] },
+  // act 1: a perfectly ordinary quiz, with perfectly ordinary quiz-show music
+  quiz: { bpm: 120, voices: [
+    { wave: 'square', pluck: true, notes: `
+      e5 . g5 . e5 . c5 . | d5 . e5 d5 c5 . a4 . | c5 . e5 . g5 . a5 . | g5 . e5 . d5 . . .
+      e5 . g5 . a5 . g5 . | e5 . d5 c5 a4 . c5 . | a4 . c5 . d5 . e5 . | d5 . b4 . g4 . . .` },
+    { wave: 'triangle', notes: 'c3 . g3 . c3 . g3 . | a2 . e3 . a2 . e3 . | f3 . c3 . f3 . c3 . | g2 . d3 . g2 . d3 .' },
+    { drums: '. h . h . h . h' },
+  ] },
+  // Ba Sing Se University: stately, and very sure that nothing is wrong
+  uni: { bpm: 100, voices: [
+    { wave: 'pulse', notes: `
+      d5 - e5 d5 b4 - a4 g4 | a4 - b4 d5 e5 - - . | g5 - e5 d5 e5 - d5 b4 | a4 - - b4 a4 - g4 .
+      d5 - e5 g5 a5 - g5 e5 | d5 - b4 d5 e5 - - . | g5 - a5 g5 e5 - d5 b4 | a4 - b4 a4 g4 - - .` },
+    { wave: 'triangle', notes: `
+      g2 - d3 - g2 - d3 - | e3 - b3 - e3 - b3 - | c3 - g3 - c3 - g3 - | d3 - a3 - d3 - a3 -
+      g2 - d3 - g2 - d3 - | e3 - b3 - e3 - b3 - | c3 - g3 - c3 - g3 - | d3 - a3 - g2 - - -` },
+    { drums: 'k . . . h . . . | k . . . h . h .' },
+  ] },
+  // on Appa's back, with fireballs coming
+  flight: { bpm: 160, voices: [
+    { wave: 'pulse', notes: `
+      e5 - g5 a5 b5 - a5 g5 | a5 - g5 e5 d5 - e5 - | e5 - g5 a5 b5 - d6 b5 | a5 - b5 a5 g5 - e5 -
+      d5 - e5 g5 a5 - g5 e5 | g5 - a5 b5 d6 - b5 - | e6 - d6 b5 a5 - g5 a5 | b5 - - - - - . .` },
+    { wave: 'triangle', notes: `
+      e3 e4 e3 e4 e3 e4 e3 e4 | c3 c4 c3 c4 c3 c4 c3 c4 | g2 g3 g2 g3 g2 g3 g2 g3 | d3 d4 d3 d4 d3 d4 d3 d4
+      e3 e4 e3 e4 e3 e4 e3 e4 | g2 g3 g2 g3 g2 g3 g2 g3 | a2 a3 a2 a3 a2 a3 a2 a3 | b2 b3 b2 b3 b2 b3 f#3 b3` },
+    { drums: 'k h s h k h s h | k h s h k k s h' },
+  ] },
+  // the world map: setting out
+  map: { bpm: 112, voices: [
+    { wave: 'pulse', notes: `
+      g4 - b4 d5 e5 - d5 - | b4 - d5 b4 a4 - - . | e5 - g5 e5 d5 - b4 -  | d5 - e5 d5 b4 - a4 .
+      g5 - e5 g5 a5 - b5 - | a5 - g5 e5 d5 - - . | e5 - d5 b4 a4 - b4 d5 | a4 - - b4 g4 - - .` },
+    { wave: 'triangle', notes: `
+      g2 . d3 . g3 . d3 . | d3 . a3 . d4 . a3 . | e3 . b3 . e4 . b3 . | c3 . g3 . d3 . a3 .
+      g2 . d3 . g3 . d3 . | d3 . a3 . d4 . a3 . | c3 . g3 . c4 . g3 . | d3 . a3 . g2 . d3 .` },
+    { drums: 'k . h . s . h . | k . h k s . h .' },
+  ] },
+  // the same map under Sozin's Comet
+  comet: { bpm: 92, voices: [
+    { wave: 'pulse', notes: `
+      e4 - - - g4 - - - | a4 - - - b4 - - - | c5 - - - b4 - a4 - | b4 - - - - - . .
+      e5 - - - d5 - - - | b4 - - - g4 - - - | a4 - - - f4 - - -  | e4 - - - - - . .` },
+    { wave: 'sawtooth', notes: `
+      e2 e2 . e2 e2 . e2 . | e2 e2 . e2 e2 . e2 . | c3 c3 . c3 c3 . c3 . | b2 b2 . b2 b2 . b2 .
+      e2 e2 . e2 e2 . e2 . | e2 e2 . e2 e2 . e2 . | f2 f2 . f2 f2 . f2 . | e2 e2 . e2 e2 . e2 .` },
+    { drums: 'k . . k . . k . | k . . k . . t t' },
+  ] },
+  // the Foggy Swamp: slow, low and twangy
+  swamp: { bpm: 84, swing: .3, voices: [
+    { wave: 'square', pluck: true, vol: 1.3, notes: `
+      g3 . bb3 . c4 db4 d4 . | f4 . d4 . c4 . bb3 .  | g3 . bb3 . c4 db4 d4 . | g4 . f4 d4 . . . .
+      c4 . eb4 . f4 . g4 .   | f4 . eb4 . c4 . bb3 . | d4 . f4 . d4 . c4 bb3  | g3 . . . . . . .` },
+    { wave: 'triangle', notes: `
+      g2 - - - d3 - - - | g2 - - - d3 - - - | g2 - - - d3 - - - | g2 - - - d3 - - -
+      c3 - - - g2 - - - | c3 - - - g2 - - - | d3 - - - d3 - - - | g2 - - - - - . .` },
+    { drums: '. . h . . . h .' },
+  ] },
+  // the Spirit World: no pulse to speak of, and something skittering in the dark
+  koh: { bpm: 120, voices: [
+    { wave: 'triangle', notes: 'd3 - - - - - - - | - - - - - - - - | eb3 - - - - - - - | - - - - - - . .' },
+    { wave: 'sine', echo: true, notes: `
+      . . a5 - - - . .  | . . . . g#5 - - - | . d5 - - . . eb5 -   | - - . . . . . .
+      . . f5 - - . b4 - | - - . . . . . .   | a5 - . g#5 - . d5 -  | - - - - . . . .` },
+    // five bars against the eight above, so it never turns up in the same place twice running
+    { wave: 'square', pluck: true, vol: .5, notes: '. . . . . . . . | . . . . . . . . | . . . . . . . . | . . . c6 b5 bb5 a5 . | . . . . . . . .' },
+  ] },
+  // the Ember Island Players: pompous, and wrong in the last bar
+  play: { bpm: 126, voices: [
+    { wave: 'square', vol: .75, notes: `
+      c5 . c5 c5 e5 . g5 . | c6 - - g5 e5 . g5 . | f5 . f5 f5 a5 . c6 . | b5 - - - g5 - . .
+      c5 . c5 c5 e5 . g5 . | c6 - - g5 a5 . b5 . | c6 . g5 . e5 . g5 . | db6 - - - c6 - . .` },
+    { wave: 'triangle', notes: `
+      c3 . g2 . c3 . g2 . | c3 . g2 . c3 . g2 . | f3 . c3 . f3 . c3 . | g2 . d3 . g2 . d3 .
+      c3 . g2 . c3 . g2 . | c3 . g2 . g2 . d3 . | c3 . g2 . c3 . g2 . | c3 . g2 . c3 . . .` },
+    { drums: 'k . s s k . s . | k . s s k s s s' },
+  ] },
+  // the beach: nobody here is in a hurry
+  beach: { bpm: 104, swing: .25, voices: [
+    { wave: 'pulse', notes: `
+      . a4 c5 d5 c5 - a4 . | . g4 a4 c5 a4 - f4 . | . a4 c5 d5 f5 - d5 . | c5 - - a4 g4 - . .
+      . d5 f5 d5 c5 - a4 . | . c5 d5 c5 a4 - g4 . | . f4 g4 a4 c5 - d5 . | c5 - a4 g4 f4 - . .` },
+    { wave: 'triangle', notes: `
+      f3 . . c3 f3 . c3 .   | d3 . . a2 d3 . a2 . | bb2 . . f3 bb2 . f3 . | c3 . . g2 c3 . g3 .
+      bb2 . . f3 bb2 . f3 . | f3 . . c3 f3 . c3 . | d3 . . a2 d3 . a2 .   | c3 . . c3 f3 - . .` },
+    { drums: 'k h . h s h . h' },
+  ] },
+  // the South Pole: open water and a lot of sky
+  fish: { bpm: 76, voices: [
+    { wave: 'pulse', echo: true, notes: `
+      b5 - - - e5 - g5 - | e5 - - - - - . . | d5 - - - g5 - b5 - | a5 - - - - - . .
+      b5 - - - d6 - b5 - | g5 - - - e5 - . . | d5 - e5 - g5 - d5 - | f#5 - - - d5 - . .` },
+    { wave: 'triangle', vol: .8, notes: 'e3 b3 e4 g4 b4 g4 e4 b3 | c3 g3 c4 e4 g4 e4 c4 g3 | g2 d3 g3 b3 d4 b3 g3 d3 | d3 a3 d4 f#4 a4 f#4 d4 a3' },
+  ] },
+  // Si Wong Desert: a tune wandering about over one long note (the cactus juice bends it)
+  desert: { bpm: 88, voices: [
+    { wave: 'square', pluck: true, notes: `
+      d5 - eb5 d5 . . . .    | a4 - bb4 a4 g4 - . . | d5 - eb5 g5 a5 - g5 eb5 | d5 - - - . . . .
+      a5 - bb5 a5 g5 - eb5 - | d5 - . . a4 - . .    | g4 - a4 bb4 a4 - g4 eb4 | d4 - - - . . . .` },
+    { wave: 'triangle', notes: 'd3 - - - d4 - - - | d3 - - - - - . .' },
+    { drums: 'h . . h . . h .', vol: .7 },
+  ] },
+  // Cave of Two Lovers, from the sheet "Love": a piano with the pedal held down,
+  // and the tune coming back off the walls. Sixteen steps to the bar, 43 bars.
+  // (The sheet slows to 70 from bar 29; here it keeps one speed. Its tremolo in
+  // bars 40 to 42 is played in sixteenths.)
+  cave: { bpm: 75, div: 4, of: 'cave', voices: [
+    // right hand: the long chords
+    { wave: 'sine', pluck: 2, vol: .85, notes: `
+      d6:16 | d5+a5+d6:32 | e5+g5+e6:32 | f#5+a5+d6:32 | g5+b5+e6:32
+      f#4:24 a4:8 | c#5:24 a4:8 | b4:48 | c#5:16 | f#5:24 a5:8 | f#6:16 | a5+c#6:16
+      d5+g5+b5:48 | b5:64
+      g4+b4:12 a4+c#5:4 | b4+d5:8 c#5+e5:8 | f#4+a4+d5+f#5:16 | f#4+a4+c#5:16 | g4+b4+d5+g5:32 | a4+c#5+e5+a5:32
+      f#4:16 | b4:8 a4:8 | d4+f#4:16 | .:48 | a3+d4+f#4:16` },
+    // the tune, whichever hand has it
+    { wave: 'square', pluck: .4, echo: true, vol: 1.15, notes: `.:144
+      d5:4 c#5:4 a4:4 f#4:4 | d5:4 c#5:4 a4:4 f#4:4 | d5:4 c#5:4 a4:4 f#4:4 | d5:4 c#5:4 a4:4 f#4:4
+      g4:4 f#4:4 g4:4 d4:4  | g4:4 f#4:4 g4:4 d4:2 b3:2 | g4:4 f#4:4 g4:4 d4:4 | g4:4 f#4:4 g4:2 f#4:2 d4:2 b3:2
+      d5:4 c#5:4 a4:4 f#4:4 | d5:4 c#5:4 a4:4 f#4:4 | d5:4 c#5:4 a4:4 f#4:4 | d5:4 c#5:4 a4:4 f#4:4
+      g4:4 f#4:4 g4:4 a4:4  | b4:4 a4:4 b4:4 c#5:4  | d5:4 c#5:4 d5:4 e5:4
+      f#5:12 e5:4 | f#5:8 a5:4 a5:4 | a5:8 e5:4 f#5:4 | c#5:16
+      d4:16 | d4+f#4:16 | .:208` },
+    // left hand
+    { wave: 'triangle', pluck: 2.5, vol: .8, notes: `.:16
+      d4:4 f#4:8 a4+c#5:20 | e4:4 g4:8 b4+d5:20 | f#4:4 a4:8 d5+f#5:20 | g4:4 b4:8 d5+g5:8 f#5:12
+      d3+f#3+a3:32 | b2+d3+f#3:32 | g2+b2+d3:24 c#3:8 | g2+b2+d3:32
+      d3+f#3+a3:24 f#3:8 | d3+f#3+c#4:32 | g3+b3:48 | .:64
+      g2+d3+g3:16 | b2+d3+f#3+b3:16 | d3+f#3+a3+d4:16 | f#3+a3+c#4:16 | g2+b2+g3:16 | c#3:8 d3:8
+      a2+e3+a3:16 | f#3:16 | f#3:16 | b3:8 a3:8 | f#3:16 | d3+f#3:16 | a2+d3+f#3:16 | d2+f#2+d3:16 | d2+f#2+d3:16` },
+    // the right hand's tremolo in bars 40 to 42, which would pile up if it rang as long as the chords do
+    { wave: 'sine', pluck: .2, vol: .7, notes: `.:624 ${'d4+f#4 a3 '.repeat(24)} .:16` },
+  ] },
+  // the labyrinth: next to nothing, so that a stomp is the loudest thing in the mountain
+  maze: { bpm: 60, voices: [
+    { wave: 'triangle', vol: .6, notes: 'd3 - - - - - . . | . . . . . . . . | d3 - - - - - . . | . . . . a2 - - .' },
+    { wave: 'sine', pluck: true, echo: true, vol: .6, notes: '. . . . . . . . | . . . . a4 . . . | . . . . . . . . | . . d5 . . . . . | . . . . . . f4 .' },
+  ] },
+  // the Jasmine Dragon, from the sheet "Teashop": nothing to do but wait. The
+  // first fifteen bars, high and slow. (Its tempo mark was not legible.)
+  tea: { bpm: 72, then: 'teaFast', voices: [
+    { wave: 'sine', notes: `
+      eb6 - - - eb6 - db6 c6 | - - - - - - - -     | ab5 - eb6 - eb6 - db6 - | c6 - - - - - - -
+      c6 - - - c6 - db6 c6   | - - bb5 ab5 - - - - | c6 - - - c6 - db6 c6    | - - bb5 ab5 - - - -
+      eb6 - - - eb6 - db6 c6 | - - - - - - - -     | . . eb6 - eb6 - f6 eb6  | - - db6 c6 - - - -
+      c6 - - - - - db6 c6    | - - bb5 ab5 - - - - | c6 - - - bb5 - ab5 -` },
+    { wave: 'triangle', vol: .3, notes: 'ab5:16 | ab5:16 | f5:16 | f5:16 | ab5:16 | ab5:16 | f5:16 | eb5:8' },
+    { wave: 'triangle', vol: .7, notes: `.:64
+      ab4 - eb5 - ab4 - eb5 - | ab4 - eb5 - ab4 - eb5 - | ab4 - eb5 - ab4 - eb5 - | ab4 - eb5 - ab4 - eb5 -
+      f4 - c5 - f4 - c5 -     | f4 - c5 - f4 - c5 -     | eb4 - bb4 - eb4 - bb4 -` },
+  ] },
+  // ...and then, as the sheet says, "Faster": the same tune in octaves over a
+  // running left hand. (The page to hand stops two bars short of the end of the
+  // tune; the last two are bars 15 and 16 of the slow part again.)
+  teaFast: { bpm: 140, then: 'tea', voices: [
+    { wave: 'sine', notes: 'ab5:8 | .:8 |' + octaves(`
+      eb6 - - - eb6 - db6 c6 | - - - - - - - -     | ab5 - eb6 - eb6 - db6 - | c6 - - - - - - -
+      c6 - - - c6 - db6 c6   | - - bb5 ab5 - - - - | c6 - - - c6 - db6 c6    | - - bb5 ab5 - - - -
+      eb6 - - - eb6 - db6 c6 | - - - - - - - -     | ab5 - eb6 - eb6 - f6 eb6 | - - db6 c6 - - - -
+      c6 - - - - - db6 c6    | - - bb5 ab5 - - - - | c6 - - - bb5 - ab5 -    | - - - - - - - -`) },
+    { wave: 'triangle', pluck: .3, vol: .8, notes: `
+      ${'ab2 eb3 ab3 eb3 c4 eb3 ab3 eb3 '.repeat(6)} | ${'f2 c3 f3 c3 ab3 c3 f3 c3 '.repeat(4)}
+      ${'ab2 eb3 ab3 eb3 c4 eb3 ab3 eb3 '.repeat(4)} | ${'f2 c3 f3 c3 ab3 c3 f3 c3 '.repeat(2)}
+      eb2 bb2 eb3 bb2 g3 bb2 eb3 bb2 | ab2 eb3 ab3 eb3 c4 eb3 ab3 eb3` },
+  ] },
+  // the Spirit Oasis: six steps to the bar, push and pull
+  water: { bpm: 80, voices: [
+    { wave: 'pulse', echo: true, notes: `
+      f#5 - - d5 - e5  | d5 - - b4 - - | a4 - - d5 - f#5  | e5 - - - - .
+      f#5 - - a5 - f#5 | d5 - - b4 - d5 | f#5 - e5 d5 - a4 | c#5 - - - - .` },
+    { wave: 'triangle', notes: 'b2 f#3 b3 d4 b3 f#3 | g2 d3 g3 b3 g3 d3 | d3 a3 d4 f#4 d4 a3 | a2 e3 a3 c#4 a3 e3' },
+  ] },
+  // the Sun Warriors: drums only, so the steps of the dance can still be heard
+  dragon: { bpm: 126, voices: [
+    { wave: 'triangle', vol: .9, notes: 'g2 - - - - - - - | g2 - - - - - d3 -' },
+    { drums: 'k . t k . t k . | k . t k . t t .', vol: 1.6 },
+  ] },
+  // the last round, with the masters watching
+  dragonFinal: { bpm: 126, voices: [
+    { wave: 'triangle', vol: .9, notes: 'g2 - g2 - g2 - g2 - | g2 - g2 - g2 - d3 -' },
+    { drums: 'k k t k k t k t | k k t k k t s s', vol: 1.6 },
+    { drums: 'h h h h h h h h', vol: .8 },
+  ] },
+  // Phoenix King Ozai
+  ozai: { bpm: 152, of: 'ozai', voices: [
+    { wave: 'pulse', notes: `
+      d5 - - - . . a4 - | f5 - - - . . e5 -  | d5 - - - . . f5 -  | e5 - - - - - . .
+      a5 - - - . . f5 - | d5 - - - . . e5 f5 | d5 - - - . . bb4 - | c#5 - - - e5 - - -` },
+    { wave: 'sawtooth', notes: `
+      d3 d3 d4 d3 d3 d4 d3 d4 | d3 d3 d4 d3 d3 d4 d3 d4 | bb2 bb2 bb3 bb2 bb2 bb3 bb2 bb3 | c3 c3 c4 c3 c3 c4 c3 c4
+      d3 d3 d4 d3 d3 d4 d3 d4 | d3 d3 d4 d3 d3 d4 d3 d4 | bb2 bb2 bb3 bb2 bb2 bb3 bb2 bb3 | a2 a2 a3 a2 a2 a3 a2 a3` },
+    { drums: 'k h s h k k s h', vol: 1.3 },
+  ] },
+  // the end: the birthday song, twice (the second time in harmony), and then the title tune
+  end: { bpm: 112, then: 'start', voices: [
+    { wave: 'pulse', notes: `
+      . . . . g4 g4   | a4 - g4 - c5 -   | b4 - - - g4 g4 | a4 - g4 - d5 - | c5 - - - g4 g4
+      g5 - e5 - c5 -  | b4 - a4 - f5 f5  | e5 - c5 - d5 - | c5 - - - - .` },
+    { wave: 'square', vol: .55, notes: '. '.repeat(54) + `
+      . . . . e4 e4   | f4 - e4 - e4 -   | d4 - - - e4 e4 | f4 - e4 - f4 - | e4 - - - e4 e4
+      e5 - c5 - g4 -  | g4 - f4 - a4 a4  | g4 - e4 - f4 - | e4 - - - - .` },
+    { wave: 'triangle', notes: `
+      . . . . . .     | c3 - e3 - g3 -   | g2 - d3 - b2 - | g2 - d3 - b2 - | c3 - e3 - g3 -
+      c3 - e3 - g3 -  | f3 - a3 - c4 -   | c3 - e3 - g2 - | c3 - g3 - c4 -` },
+  ] },
+};
+// Two tunes are an existing one with a voice added. Because they are marked
+// (`of`) as the same piece, changing from one to the other does not start over.
+// torch out: the crystals glow, each bar in the chord the tune has reached (one letter to the bar)
+const GLOW = { D: 'a5 d6 f#6 d6', E: 'g5 b5 e6 b5', G: 'g5 b5 d6 b5', B: 'f#5 b5 d6 b5', A: 'a5 c#6 e6 c#6', F: 'f#5 a5 c#6 a5' };
+TRACKS.caveDark = { ...TRACKS.cave, voices: [...TRACKS.cave.voices,
+  { wave: 'sine', echo: true, vol: .45, notes: [...'DDDEEDDGGDDBBGGGGDDDDGGGBBBFGBDFGGAAFBDDDDD']
+    .map(chord => (GLOW[chord].replace(/\S+/g, '$&:2') + ' ').repeat(2)).join('| ') }] };
+TRACKS.ozaiBend = { ...TRACKS.ozai, voices: [...TRACKS.ozai.voices,   // the last struggle
+  { wave: 'square', pluck: true, vol: .4, notes: `
+    a5 d6 f6 d6 a5 d6 f6 d6   | a5 d6 f6 d6 a5 d6 f6 d6 | bb5 d6 f6 d6 bb5 d6 f6 d6 | g5 c6 e6 c6 g5 c6 e6 c6
+    a5 d6 f6 d6 a5 d6 f6 d6   | a5 d6 f6 d6 a5 d6 f6 d6 | bb5 d6 f6 d6 bb5 d6 f6 d6 | a5 c#6 e6 c#6 a5 c#6 e6 c#6` }] };
+
+const WAVE_VOL = { pulse: .08, square: .075, triangle: .16, sine: .08, sawtooth: .08 };
+const SEMITONE = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+const pitch = name => {
+  const m = name.match(/^([a-g])([#b]?)(\d)$/);
+  return m && 440 * 2 ** ((SEMITONE[m[1]] + (m[2] === '#') - (m[2] === 'b') + 12 * m[3] - 57) / 12);
+};
+// A line of steps → one entry per step: nothing, or what starts there and for how many steps.
+function parseVoice(v) {
+  const steps = [];
+  let held = null;
+  for (const tok of (v.notes || v.drums).split(/[\s|]+/).filter(Boolean)) {
+    const [name, n = 1] = tok.split(':');
+    if (name !== '-') {
+      const hz = name.split('+').map(pitch);   // anything unreadable is a rest
+      held = v.drums ? ('ktsh'.includes(name) ? { hit: name } : null) : hz.every(Boolean) ? { hz, len: 0 } : null;
+    }
+    if (held) held.len += +n;
+    steps.push(name === '-' ? null : held);
+    for (let i = 1; i < n; i++) steps.push(null);
+  }
+  return steps;
+}
+for (const tr of Object.values(TRACKS)) {
+  for (const v of tr.voices) v.steps = v.steps || parseVoice(v);
+  tr.len = Math.max(...tr.voices.map(v => v.steps.length));
+}
+
+const Music = {
+  on: localStorage.getItem(LS_KEY + '_music') !== 'off',
+  want: null,    // the tune the game is asking for
+  track: null,   // the one that is playing
+  rate: 1,
+  // Says what should be playing; null is silence. A browser allows no sound
+  // before the first click or key press, so until then (and while the music is
+  // switched off, or the tab is hidden) this only remembers what was asked for.
+  play(name) {
+    this.want = name;
+    const tr = this.out && this.on && !document.hidden && TRACKS[name] || null, old = this.track;
+    if (tr === old) return;
+    this.track = tr;
+    if (tr && old && tr.of && tr.of === old.of) return;   // the same piece: carry on in step
+    if (this.bus) {
+      const bus = this.bus;
+      bus.gain.setTargetAtTime(0, actx.currentTime, .06);
+      setTimeout(() => bus.disconnect(), 600);
+      this.bus = null;
+    }
+    if (!tr) return;
+    this.bus = actx.createGain();
+    this.bus.connect(this.out);
+    this.step = 0; this.at = actx.currentTime + .15;
+  },
+  // Runs many times a second, and writes the music a fraction of a second ahead.
+  tick() {
+    if (this.track && this.at < actx.currentTime) this.at = actx.currentTime + .05;   // fell behind (a stalled tab): pick up from now
+    while (this.track && this.at < actx.currentTime + .2) this.advance();
+  },
+  advance() {
+    const tr = this.track, dur = 60 / tr.bpm / (tr.div || 2) / this.rate;   // one step
+    const t = this.at + (this.step % 2 ? (tr.swing || 0) * dur : 0);
+    for (const v of tr.voices) {
+      const n = v.steps[this.step % v.steps.length];
+      if (!n) continue;
+      if (n.hit) { this.drum(n.hit, t, v.vol || 1); continue; }
+      const vol = 1 / Math.sqrt(n.hz.length);   // so that a chord is not that many times as loud as a note
+      for (const hz of n.hz) {
+        this.tone(v, hz, t, n.len * dur, vol);
+        if (v.echo) this.tone(v, hz, t + dur * 1.5, n.len * dur, .3 * vol);
+      }
+    }
+    this.at += dur;
+    if (++this.step >= tr.len && tr.then) { this.track = TRACKS[this.want = tr.then]; this.step = 0; }   // played once, then straight on into another
+  },
+  tone(v, hz, t, len, vol) {
+    const o = actx.createOscillator(), g = actx.createGain();
+    if (v.wave === 'pulse') o.setPeriodicWave(this.pulse); else o.type = v.wave;
+    o.frequency.value = hz;
+    this.wobble.connect(o.detune);
+    vol *= WAVE_VOL[v.wave] * (v.vol || 1);
+    g.gain.value = 0;   // shut until the note begins (see drum())
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + .01);
+    if (v.pluck) {   // struck and left to ring out, however long the note is (a number: more slowly, like a piano with the pedal down)
+      const ring = v.pluck === true ? .12 : v.pluck;
+      g.gain.setTargetAtTime(0, t + .01, ring); len = ring * 7;
+    } else { g.gain.setValueAtTime(vol, t + len * .7); g.gain.exponentialRampToValueAtTime(.001, t + len); }
+    o.connect(g).connect(this.bus);
+    o.start(t); o.stop(t + len + .02);
+  },
+  drum(kind, t, vol) {
+    const g = actx.createGain();
+    g.gain.value = 0;   // or the very first sample can slip through at full volume, as a click
+    g.connect(this.bus);
+    if (kind === 'k' || kind === 't') {   // kick and tom: a note that drops
+      const o = actx.createOscillator(), [from, to, len] = kind === 'k' ? [150, 45, .16] : [230, 110, .2];
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(from, t);
+      o.frequency.exponentialRampToValueAtTime(to, t + len);
+      g.gain.setValueAtTime(.2 * vol, t);
+      g.gain.exponentialRampToValueAtTime(.001, t + len);
+      o.connect(g);
+      o.start(t); o.stop(t + len + .02);
+      return;
+    }
+    const n = actx.createBufferSource(), f = actx.createBiquadFilter(), len = kind === 'h' ? .04 : .13;   // hat and snare: a burst of noise
+    n.buffer = this.noise;
+    f.type = 'highpass'; f.frequency.value = kind === 'h' ? 7000 : 1800;
+    g.gain.setValueAtTime((kind === 'h' ? .05 : .09) * vol, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + len);
+    n.connect(f).connect(g);
+    n.start(t, Math.random() * .8); n.stop(t + len + .02);
+  },
+  // The first click or key press: build what the music runs through, and begin.
+  wake() {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      if (!this.out) {
+        const vol = actx.createGain(), out = actx.createGain();   // `out` drops for a moment whenever a jingle plays
+        vol.gain.value = MUSIC_VOL;
+        out.connect(vol).connect(actx.destination);
+        // a narrow pulse wave, the lead voice of an old game console
+        const re = new Float32Array(32), im = new Float32Array(32);
+        for (let n = 1; n < 32; n++) { re[n] = Math.sin(Math.PI * n / 2) / n; im[n] = (1 - Math.cos(Math.PI * n / 2)) / n; }
+        this.pulse = actx.createPeriodicWave(re, im);
+        this.noise = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+        const d = this.noise.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        // one slow wave that every note's tuning listens to; flat unless warp() says otherwise
+        this.lfo = actx.createOscillator(); this.wobble = actx.createGain();
+        this.wobble.gain.value = 0;
+        this.lfo.connect(this.wobble);
+        this.lfo.start();
+        this.out = out;
+        setInterval(() => this.tick(), 40);
+      }
+      this.play(this.want);
+    } catch (e) {}
+  },
+  // Makes room for something louder for a few seconds.
+  duck(sec) {
+    if (!this.out) return;
+    const g = this.out.gain, t = actx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(.25, t, .03);
+    g.setTargetAtTime(1, t + sec, .3);
+  },
+  // Bends whatever is playing out of tune, `cents` either way and `hz` times a
+  // second, and changes its speed. Without arguments: back to normal.
+  warp(cents = 0, hz = 1, rate = 1) {
+    this.rate = rate;
+    if (!this.out) return;
+    this.lfo.frequency.value = hz;
+    this.wobble.gain.setTargetAtTime(cents, actx.currentTime, .1);
+  },
+  toggle() {
+    this.on = !this.on;
+    localStorage.setItem(LS_KEY + '_music', this.on ? 'on' : 'off');
+    $('hud-music').classList.toggle('off', !this.on);
+    this.play(this.want);
+  },
+};
+// On the click itself rather than the press before it: the button's own handler
+// then runs in the same instant, so a click that changes screen never lets out
+// a first note of the tune it is leaving.
+['click', 'keydown'].forEach(type => window.addEventListener(type, () => Music.wake(), true));
+document.addEventListener('visibilitychange', () => Music.play(Music.want));
+$('hud-music').classList.toggle('off', !Music.on);
+$('hud-music').onclick = () => Music.toggle();
+
+// The tune for a screen. Two screens have a second one: the quiz once it has
+// become a university, and the map while the comet is in the sky.
+const tuneFor = id => id === 's-quiz' && S.stage === 'map' ? 'uni'
+  : id === 's-map' && S.comet && !has('energy') ? 'comet' : id.slice(2);
+
+// ── screens ──
+const SCENES = {};
+let cur = 's-start';
+
+function go(id) {
+  if (SCENES[cur] && SCENES[cur].leave) SCENES[cur].leave();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  cur = id;
+  updateHud();
+  pageBg();
+  Music.play(tuneFor(id));
+  if (SCENES[id] && SCENES[id].enter) SCENES[id].enter();
+}
+
+function updateHud() {
+  $('hud-num').innerHTML = document.body.classList.contains('trip')
+    ? art('cactus') + '/' + art('mushroom')
+    : `${mainFound()} / ${CARDS.length}` + (secretsFound() ? ` +${secretsFound()}` : '');
+  const onMap = S.stage === 'map';
+  $('hud-map').style.display  = onMap && !['s-map', 's-flight'].includes(cur) ? '' : 'none';
+  $('hud-hint').style.display = onMap && cur !== 's-flight' ? '' : 'none';
+  document.body.classList.toggle('comet', S.comet && !has('energy'));
+}
+
+let toastTimer;
+function toast(text, ms = 2600) {
+  const t = $('toast');
+  t.textContent = text; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+// ── speech overlay ──
+const CAST = {
+  zuko: 'Prince Zuko', sokka: 'Sokka', daili: 'Dai Li agent', longfeng: 'Long Feng',
+  iroh: 'Uncle Iroh', comet: "Sozin's Comet", world: 'The Four Nations',
+  melon: 'The Melon Lord', noface: 'You, more or less', roku: 'Avatar Roku', owl: 'Wan Shi Tong',
+  azula: 'Princess Azula', katara: 'Katara', loli: 'Lo and Li', 'actor-zuko': 'Actor Zuko',
+};
+let sayCb = null;
+function say(who, text, btn = 'Okay', cb = null, name = CAST[who], cancel = '') {
+  $('say-emoji').innerHTML = art(who);
+  $('say-name').textContent = name;
+  $('say-text').textContent = text;
+  $('say-ok').textContent = btn;
+  $('say-alt').textContent = cancel;
+  $('say-alt').style.display = cancel ? '' : 'none';
+  sayCb = cb;
+  $('say').classList.add('show');
+}
+$('say-alt').onclick = () => { $('say').classList.remove('show'); sayCb = null; };
+$('say-ok').onclick = () => {
+  $('say').classList.remove('show');
+  const cb = sayCb; sayCb = null;
+  if (cb) cb();
+};
+
+// ── cards ──
+function cardHTML(c, small, locked) {
+  const n = CARDS.indexOf(c) + 1;
+  const pic = ART_URL['card-' + c.id] ? `<img src="${ART_URL['card-' + c.id]}" alt="">` : c.emoji;
+  return `<div class="tcg ${locked ? 'locked' : c.el}${small ? ' small' : ''}">
+    <div class="tcg-num">${n ? `${n} / ${CARDS.length}` : 'Secret'}</div>
+    <div class="tcg-art">${locked ? '?' : pic}</div>
+    <div class="tcg-name">${locked ? '???' : c.name}</div>
+    <div class="tcg-text">${locked ? '' : c.text}</div>
+  </div>`;
+}
+
+let unlockCb = null;
+function unlock(id, cb = null) {
+  if (has(id)) { if (cb) cb(); return; }
+  const c = ALL_CARDS.find(x => x.id === id);
+  S.found.push(id); save(); updateHud();
+  $('unlock-title').textContent = SECRETS.includes(c) ? 'Secret card unlocked!' : 'Card unlocked!';
+  $('hud-count').classList.remove('bump'); void $('hud-count').offsetWidth; $('hud-count').classList.add('bump');
+  $('unlock-card').innerHTML = cardHTML(c);
+  $('unlock-prize').innerHTML = (c.prize ? `You win: <b>${c.prize}</b><br>` : '') + `Collect your card from ${CONFIG.quizmaster}!`;
+  unlockCb = cb;
+  $('unlock').classList.add('show');
+  confetti(id === 'energy' ? 320 : 140);
+  setTimeout(() => id === 'energy' ? chip(FANFARE, .13) : chip(pick(JINGLES)), 350);
+}
+$('unlock-ok').onclick = () => {
+  $('unlock').classList.remove('show');
+  const cb = unlockCb; unlockCb = null;
+  // Everything but the last card found → the comet appears.
+  if (mainFound() === CARDS.length - 1 && !has('energy') && !S.comet) {
+    S.comet = true; save(); updateHud();
+    say('comet', 'The sky turns blood red.\nOne card is left — and someone who does not intend to hand it over.', 'To the world map', () => go('s-map'));
+    return;
+  }
+  if (cb) cb();
+};
+
+function openBinder() {
+  $('binder-grid').innerHTML = CARDS.map(c => cardHTML(c, true, !has(c.id))).join('');
+  const showSecrets = secretsFound() || mainFound() === CARDS.length;
+  $('binder-secrets').innerHTML = showSecrets ? SECRETS.map(c => cardHTML(c, true, !has(c.id))).join('') : '';
+  $('binder').classList.add('show');
+}
+$('hud-count').onclick = openBinder;
+$('binder-close').onclick = () => $('binder').classList.remove('show');
+// The first card is named after a play. Once you are out in the world, clicking
+// it in the binder gets you into the theater where that play is on.
+$('binder-grid').onclick = e => {
+  const card = e.target.closest('.tcg'), c = card && CARDS[[...$('binder-grid').children].indexOf(card)];
+  if (!c || c.id !== 'iceberg' || !has('iceberg') || S.stage !== 'map') return;
+  $('binder').classList.remove('show');
+  say('sokka', '“The Boy in the Iceberg is a new production from acclaimed playwright Pu-on Tim, who scoured the globe gathering information on the Avatar, from the icy South Pole to the heart of Ba Sing Se. His sources include singing nomads, pirates, prisoners of war, and a surprisingly knowledgeable merchant of cabbage.”',
+    'To the theater!', () => go('s-play'), 'Sokka, reading a poster', 'Not tonight');
+};
+// The Avatar is never really gone: erasing everything starts a new life, and
+// that new life begins with one secret card (see the end of this file).
+$('binder-reset').onclick = () => {
+  say('roku', 'Erase everything? Every card you have found will be forgotten, and this life starts again from the very first question.', 'Erase everything', () => {
+    erasing = true;
+    $('binder').classList.remove('show');
+    Music.play(null);
+    document.body.classList.add('blackout');
+    localStorage.removeItem(LS_KEY);
+    localStorage.setItem(LS_KEY + '_reborn', '1');
+    localStorage.setItem(LS_KEY + '_lives', (+localStorage.getItem(LS_KEY + '_lives') || 0) + 1);
+    setTimeout(() => location.reload(), 1500);
+  }, CAST.roku, 'Keep my cards');
+};
+$('hud-map').onclick = () => go('s-map');
+
+// ── Uncle Iroh's advice ──
+$('hud-hint').onclick = () => {
+  const left = CARDS.filter(c => !has(c.id));
+  const c = left.find(c => c.id !== 'energy') || left[0] || SECRETS.find(c => !has(c.id));
+  if (!c) { say('iroh', 'You have found everything. Now it is time for tea.', 'Cheers'); return; }
+  const lvl = S.hints[c.id] || 0;
+  S.hints[c.id] = lvl + 1; save();
+  say('iroh', HINTS[c.id][Math.min(lvl, 2)], lvl < 2 ? 'Thank you, Uncle' : "Can't be clearer than that", null,
+    SECRETS.includes(c) ? 'Uncle Iroh · a secret card' : `Uncle Iroh · card ${CARDS.indexOf(c) + 1}`);
+};
+
+// ── confetti ──
+let confTok = 0;
+function confetti(n = 140) {
+  const c = $('confetti'), x = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight;
+  const cols = ['#f97316', '#fbbf24', '#38bdf8', '#22c55e', '#dc2626', '#a855f7', '#ffffff'];
+  const ps = Array.from({ length: n }, () => ({
+    x: rnd(0, c.width), y: rnd(-c.height * .8, 0), vx: rnd(-2, 2), vy: rnd(2, 6),
+    w: rnd(5, 12), h: rnd(3, 7), r: rnd(0, 6), rv: rnd(-.2, .2), col: pick(cols),
+  }));
+  const tok = ++confTok;
+  (function loop() {
+    if (tok !== confTok) return;
+    x.clearRect(0, 0, c.width, c.height);
+    let live = false;
+    for (const p of ps) {
+      p.x += p.vx; p.y += p.vy; p.vy += .05; p.r += p.rv;
+      if (p.y < c.height + 20) live = true;
+      x.save(); x.translate(p.x, p.y); x.rotate(p.r);
+      x.fillStyle = p.col; x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      x.restore();
+    }
+    if (live) requestAnimationFrame(loop);
+  })();
+}
+
+// ══════════════════════════════════════════════
+// QUIZ — act 1, and later Ba Sing Se University
+// ══════════════════════════════════════════════
+
+// The opening quiz: one question with a card, then a few easy ones to make it
+// feel like an ordinary quiz. After these come the Ba Sing Se question and the
+// one that brings Appa through the wall. S.step counts through all of them.
+const ACT1 = [
+  { question: "What is the name of Aang's flying bison?", options: ['Momo', 'Appa', 'Bosco', 'Naga'], correct: 1, card: 'iceberg' },
+  { question: 'Which element does Katara bend?', options: ['Fire', 'Water', 'Earth', 'Air'], correct: 1, after: 'Correct. This is going very smoothly.' },
+  { question: "Who is Zuko's tea-loving uncle?", options: ['Iroh', 'Ozai', 'Bumi', 'Pakku'], correct: 0, after: 'Correct. Nothing strange about this quiz at all.' },
+  { question: 'What does Sokka throw that always comes back?', options: ['His sword', 'A fish', 'Momo', 'His boomerang'], correct: 3, after: 'Correct. What could possibly go wrong?' },   // D on purpose: it leaves the mouse as far as possible from "Yes" in the next question
+];
+if (S.v !== 2) {   // a game saved before the easy questions were added: keep it at the same question
+  if (S.stage === 'quiz' && S.step) S.step += ACT1.length - 1;
+  S.v = 2;
+}
+const Q_BSS  = { question: 'Is there a war in Ba Sing Se?', options: ['Yes', 'No', 'There is no war in Ba Sing Se', "What's a war?"] };
+
+// Endless pool for Ba Sing Se University.
+const QUESTIONS = [
+  { question: "Who were Toph's original earthbending teachers?", options: ['King Bumi', 'She taught herself', 'Badgermoles', 'An old Earth Kingdom master'], correct: 2 },
+  { question: "What is the name of Zuko's mother?", options: ['Azulon', 'Ursa', 'Kya', 'Ilah'], correct: 1 },
+  { question: 'Who leads the Dai Li when Team Avatar arrives in Ba Sing Se?', options: ['Joo Dee', 'General How', 'Long Feng', 'General Fong'], correct: 2 },
+  { question: 'Who invented bloodbending?', options: ['Katara', 'Pakku', 'Hama', 'Yugoda'], correct: 2 },
+  { question: "What is the name of the Earth King's pet bear?", options: ['Bosco', 'Flopsie', 'Nyla', 'Fang'], correct: 0 },
+  { question: 'Which two dragons judged Aang and Zuko?', options: ['Fang and Ran', 'Ran and Shaw', 'Shaw and Druk', 'Fang and Druk'], correct: 1 },
+  { question: 'Which spirit guards the library in the Si Wong Desert?', options: ['Koh', 'Hei Bai', 'Wan Shi Tong', 'Tui'], correct: 2 },
+  { question: 'Who killed the Moon Spirit at the North Pole?', options: ['Admiral Zhao', 'Prince Zuko', 'Fire Lord Ozai', 'General Iroh'], correct: 0 },
+  { question: 'What name does Zuko go by while hiding in the Earth Kingdom?', options: ['Mushi', 'Lee', 'Kuzon', 'Wang'], correct: 1 },
+  { question: "What is Uncle Iroh's legendary nickname?", options: ['The Dragon of the West', 'The Phoenix of the East', 'The Tea General', 'The Blue Spirit'], correct: 0 },
+  { question: "What is Sokka's sword made from?", options: ['Whalebone', 'A meteorite', 'Fire Nation steel', 'A dragon tooth'], correct: 1 },
+  { question: 'Which Fire Nation sword master trains Sokka?', options: ['Jeong Jeong', 'Piandao', 'Pakku', 'Zhao'], correct: 1 },
+  { question: 'Which monk raised Aang at the Southern Air Temple?', options: ['Monk Tashi', 'Monk Pasang', 'Monk Gyatso', 'Guru Pathik'], correct: 2 },
+  { question: 'Which city does King Bumi rule?', options: ['Ba Sing Se', 'Omashu', 'Gaoling', 'Chin Village'], correct: 1 },
+  { question: "What is the name of King Bumi's pet?", options: ['Flopsie', 'Bosco', 'Foo Foo Cuddlypoops', 'Hawky'], correct: 0 },
+  { question: "What was the name of Iroh's son?", options: ['Lu Ten', 'Zhao', 'Kuzon', 'Roku'], correct: 0 },
+  { question: 'Who is hiding behind the mask of the Blue Spirit?', options: ['Jet', 'Zuko', 'Sokka', 'Iroh'], correct: 1 },
+  { question: "What is Toph's stage name at Earth Rumble VI?", options: ['The Boulder', 'The Blind Bandit', 'The Runaway', 'The Gopher'], correct: 1 },
+  { question: 'What does Toph call Aang?', options: ['Sugar Queen', 'Snoozles', 'Twinkle Toes', 'Arrow Head'], correct: 2 },
+  { question: 'Who leads the Kyoshi Warriors?', options: ['Ty Lee', 'Suki', 'Mai', 'Yue'], correct: 1 },
+  { question: 'What is the name of the spirit who steals faces?', options: ['Wan Shi Tong', 'Hei Bai', 'Koh', 'La'], correct: 2 },
+  { question: 'Who was the Avatar immediately before Aang?', options: ['Kyoshi', 'Kuruk', 'Yangchen', 'Roku'], correct: 3 },
+  { question: "What is Iroh's favorite game?", options: ['Pai Sho', 'Kuai ball', 'Earth Rumble', 'Airball'], correct: 0 },
+  { question: 'What is the Fire Nation prison in the middle of a boiling lake called?', options: ['Lake Laogai', 'The Boiling Rock', 'Pohuai Stronghold', 'The Crystal Catacombs'], correct: 1 },
+  { question: "What is Sokka's first nickname for the assassin with the third eye?", options: ['Combustion Man', 'Sparky Sparky Boom Man', 'The Deserter', 'Hot Head'], correct: 1 },
+  { question: "Which of Azula's friends can block chi?", options: ['Mai', 'Ty Lee', 'Suki', 'Jin'], correct: 1 },
+  { question: "What was the name of Katara and Sokka's mother?", options: ['Kanna', 'Ursa', 'Kya', 'Hama'], correct: 2 },
+  { question: 'Who teaches Katara waterbending at the North Pole?', options: ['Master Pakku', 'Master Piandao', 'Master Jeong Jeong', 'Master Yu'], correct: 0 },
+  { question: 'What kind of animal is Momo?', options: ['A hog monkey', 'A winged lemur', 'A wolfbat', 'A cat owl'], correct: 1 },
+  { question: "What is Jet's gang called?", options: ['The Rough Rhinos', 'The Freedom Fighters', 'The Dai Li', 'The Yuyan Archers'], correct: 1 },
+  { question: 'What happens to firebenders on the Day of Black Sun?', options: ['They become twice as strong', 'They lose their bending during the eclipse', 'They can suddenly bend lightning', 'Nothing at all'], correct: 1 },
+  { question: 'What giant creature lives in the bay of Kyoshi Island?', options: ['The Serpent', 'The Unagi', 'A lion turtle', 'A badgermole'], correct: 1 },
+  { question: 'What is the title of the play the gang watches on Ember Island?', options: ['The Boy in the Iceberg', 'Love Amongst the Dragons', 'The Last Airbender', 'The Avatar Returns'], correct: 0 },
+  { question: 'What name does Sokka use when disguised as a Fire Nation dad?', options: ['Kuzon', 'Wang Fire', 'Lee', 'Mushi'], correct: 1 },
+  { question: "What is Toph's family name?", options: ['Beifong', 'Kyoshi', 'Gan Jin', 'Zhang'], correct: 0 },
+  { question: 'Which firebending master is known as "the Deserter"?', options: ['Jeong Jeong', 'Piandao', 'Iroh', 'Zhao'], correct: 0 },
+  { question: 'Which Earth Kingdom general tries to force Aang into the Avatar State?', options: ['General How', 'General Fong', 'General Sung', 'Long Feng'], correct: 1 },
+  { question: "Which fortuneteller predicts Katara's future?", options: ['Aunt Wu', 'Madame Macmu-Ling', 'Hama', 'Gran Gran'], correct: 0 },
+];
+
+function renderMC(q, label, onPick) {
+  $('q-label').textContent = label;
+  $('q-text').textContent = q.question;
+  $('q-feedback').textContent = '';
+  const box = $('q-opts');
+  box.className = 'options';
+  box.innerHTML = '';
+  q.options.forEach((o, i) => {
+    const b = document.createElement('button');
+    b.className = 'option';
+    b.innerHTML = `<span class="letter">${'ABCD'[i]}</span>`;
+    b.append(o);
+    b.onclick = () => onPick(i, b);
+    box.append(b);
+  });
+  return box;
+}
+
+// A set of answer buttons under a scene (the Spirit World, the theater).
+function choices(boxId, labels, onPick) {
+  const box = $(boxId);
+  box.className = 'options';
+  box.innerHTML = '';
+  labels.forEach(label => {
+    const b = document.createElement('button');
+    b.className = 'option'; b.textContent = label;
+    b.onclick = () => onPick(label, b);
+    box.append(b);
+  });
+  return box;
+}
+
+const WRONG_QUIPS = ['Wrong. Zuko sighs deeply.', 'Wrong. Somewhere, a badgermole weeps.', 'Wrong. Even Momo knew that one.', "Wrong. That's rough, buddy."];
+function wrongAnswer(btn, next) {
+  btn.classList.add('wrong');
+  SFX.wrong();
+  if (has('rough')) {
+    $('q-feedback').textContent = pick(WRONG_QUIPS);
+    setTimeout(next, 1500);
+    return;
+  }
+  say('zuko', 'Wrong?! Even Uncle knew that one. Where is your honor?!', 'Sorry…', () =>
+    say('sokka', "Don't sweat it. My first girlfriend turned into the moon.", "That's rough, buddy.", () =>
+      unlock('rough', next)));
+}
+
+// The question whose "Yes" answer refuses to be given. It leaps away from the
+// cursor, tires in stages, and in the end lies wherever it dropped; only then
+// can it be clicked.
+// `settled` runs as soon as an answer is accepted, before any dialogue or card.
+const POINTER = { x: innerWidth / 2, y: innerHeight / 2 };
+window.addEventListener('pointermove', e => { POINTER.x = e.clientX; POINTER.y = e.clientY; }, { passive: true });
+
+function askBSS(label, next, settled = () => {}) {
+  const STAGES = [   // until which dodge, how far each hop goes (px), how long it takes (s), what the button says
+    { until: 6,  hop: [200, 360], time: .18, text: 'Yes' },
+    { until: 9,  hop: [90, 150],  time: .4,  text: 'Yes… (panting)' },
+    { until: 11, hop: [25, 45],   time: .8,  text: 'Yes… (exhausted)' },
+  ];
+  const lines = [
+    'Huh? The answer just… moved.',
+    'Joo Dee: "I\'m afraid that answer is unavailable at the moment."',
+    'Joo Dee: "Perhaps you would enjoy a tour of the Upper Ring instead?"',
+    'Joo Dee: "Everyone is perfectly safe here."',
+    'Joo Dee: "The Earth King has no time for questions like this one."',
+    'Joo Dee is smiling. Her eye is twitching.',
+    'The answer is out of breath.',
+    'The answer is wheezing. It keeps going anyway.',
+    'Joo Dee: "Please stop chasing the answer."',
+    'The answer is exhausted. It is mostly crawling now.',
+    'The answer drags itself one more inch.',
+    'The answer has given up. It lies where it fell.',
+  ];
+  let dodges = 0, ox = 0, oy = 0;   // how far it has run from its own slot
+  const box = renderMC(Q_BSS, label, i => {
+    if (i === 0) {
+      if (dodges < lines.length) { dodge(); return; }
+      box.classList.add('locked');
+      settled();
+      document.body.classList.add('glitch');
+      Music.warp(400, 11);
+      setTimeout(() => {
+        document.body.classList.remove('glitch');
+        Music.warp();
+        say('longfeng', 'You have seen too much.\n“The Earth King has invited you to Lake Laogai.”', 'I am honored to accept his invitation.', () => unlock('nowar', next));
+      }, 900);
+      return;
+    }
+    box.classList.add('locked');
+    settled();
+    SFX.correct();
+    say('daili', 'Correct.\n“There is no war within the walls. Here we are safe. Here, we are free.”', 'Uh… okay', next);
+  });
+  const yes = box.firstChild;
+  yes.style.cssText = 'position:relative;z-index:5';
+  function dodge() {
+    if (dodges >= lines.length) return;
+    dodges++;
+    $('q-feedback').textContent = lines[dodges - 1];
+    if (dodges >= lines.length) {   // collapsed: it stays exactly where it is
+      yes.lastChild.textContent = 'Yes… (lying very still)';
+      yes.style.transition = 'transform .8s';
+      yes.style.transform = `translate(${ox}px, ${oy}px) rotate(-3deg)`;
+      return;
+    }
+    const stage = STAGES.find(st => dodges <= st.until);
+    yes.lastChild.textContent = stage.text;
+    yes.style.transition = `transform ${stage.time}s`;
+    // of a handful of landing spots, take the one furthest from the cursor that is still on screen
+    const r = yes.getBoundingClientRect(), slotX = r.left - ox, slotY = r.top - oy;
+    const loX = 12 - slotX, hiX = Math.max(loX, innerWidth - r.width - 12 - slotX);
+    const loY = 76 - slotY, hiY = Math.max(loY, innerHeight - r.height - 12 - slotY);
+    let best = null;
+    for (let k = 0; k < 12; k++) {
+      const a = rnd(0, Math.PI * 2), d = rnd(...stage.hop);
+      const nx = clamp(ox + Math.cos(a) * d, loX, hiX), ny = clamp(oy + Math.sin(a) * d, loY, hiY);
+      const away = Math.hypot(slotX + nx + r.width / 2 - POINTER.x, slotY + ny + r.height / 2 - POINTER.y);
+      const score = away + Math.hypot(nx - ox, ny - oy);   // far from the cursor, and actually going somewhere
+      if (!best || score > best.score) best = { nx, ny, score };
+    }
+    ox = best.nx; oy = best.ny;
+    yes.style.transform = `translate(${ox}px, ${oy}px) rotate(${rnd(-8, 8)}deg)`;
+  }
+  yes.addEventListener('pointerenter', dodge);
+}
+
+function askYip(label) {
+  $('q-label').textContent = label;
+  $('q-text').textContent = 'What does Aang say to make Appa take off?';
+  $('q-feedback').textContent = '';
+  const box = $('q-opts');
+  box.className = 'options';
+  box.innerHTML = '<input type="text" id="yip-in" placeholder="Type your answer…" autocomplete="off"><button class="btn btn-primary" id="yip-btn">Answer</button>';
+  let tries = 0;
+  const nope = ['Appa stares at you, unimpressed.', 'Appa yawns. Nothing happens.', 'Appa rolls over and goes to sleep.'];
+  const tryIt = () => {
+    const v = $('yip-in').value.toLowerCase().replace(/[^a-z]/g, '');
+    if (v.includes('yipyip')) { box.classList.add('locked'); appaSmash(); return; }
+    tries++;
+    SFX.wrong();
+    $('yip-in').classList.remove('shakeit'); void $('yip-in').offsetWidth; $('yip-in').classList.add('shakeit');
+    $('q-feedback').textContent = nope[(tries - 1) % nope.length] + (tries >= 3 ? ' (Two words. Rhymes with "hip hip".)' : '');
+  };
+  $('yip-btn').onclick = tryIt;
+  $('yip-in').onkeydown = e => { if (e.key === 'Enter') tryIt(); };
+  $('yip-in').focus();
+}
+
+// Appa flies straight through the quiz. Nothing is normal after this.
+function appaSmash() {
+  const a = document.createElement('div');
+  a.className = 'appa-fly'; a.innerHTML = art('appa');
+  if (ART_URL.appa) a.style.setProperty('--flip', 1);
+  document.body.append(a);
+  document.body.classList.add('shake');
+  $('quiz-card').classList.add('smashed');
+  beep(70, 1.4, 'sawtooth');
+  Music.play(null);   // the quiz music does not survive it either
+  toast('YIP YIP!');
+  setTimeout(() => {
+    a.remove();
+    document.body.classList.remove('shake');
+    $('quiz-card').classList.remove('smashed');
+    go('s-flight');
+  }, 1900);
+}
+
+const Uni = {
+  STREAK: 10,   // right answers in a row that bring out Wan Shi Tong
+  start() {
+    this.n = 0; this.streak = 0;
+    this.pool = shuffle(QUESTIONS.slice());
+    this.ask();
+  },
+  ask() {
+    if (cur !== 's-quiz' || S.stage !== 'map') return;
+    this.n++;
+    const label = `Ba Sing Se University · streak ${this.streak}`;
+    // three cards can be won here; once they are all in, say so
+    $('q-note').textContent = has('rough') && has('nowar') && has('owl')
+      ? 'You have won every card this university has to offer. From here on it is knowledge for its own sake.' : '';
+    if (!has('nowar') && this.n % 3 === 2) { askBSS(label, () => this.ask()); return; }
+    const q = this.pool[this.n % this.pool.length];
+    const box = renderMC(q, label, (i, b) => {
+      box.classList.add('locked');
+      if (i === q.correct) {
+        b.classList.add('correct'); SFX.correct();
+        this.right();
+      } else {
+        box.children[q.correct].classList.add('correct');
+        this.streak = 0;
+        wrongAnswer(b, () => this.ask());
+      }
+    });
+  },
+  // A long enough streak catches the attention of the spirit of knowledge.
+  right() {
+    this.streak++;
+    const next = () => this.ask();
+    if (has('owl')) { setTimeout(next, 900); return; }
+    if (this.streak >= this.STREAK) {
+      setTimeout(() => say('owl', `${this.STREAK} in a row. You know far too much for a human.\n“I am Wan Shi Tong, He Who Knows Ten Thousand Things.” You may keep one.`, 'Take it and back away slowly', () => unlock('owl', next)), 700);
+      return;
+    }
+    if (this.streak === 5) $('q-feedback').textContent = 'Five in a row. Somewhere far away, a very large owl turns its head.';
+    if (this.streak === 8) $('q-feedback').textContent = 'Eight in a row. The owl has started taking notes.';
+    setTimeout(next, this.streak === 5 || this.streak === 8 ? 2200 : 900);
+  },
+};
+
+SCENES['s-quiz'] = {
+  enter() {
+    $('q-note').textContent = '';
+    if (S.stage === 'map') { Uni.start(); return; }
+    const label = `Question ${S.step + 1} of 10`, q = ACT1[S.step];
+    if (q) {
+      const box = renderMC(q, label, (i, b) => {
+        box.classList.add('locked');
+        if (i !== q.correct) { wrongAnswer(b, () => go('s-quiz')); return; }
+        b.classList.add('correct'); SFX.correct();
+        S.step++; save();   // saved now, so a refresh during the card reveal cannot repeat the question
+        if (q.card) { setTimeout(() => unlock(q.card, () => go('s-quiz')), 600); return; }
+        $('q-feedback').textContent = q.after;
+        setTimeout(() => { if (cur === 's-quiz') go('s-quiz'); }, 1400);
+      });
+    } else if (S.step === ACT1.length) {
+      askBSS(label, () => go('s-quiz'), () => { S.step++; save(); });
+    } else {
+      askYip(label);
+    }
+  },
+};
+
+// ══════════════════════════════════════════════
+// FLIGHT ON APPA
+// ══════════════════════════════════════════════
+
+const Flight = {
+  tok: 0,
+  enter() {
+    const st = this.st = $('flight-stage');
+    st.querySelectorAll('.fo').forEach(e => e.remove());
+    this.objs = []; this.lives = 3; this.safe = 0; this.t = 0; this.spawn = 1; this.goal = null; this.goalAt = 10;
+    this.py = this.ay = .5; this.run = true; this.last = performance.now();
+    $('appa').style.transition = '';
+    this.showLives();
+    $('flight-status').textContent = (S.stage === 'map' ? '' : 'The quiz is… gone. ')
+      + 'Move your mouse to steer Appa and dodge the fireballs. He can take three hits.';
+    const tok = ++this.tok;
+    const frame = now => { if (tok !== this.tok || !this.run) return; this.tick(now); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+  },
+  leave() { this.run = false; this.tok++; },
+  add(key, x, y, vx, kind) {
+    const el = document.createElement('div');
+    el.className = 'fo ' + kind; el.innerHTML = art(key);
+    this.st.append(el);
+    const o = { el, x, y, vx, kind };
+    this.objs.push(o);
+    return o;
+  },
+  tick(now) {
+    const dt = Math.min(.05, (now - this.last) / 1000);
+    this.last = now; this.t += dt;
+    const W = this.st.clientWidth, H = this.st.clientHeight;
+    this.ay += (this.py - this.ay) * Math.min(1, dt * 8);
+    const ax = W * .2, ay = this.ay * H;
+    const flip = ART_URL.appa ? 1 : -1;   // the bison emoji faces left
+    $('appa').style.transform = `translate(${ax}px, ${ay}px) translate(-50%,-50%) scaleX(${flip}) rotate(${(this.ay - this.py) * 60}deg)`;
+
+    this.spawn -= dt;
+    if (this.spawn <= 0) {
+      this.spawn = rnd(.35, .8);
+      this.add('fireball', W + 40, rnd(.08, .92) * H, -rnd(260, 420), 'fire');
+    }
+    if (!this.goal && this.t >= this.goalAt) {
+      const again = has('yipyip');
+      this.goal = this.add(again ? 'island' : 'card', W + 40, rnd(.2, .8) * H, -150, 'goal');
+      $('flight-status').textContent = again ? 'Land ho! Fly towards it.' : "There's a card floating out there! Catch it!";
+    }
+    for (let i = this.objs.length - 1; i >= 0; i--) {
+      const o = this.objs[i];
+      o.x += o.vx * dt;
+      o.el.style.transform = `translate(${o.x}px, ${o.y}px) translate(-50%,-50%)`;
+      const near = Math.hypot(o.x - ax, o.y - ay) < (o.kind === 'goal' ? 62 : 44);
+      if (near && o.kind === 'goal') { this.finish(); return; }
+      if (near || o.x < -60) {
+        o.el.remove(); this.objs.splice(i, 1);
+        if (o.kind === 'goal') { this.goal = null; this.goalAt = this.t + 2; }
+        else if (near && this.t >= this.safe) {
+          this.lives--; this.safe = this.t + 1;   // a second of mercy after each hit
+          this.showLives();
+          beep(110, .2, 'square');
+          this.st.classList.remove('hit'); void this.st.offsetWidth; this.st.classList.add('hit');
+          if (this.lives <= 0) { this.crash(); return; }
+          if (!this.goal) $('flight-status').textContent = 'Appa has been toasted. He does not rate you as a pilot.';
+        }
+      }
+    }
+  },
+  finish() {
+    this.run = false;
+    S.stage = 'map'; save();   // landed, whatever happens during the card reveal
+    unlock('yipyip', () => go('s-map'));
+  },
+  showLives() { $('flight-lives').innerHTML = art('heart').repeat(Math.max(0, this.lives)); },
+  // Three hits and Appa goes down, which is the only way to find the swamp.
+  crash() {
+    this.run = false;
+    $('flight-status').textContent = 'Appa is out of fur to singe. Going down!';
+    const a = $('appa');
+    a.style.transition = 'transform 1.1s ease-in';
+    a.style.transform += ' translateY(120vh) rotate(140deg)';
+    beep(300, 1.1, 'sawtooth');
+    Music.play(null);
+    setTimeout(() => {
+      if (cur !== 's-flight') return;
+      S.stage = 'map'; save();
+      go('s-swamp');
+    }, 1200);
+  },
+};
+SCENES['s-flight'] = Flight;
+$('flight-stage').addEventListener('pointermove', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  Flight.py = clamp((e.clientY - r.top) / r.height, .08, .92);
+});
+
+SCENES['s-swamp'] = {
+  enter() {
+    $('swamp-loot').style.display = has('swamp') ? 'none' : '';
+    $('swamp-text').textContent = has('swamp')
+      ? 'Appa is up to his knees in swamp again. He has stopped being surprised.'
+      : 'A crash landing in the Foggy Swamp. Appa is up to his knees in mud and will never forgive you. But something glimmers between the roots of the great tree…';
+  },
+};
+$('swamp-loot').onclick = () => { $('swamp-loot').style.display = 'none'; unlock('swamp', () => go('s-map')); };
+
+// ══════════════════════════════════════════════
+// WORLD MAP
+// ══════════════════════════════════════════════
+
+const ELS = ['fire', 'air', 'water', 'earth'];     // order shown on screen
+const CYCLE = ['water', 'earth', 'fire', 'air'];   // order to click them in
+
+// `routes` is a list of [order, callback]: lighting the stones in one of those
+// orders runs its callback.
+function makePads(box, routes) {
+  box.innerHTML = '';
+  let seq = [], locked = false;
+  const clear = () => { seq = []; locked = false; box.querySelectorAll('.lit').forEach(x => x.classList.remove('lit')); };
+  ELS.forEach(id => {
+    const b = document.createElement('button');
+    b.className = 'pad-el'; b.dataset.art = 'el-' + id; b.innerHTML = art('el-' + id); b.title = id[0].toUpperCase() + id.slice(1);
+    b.onclick = () => {
+      if (locked || seq.includes(id)) return;
+      const next = [...seq, id];
+      const live = routes.filter(([order]) => next.every((x, i) => order[i] === x));
+      if (!live.length) {
+        locked = true;   // until the shake has finished
+        beep(120, .3, 'sawtooth');
+        box.classList.add('shakeit');
+        setTimeout(() => { box.classList.remove('shakeit'); clear(); }, 380);
+        return;
+      }
+      seq = next; b.classList.add('lit');
+      beep(260 + seq.length * 110, .25);
+      if (seq.length === 4) { locked = true; setTimeout(() => { clear(); live[0][1](); }, 500); }
+    };
+    box.append(b);
+  });
+}
+
+function avatarState(cb) {
+  document.body.classList.add('avatar-state');
+  Music.duck(2.6);
+  [330, 440, 550, 660].forEach((f, i) => setTimeout(() => beep(f, 1.2), i * 120));
+  setTimeout(() => { document.body.classList.remove('avatar-state'); if (cb) cb(); }, 2600);
+}
+
+const MapScene = {
+  enter() {
+    $('map-title').textContent = document.body.classList.contains('comet') ? "Sozin's Comet Approaches" : 'The Four Nations';
+    document.querySelectorAll('#map .pin').forEach(p =>
+      p.classList.toggle('done', p.dataset.cards.split(' ').every(has)));
+    document.querySelector('#map .comet-pin').classList.toggle('show', S.comet);   // stays for rematches
+    document.querySelector('#map .ember-pin').classList.toggle('show', !!S.ember);   // once you have been sent there
+    this.t1 = setTimeout(() => { this.runCart(); this.t2 = setInterval(() => this.runCart(), 22000); }, 5000);
+    if (!S.mapIntro) {
+      S.mapIntro = true; save();
+      say('world', `You have landed. The quiz is nowhere to be found.\nBut there are still cards hidden all over the world — ${CARDS.length - mainFound()} of them.\nNobody will tell you how to find them. Except maybe an old tea lover, top left.`, 'Adventure!');
+    }
+    Vacation.check();
+  },
+  leave() { clearTimeout(this.t1); clearInterval(this.t2); },
+  runCart() {
+    const c = $('cart');
+    c.classList.remove('gone');
+    c.style.transition = 'none'; c.style.left = '-14%';
+    void c.offsetWidth;
+    c.style.transition = 'left 12s linear'; c.style.left = '106%';
+  },
+  boom() {
+    const c = $('cart'), m = $('map');
+    const cr = c.getBoundingClientRect(), mr = m.getBoundingClientRect();
+    const x = cr.left - mr.left + cr.width / 2, y = cr.top - mr.top + cr.height / 2;
+    c.classList.add('gone');
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement('div');
+      p.className = 'cabp'; p.innerHTML = art('cabbage');
+      p.style.left = x + 'px'; p.style.top = y + 'px';
+      p.style.setProperty('--dx', rnd(-320, 320) + 'px');
+      p.style.setProperty('--dy', rnd(-380, -60) + 'px');
+      p.style.setProperty('--r', rnd(-720, 720) + 'deg');
+      m.append(p);
+      setTimeout(() => p.remove(), 1250);
+    }
+    const s = document.createElement('div');
+    s.className = 'shout'; s.textContent = 'MY CABBAGES!!!';
+    m.append(s);
+    beep(90, .5, 'sawtooth');
+    setTimeout(() => { s.remove(); unlock('cabbages'); }, 1400);
+  },
+};
+SCENES['s-map'] = MapScene;
+$('cart').onclick = () => MapScene.boom();
+$('map-canoe').onclick = () => go('s-fish');
+document.querySelectorAll('#map .pin').forEach(p => p.onclick = () => go(p.dataset.go));
+
+// typing "yip yip" on the map = another flight
+let keybuf = '';
+window.addEventListener('keydown', e => {
+  if (e.key.length !== 1) return;
+  keybuf = (keybuf + e.key.toLowerCase()).replace(/[^a-z]/g, '').slice(-12);
+  if (cur === 's-map' && keybuf.endsWith('yipyip') && !document.querySelector('.overlay.show')) {
+    keybuf = '';
+    toast('YIP YIP!');
+    go('s-flight');
+  }
+});
+
+// ══════════════════════════════════════════════
+// SI WONG DESERT — cactus juice
+// ══════════════════════════════════════════════
+
+const Desert = {
+  enter() {
+    $('desert-text').textContent = 'Sand. Sun. More sand. You are thirsty. So very thirsty.';
+    $('cactus').style.display = '';
+  },
+  leave() { this.sober(); },
+  drink() {
+    if (this.tripping) return;
+    this.tripping = true;
+    document.body.classList.add('trip');
+    Music.warp(90, 1.5, 1.2);   // the tune goes the same way as the screen
+    updateHud();
+    $('cactus').style.display = 'none';
+    const st = $('desert-stage');
+    const junk = ['cactus', 'lizard', 'eye', 'el-air', 'cabbage', 'shroom-bad', 'shroom-bad2', 'shroom-bad', 'koi', 'eye', 'shroom-bad2', 'lizard'];
+    const decoyLines = ['This mushroom is NOT friendly.', 'That was a lizard. It is offended.', 'The sand whispers your name.', 'Not friendly enough.', 'Not mushy. Not giant. Not a friend.'];
+    const mk = (html, size, friend) => {
+      const f = document.createElement('div');
+      f.className = 'floater'; f.innerHTML = html;
+      f.style.cssText = `left:${rnd(4, 82)}%;top:${rnd(4, 68)}%;font-size:${size}px;animation-duration:${rnd(1.2, 3)}s;z-index:${friend ? 2 : 3}`;
+      f.style.setProperty('--fx', rnd(-90, 90) + 'px');
+      f.style.setProperty('--fy', rnd(-60, 60) + 'px');
+      f.onclick = () => {
+        if (!friend) { $('desert-text').textContent = pick(decoyLines); beep(rnd(200, 900), .15, 'triangle'); return; }
+        $('desert-text').textContent = 'FRIENDLY MUSHROOM! MUSHY GIANT FRIEND!';
+        this.sober();
+        unlock('cactus', () => Desert.enter());
+      };
+      st.append(f);
+    };
+    junk.forEach(key => mk(art(key), rnd(34, 60)));
+    mk(art('mushroom'), 150, true);
+    const lines = [
+      "Drink cactus juice. It'll quench ya!",
+      "Nothing's quenchier. It's the quenchiest!",
+      'Who lit Toph on fire?',
+      "It's a giant… mushroom. Maybe it's friendly!",
+    ];
+    let i = 0;
+    $('desert-text').textContent = lines[0];
+    this.iv = setInterval(() => { $('desert-text').textContent = lines[++i % lines.length]; }, 2800);
+    this.to = setTimeout(() => {
+      this.sober();
+      $('cactus').style.display = '';
+      $('desert-text').textContent = 'You wake up with a mouthful of sand. What happened? The cactus looks innocent.';
+    }, 30000);
+  },
+  sober() {
+    this.tripping = false;
+    clearInterval(this.iv); clearTimeout(this.to);
+    document.body.classList.remove('trip');
+    Music.warp();
+    document.querySelectorAll('#desert-stage .floater').forEach(f => f.remove());
+    updateHud();
+  },
+};
+SCENES['s-desert'] = Desert;
+$('cactus').onclick = () => Desert.drink();
+
+// ══════════════════════════════════════════════
+// CAVE OF TWO LOVERS — put out the torch
+// ══════════════════════════════════════════════
+
+const Cave = {
+  enter() {
+    this.walks = 0; this.dark = false; this.depth = 0; this.chamber = false; this.glow = 1;
+    const st = $('cave-stage');
+    st.classList.remove('dark', 'deep', 'chamber', 'unfold');
+    $('cave-btns').style.display = '';
+    $('cave-loot').style.display = has('tunnel') ? 'none' : '';
+    $('cave-text').textContent = 'The entrance has caved in behind you. Ahead, the tunnel splits three ways. Your torch crackles.';
+    document.querySelectorAll('.tunnel-glow').forEach(g => { g.innerHTML = art('crystal').repeat(3); });
+    if (!st.querySelector('.crystal')) {
+      for (let i = 0; i < 11; i++) {
+        const c = document.createElement('div');
+        c.className = 'crystal' + (ART_URL.crystal ? ' has-art' : ''); c.innerHTML = art('crystal');
+        const t = i / 10;
+        c.style.left = (8 + t * 72) + '%';
+        c.style.top = (30 + Math.sin(t * Math.PI * 2) * 16 + t * 34) + '%';
+        c.style.transitionDelay = (t * 1.1) + 's';
+        st.append(c);
+      }
+    }
+    this.paint();
+  },
+  // backdrop for light or dark, and which of the three tunnels is glowing
+  paint() {
+    const url = ART_URL[this.dark ? 'stage-cave-dark' : 'stage-cave'];
+    $('cave-stage').style.background = url ? stageBg('cave', url) : '';
+    document.querySelectorAll('.tunnel-glow').forEach((g, i) =>
+      g.classList.toggle('on', this.dark && !this.chamber && i === this.glow));
+  },
+  walk(i) {
+    const dir = ['left', 'straight on', 'right'][i], st = $('cave-stage');
+    if (!this.dark) {
+      this.walks++;
+      const ends = [
+        `You go ${dir}. Dead end. You walk back.`,
+        `You go ${dir}. A wolfbat shrieks. You run back.`,
+        `You go ${dir}. You come out… exactly where you started.`,
+        `You go ${dir}. Somewhere in the distance, a nomad with a lute is singing about a secret tunnel. Again.`,
+        `You go ${dir}. A badgermole gives you a pitying look and keeps digging.`,
+      ];
+      let text = ends[(this.walks - 1) % ends.length];
+      if (this.walks >= 6) text += ' The torch flickers. It makes everything so… bright.';
+      $('cave-text').textContent = text;
+      return;
+    }
+    // In the dark, the way the two lovers found each other: follow the glow, four tunnels deep.
+    if (i !== this.glow) {
+      this.depth = 0;
+      st.classList.remove('deep');
+      $('cave-text').textContent = `You go ${dir}, away from the glow. Pitch black. You feel your way along the wall and end up back where you started.`;
+    } else if (++this.depth >= 4) {
+      this.chamber = true;
+      st.classList.add('deep', 'chamber');
+      $('cave-btns').style.display = 'none';
+      $('cave-text').textContent = 'The glow opens into a vast chamber. Something enormous is breathing in the dark: a badgermole, one of the first earthbenders. It is blind. It knows every tunnel in this mountain anyway, all of them at once. It lowers its nose toward your hand.';
+    } else {
+      st.classList.add('deep');
+      $('cave-text').textContent = [
+        `You go ${dir}, into the glow. The crystals light just enough of the floor to keep walking.`,
+        `You go ${dir}. The tunnel slopes down. The crystals are thicker here.`,
+        `You go ${dir}. The air is warmer. Somewhere ahead, something is digging.`,
+      ][this.depth - 1];
+    }
+    this.glow = Math.floor(Math.random() * 3);
+    this.paint();
+  },
+  torch() {
+    const st = $('cave-stage');
+    this.dark = !this.dark; this.depth = 0; this.chamber = false;
+    this.glow = Math.floor(Math.random() * 3);
+    st.classList.toggle('dark', this.dark);
+    st.classList.remove('deep', 'chamber');
+    $('cave-btns').style.display = '';
+    $('cave-text').textContent = this.dark
+      ? (has('tunnel') ? 'Darkness. The crystals glow softly. There used to be a card here.' : 'Darkness. And then… the crystals begin to glow. “Love is brightest in the dark.”')
+      : 'You relight the torch. The crystals fade.';
+    Music.play(this.dark ? 'caveDark' : 'cave');
+    this.paint();
+  },
+  // The badgermole shares how it feels the mountain: not flat, but all around you.
+  touchMole() {
+    if (!this.chamber) return;
+    this.chamber = false;
+    $('cave-text').textContent = 'You hold out your hand. The mountain stops being flat. For the first time you feel it the way a badgermole does: not as a picture in front of you, but all around you.';
+    $('cave-stage').classList.add('unfold');
+    [110, 147, 196, 262].forEach((f, i) => setTimeout(() => beep(f, .6, 'triangle'), i * 250));
+    setTimeout(() => { if (cur === 's-cave') go('s-maze'); }, 1400);
+  },
+};
+SCENES['s-cave'] = Cave;
+$('torch').onclick = () => Cave.torch();
+$('cave-loot').onclick = () => { $('cave-loot').style.display = 'none'; unlock('tunnel'); };
+$('mole').onclick = () => Cave.touchMole();
+document.querySelectorAll('#cave-btns button').forEach((b, i) => b.onclick = () => Cave.walk(i));
+
+// ══════════════════════════════════════════════
+// THE LABYRINTH — the mountain, felt the way a badgermole feels it
+// ══════════════════════════════════════════════
+// A small first-person raycaster. Badgermoles (and Toph) sense the earth around
+// them instead of seeing it, so the tunnels are black until you stomp: that
+// sends a seismic "ping" rolling outwards, which lights the rock up for a
+// moment as it passes. Crystals glow faintly up close and flare when a ping
+// reaches them; they mark the way to the lovers' tomb.
+const PING_SPEED = 6, PING_REACH = 10;        // cells per second, and the distance at which a ping has faded to nothing
+const PING_FADE = .55, PING_WAIT = .9;        // seconds for the lit rock to fade, and between one stomp and the next
+const EYE = .5, SPRING = .7, APEX = 1.15;     // eye height, where the roof meets the walls, and the top of the vault
+// smooth random bumps, used for the rock: wave() along a line, wave2() across a surface
+const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+const wave = x => { const i = Math.floor(x), f = x - i, t = f * f * (3 - 2 * f); return hash(i) * (1 - t) + hash(i + 1) * t; };
+const wave2 = (x, y) => { const i = Math.floor(y), f = y - i, t = f * f * (3 - 2 * f); return wave(x + i * 57.3) * (1 - t) + wave(x + (i + 1) * 57.3) * t; };
+
+const CRYSTAL_TILE = [
+  '................', '....#...........', '...###..........', '..#####.....#...',
+  '...###.....###..', '....#.....#####.', '...........###..', '............#...',
+  '................', '......#.........', '.....###........', '....#####.......',
+  '.....###........', '......#.........', '................', '................',
+];
+// The lovers' tomb as it appears on the wall at the end: the two statues leaning
+// into a kiss, the tablet between them, two torches. (A copy of art/tomb.png,
+// kept here as text so the labyrinth does not depend on reading image files.)
+const TOMB_TILE = [
+  '11111121212111111111121212111111',
+  '10002012211112222221111221020010',
+  '10000212111112222221111121200010',
+  '11133232222220000002222223233111',
+  '00022332222224400442222223322000',
+  '00033334222211400411222243333000',
+  '11122224444444444444444442222111',
+  '10022332444444444444444423322010',
+  '10033200044444000044444000233010',
+  '11122200333330000003333300222111',
+  '00022333333330000003333333322000',
+  '000222332334330bbb33433233222000',
+  '111222332344430bca34443233222111',
+  '100222332334440bca44433233222010',
+  '100233232333344baa43333232332010',
+  '111244343444445bca44444343442111',
+  '000444343444444bac44444343444000',
+  '0444444444444f4baa4f444444444440',
+  '144444444444fFfbaafFf44444444441',
+  '144444444444414baa41444444444440',
+  '44444444444441444441444444444444',
+  '22222222222222222222222222222222',
+];
+const TOMB_COLORS = {
+  0: [18, 13, 10], 1: [42, 32, 24], 2: [74, 58, 42], 3: [110, 90, 64], 4: [150, 128, 90], 5: [196, 170, 120],   // stone, dark to light
+  a: [47, 74, 48], b: [85, 120, 74], c: [201, 216, 160],   // the tablet
+  f: [239, 138, 43], F: [255, 240, 166],                   // torch flames
+};
+const Maze = {
+  // # rock · c crystal wall · T the tomb · S start · G the floor in front of the tomb
+  MAP: [
+    '#####c#####c###',
+    '#S..c.....c...c',
+    '###.#.###.#.#.#',
+    'c...#.c...#.#.#',
+    '#.#c#.#.#c#.#.#',
+    '#.....c.....c.#',
+    '#.#####c###.#.#',
+    '#.#...#.....#.#',
+    '#.#.#########.#',
+    '#...#TG.......#',
+    '#############c#',
+  ],
+  W: 176, H: 96, tok: 0, keys: {},
+  enter() {
+    this.ctx = $('maze').getContext('2d');
+    this.img = this.ctx.createImageData(this.W, this.H);
+    this.rock = this.MAP.map(row => [...row].map(ch => !'.SG'.includes(ch)));
+    this.x = 1.5; this.y = 1.5; this.a = 0; this.t = 0; this.keys = {};
+    this.pings = [];   // the moments (in this.t) at which you stomped
+    this.run = true; this.last = performance.now();
+    $('maze-text').textContent = 'It is pitch dark. Stomp (space bar, or the Stomp button) to send a pulse through the rock and feel the tunnels for a moment. Walk with the arrow keys or W A S D. Crystals answer when the pulse reaches them.';
+    const tok = ++this.tok;
+    const frame = now => { if (tok !== this.tok || !this.run) return; this.step(now); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+  },
+  leave() { this.run = false; this.tok++; this.keys = {}; },
+  cell(x, y) { const row = this.MAP[Math.floor(y)]; return (row && row[Math.floor(x)]) || '#'; },
+  open(x, y) { return '.SG'.includes(this.cell(x, y)); },
+  step(now) {
+    const dt = Math.min(.05, (now - this.last) / 1000);
+    this.last = now; this.t += dt;
+    const k = this.keys, move = (k.up ? 1 : 0) - (k.down ? 1 : 0);
+    this.a += ((k.right ? 1 : 0) - (k.left ? 1 : 0)) * 2.4 * dt;
+    if (move) {   // slide along walls instead of stopping dead
+      const nx = this.x + Math.cos(this.a) * move * 2.2 * dt, ny = this.y + Math.sin(this.a) * move * 2.2 * dt, r = .2;
+      if (this.open(nx + Math.sign(nx - this.x) * r, this.y)) this.x = nx;
+      if (this.open(this.x, ny + Math.sign(ny - this.y) * r)) this.y = ny;
+    }
+    this.draw();
+    if (this.cell(this.x, this.y) === 'G') this.found();
+  },
+  wall(cx, cy) { const row = this.rock[cy]; return !row || row[cx] !== false; },
+  // Stomp: send a ping out through the rock.
+  pulse() {
+    if (!this.run || this.t - (this.pings[this.pings.length - 1] ?? -9) < PING_WAIT) return;
+    this.pings = [...this.pings.slice(-2), this.t];
+    beep(62, .35, 'triangle');
+  },
+  // How bright something at distance d is right now: nothing, until a ping
+  // sweeps over it. Then it lights up and fades again. Also notes how hard the
+  // ping is hitting that spot regardless of distance (this.flare), for crystals.
+  lit(d) {
+    let glow = 0, front = 0;
+    for (const sent of this.pings) {
+      const age = this.t - sent - d / PING_SPEED;   // seconds since that ping passed here; negative = not here yet
+      if (age < 0) continue;
+      glow = Math.max(glow, Math.exp(-age / PING_FADE));
+      if (age < .05) front = .5;   // the bright leading edge
+    }
+    this.flare = glow;
+    const b = .05 * Math.max(0, 1 - d / 1.2) + glow * Math.max(0, 1 - d / PING_REACH) + front;
+    return Math.round(Math.min(1.3, b) * 8) / 8;
+  },
+  // Height of the cave roof above a point: lowest where it meets rock, arching
+  // up to the middle of the tunnel.
+  roof(wx, wy) {
+    const cx = Math.floor(wx), cy = Math.floor(wy), fx = wx - cx, fy = wy - cy;
+    const l = this.wall(cx - 1, cy), r = this.wall(cx + 1, cy), u = this.wall(cx, cy - 1), dn = this.wall(cx, cy + 1);
+    let d = .5;
+    if (l) d = Math.min(d, fx);
+    if (r) d = Math.min(d, 1 - fx);
+    if (u) d = Math.min(d, fy);
+    if (dn) d = Math.min(d, 1 - fy);
+    if (!l && !u && this.wall(cx - 1, cy - 1)) d = Math.min(d, Math.hypot(fx, fy));          // corners at junctions
+    if (!r && !u && this.wall(cx + 1, cy - 1)) d = Math.min(d, Math.hypot(1 - fx, fy));
+    if (!l && !dn && this.wall(cx - 1, cy + 1)) d = Math.min(d, Math.hypot(fx, 1 - fy));
+    if (!r && !dn && this.wall(cx + 1, cy + 1)) d = Math.min(d, Math.hypot(1 - fx, 1 - fy));
+    const k = 1 - d / .5;   // 1 at the rock, 0 in the middle of the tunnel
+    return SPRING + (APEX - SPRING) * Math.sqrt(1 - k * k);
+  },
+  draw() {
+    const { W, H } = this, px = this.img.data, half = H / 2;
+    const dx = Math.cos(this.a), dy = Math.sin(this.a), plx = -dy * .66, ply = dx * .66;
+    const set = (i, r, g, b) => { px[i] = r; px[i + 1] = g; px[i + 2] = b; px[i + 3] = 255; };
+    for (let y = 0; y < H; y++) {   // black everywhere, then the floor
+      const b = y > half ? this.lit(EYE * H / (y - half)) : 0;
+      for (let x = 0; x < W; x++) set((y * W + x) * 4, 30 * b, 58 * b, 64 * b);
+    }
+    for (let x = 0; x < W; x++) {   // one ray per screen column
+      const cam = 2 * x / W - 1, rx = dx + plx * cam, ry = dy + ply * cam;
+      let mx = Math.floor(this.x), my = Math.floor(this.y);
+      const ddx = Math.abs(1 / rx), ddy = Math.abs(1 / ry), sx = rx < 0 ? -1 : 1, sy = ry < 0 ? -1 : 1;
+      let sdx = (rx < 0 ? this.x - mx : mx + 1 - this.x) * ddx, sdy = (ry < 0 ? this.y - my : my + 1 - this.y) * ddy;
+      let side = 0, type = '#';
+      for (let i = 0; i < 40; i++) {
+        if (sdx < sdy) { sdx += ddx; mx += sx; side = 0; } else { sdy += ddy; my += sy; side = 1; }
+        type = (this.MAP[my] && this.MAP[my][mx]) || '#';
+        if (!'.SG'.includes(type)) break;
+      }
+      const dist = Math.max(.05, side ? sdy - ddy : sdx - ddx);
+
+      // the vaulted roof, front to back: nearer rock hides whatever is behind it
+      let top = 0, band = -1;
+      for (let t = .1, last = false; !last; t += Math.max(.03, t * .04)) {
+        if (t >= dist - .01) { t = dist - .01; last = true; }
+        const z = this.roof(this.x + rx * t, this.y + ry * t);
+        const ys = Math.min(half, half - (z - EYE) * H / t);
+        if (ys <= top) continue;
+        const k = (z - SPRING) / (APEX - SPRING), b = this.lit(t) * (.7 + .3 * k);   // a little darker toward the rock
+        // a pale line wherever the roof passes a certain height: these run along the
+        // tunnel like ribs and are what makes the vault read as round
+        const rib = Math.floor(k * 2.999) !== band && band >= 0;
+        band = Math.floor(k * 2.999);
+        for (let y = Math.floor(top); y < ys; y++) set((y * W + x) * 4, 58 * b, 84 * b, 92 * b);
+        if (rib) set((Math.floor(top) * W + x) * 4, 150 * b, 190 * b, 196 * b);
+        top = ys;
+      }
+
+      // The walls are rough rock, not flat panels: the pattern follows the position
+      // along the wall (so it runs on from one map square to the next), and the
+      // surface bulges in and out a little.
+      const along = side ? this.x + dist * rx : this.y + dist * ry;
+      const face = (side ? my : mx) * 7.3 + side * 3.1;   // tells one wall from the next
+      const seen = dist * (1 + .14 * (wave(along * 1.7 + face) - .5));
+      const y0 = half - (SPRING - EYE) * H / seen, h = SPRING * H / seen;
+      const tx = Math.min(15, Math.floor((along - Math.floor(along)) * 16));
+      const b = this.lit(dist) * (side ? .78 : 1);
+      // crystals and the tomb give off a little light of their own, but only close
+      // by; from further off they show when a ping reaches them and makes them flare
+      const own = Math.max(.5 * Math.max(0, 1 - dist / 3) ** 2, this.flare * .9);
+      // right above a wall the vault climbs almost straight up, steeper than the
+      // samples above can catch: fill what is left down to the top of the wall
+      const hidden = top > y0 + 2;   // nearer roof really is in front of the top of this wall
+      for (let y = Math.max(0, Math.floor(top)); y < Math.min(half, y0); y++) set((y * W + x) * 4, 41 * b, 59 * b, 64 * b);
+      const start = Math.max(0, Math.floor(hidden ? top : y0)), end = Math.min(H, y0 + h);
+      // three wavering seams run through the rock, each broken up into stretches
+      const seams = [0, 1, 2].map(k => wave(along * 2.3 + k * 31 + face) > .4
+        ? .2 + k * .27 + .05 * Math.sin(along * 4.3 + k * 2.1 + face) + .03 * Math.sin(along * 11.7 + k * 5.3) : -1);
+      const thick = Math.max(.6 / h, .012);
+      for (let y = start; y < end; y++) {
+        const v = (y - y0) / h;   // 0 where the wall meets the roof, 1 at the floor
+        const ty = Math.max(0, Math.min(15, Math.floor(v * 16)));
+        const patch = .78 + .22 * Math.round(wave2(along * 2.1 + face, v * 2.4) * 2) / 2;   // lighter and darker stone
+        let r = 70 * b * patch, g = 96 * b * patch, bl = 104 * b * patch;
+        if ((y === start && !hidden) || y >= end - 1 || seams.some(line => Math.abs(v - line) < thick)) { r = 150 * b; g = 190 * b; bl = 196 * b; }
+        if (type === 'c' && CRYSTAL_TILE[ty][tx] === '#') { const k = Math.max(b, own); r = 110 * k; g = 255 * k; bl = 150 * k; }
+        if (type === 'T') {
+          const u = along - Math.floor(along), k = Math.min(1.3, Math.max(b, own) * 1.3);
+          const c = TOMB_COLORS[TOMB_TILE[Math.max(0, Math.min(21, Math.floor(v * 22)))][Math.min(31, Math.floor(u * 32))]];
+          r = c[0] * k; g = c[1] * k; bl = c[2] * k;
+        }
+        set((y * W + x) * 4, Math.min(255, r), Math.min(255, g), Math.min(255, bl));
+      }
+    }
+    this.ctx.putImageData(this.img, 0, 0);
+  },
+  found() {
+    this.run = false;
+    $('maze-text').textContent = 'The tomb of Oma and Shu, the two lovers. The crystals burn brighter here than anywhere else in the mountain.';
+    setTimeout(() => { if (cur === 's-maze') unlock('lovers', () => go('s-cave')); }, 1200);
+  },
+};
+SCENES['s-maze'] = Maze;
+const MAZE_KEYS = { ArrowUp: 'up', w: 'up', ArrowDown: 'down', s: 'down', ArrowLeft: 'left', a: 'left', ArrowRight: 'right', d: 'right', ' ': 'stomp' };
+['keydown', 'keyup'].forEach(type => window.addEventListener(type, e => {
+  const key = MAZE_KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+  if (cur !== 's-maze' || !key) return;
+  e.preventDefault();
+  if (key !== 'stomp') Maze.keys[key] = type === 'keydown';
+  else if (type === 'keydown' && !e.repeat) Maze.pulse();
+}));
+document.querySelectorAll('#maze-btns button').forEach(b => {
+  if (b.dataset.key === 'stomp') { b.addEventListener('pointerdown', () => Maze.pulse()); return; }
+  b.addEventListener('pointerdown', () => { Maze.keys[b.dataset.key] = true; });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(type => b.addEventListener(type, () => { Maze.keys[b.dataset.key] = false; }));
+});
+$('maze').addEventListener('pointerdown', () => Maze.pulse());   // tapping the view stomps too
+
+// ══════════════════════════════════════════════
+// THE JASMINE DRAGON — patience
+// ══════════════════════════════════════════════
+
+const Tea = {
+  SECONDS: 15,
+  enter() {
+    this.stop();
+    $('tea-bar').style.width = '0%';
+    $('tea-btn').style.display = '';
+    $('tea-text').textContent = 'Uncle Iroh: "Good tea asks for only one thing: patience. Start the tea, and then do… absolutely nothing."';
+  },
+  leave() { this.stop(); },
+  start() {
+    this.brewing = true; this.t = 0; this.grace = performance.now() + 900; this.moved = 0;
+    $('tea-btn').style.display = 'none';
+    $('teapot').classList.add('brewing');
+    $('tea-text').textContent = 'The tea is steeping…';
+    this.iv = setInterval(() => {
+      this.t += .1;
+      $('tea-bar').style.width = Math.min(100, this.t / this.SECONDS * 100) + '%';
+      if (this.t >= this.SECONDS) {
+        this.stop();
+        $('tea-text').textContent = 'Uncle Iroh: "Perfect. You have mastered the hardest art of all."';
+        unlock('tea', () => Tea.enter());
+      }
+    }, 100);
+  },
+  stop() { this.brewing = false; clearInterval(this.iv); $('teapot').classList.remove('brewing'); },
+  disturb(e) {
+    if (!this.brewing || performance.now() < this.grace) return;
+    if (e.type === 'pointermove') {   // ignore the jitter of a mouse lying still
+      this.moved += Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0);
+      if (this.moved < 8) return;
+    }
+    this.moved = 0; this.t = 0; this.grace = performance.now() + 500;
+    $('tea-bar').style.width = '0%';
+    beep(160, .15, 'triangle');
+    $('tea-text').textContent = 'Uncle Iroh: "' + pick([
+      'Patience, nephew. You moved. The tea starts over.',
+      'Tea cannot be rushed. Again.',
+      'Your hands are restless. Now your tea is, too. Again.',
+      'Even a dragon can sit still. Again.',
+    ]) + '"';
+  },
+};
+SCENES['s-tea'] = Tea;
+$('tea-btn').onclick = () => Tea.start();
+['pointermove', 'pointerdown', 'keydown', 'wheel'].forEach(ev =>
+  window.addEventListener(ev, e => Tea.disturb(e), { passive: true }));
+
+// ══════════════════════════════════════════════
+// NORTHERN WATER TRIBE — the moon pulls the tide
+// ══════════════════════════════════════════════
+
+const Water = {
+  enter() {
+    const st = $('water-stage');
+    if (!st.querySelector('.star') && !ART_URL['stage-water']) {
+      for (let i = 0; i < 40; i++) {
+        const s = document.createElement('div');
+        s.className = 'star'; s.textContent = '✦';
+        s.style.left = rnd(0, 100) + '%'; s.style.top = rnd(0, 60) + '%'; s.style.opacity = rnd(.2, .9);
+        st.prepend(s);
+      }
+    }
+    $('water-loot').style.display = has('moon') ? 'none' : '';
+    this.mx = .28; this.my = .2;
+    this.update();
+    $('water-text').textContent = 'The Spirit Oasis. Tui and La circle each other, as they always have. Something glints deep under the water.';
+  },
+  update() {
+    const m = $('moon');
+    m.style.left = this.mx * 100 + '%'; m.style.top = this.my * 100 + '%';
+    this.h = Math.max(2, 72 - 75 * this.my);   // moon high = high tide, moon low = low tide
+    $('sea').style.height = this.h + '%';
+    $('water-loot').classList.toggle('exposed', this.h <= 9);
+  },
+};
+SCENES['s-water'] = Water;
+(() => {
+  const m = $('moon'), st = $('water-stage');
+  let drag = false;
+  m.addEventListener('pointerdown', e => { drag = true; m.setPointerCapture(e.pointerId); });
+  m.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const r = st.getBoundingClientRect();
+    Water.mx = clamp((e.clientX - r.left) / r.width, .06, .94);
+    Water.my = clamp((e.clientY - r.top) / r.height, .09, .95);
+    Water.update();
+    if (Water.h <= 9 && !has('moon')) $('water-text').textContent = "The moon sinks below the horizon. The tide pulls back… and there's something on the seabed.";
+  });
+  const end = () => { drag = false; };
+  m.addEventListener('pointerup', end);
+  m.addEventListener('pointercancel', end);
+  $('water-loot').onclick = () => {
+    if (Water.h > 9) { $('water-text').textContent = 'The water is far too deep here. If only the tide were out.'; return; }
+    $('water-loot').style.display = 'none';
+    unlock('moon');
+  };
+})();
+
+// ══════════════════════════════════════════════
+// SUN WARRIORS — the Dancing Dragon
+// ══════════════════════════════════════════════
+
+// Music for the last round of the dance: the masters rising, and their verdict.
+const RISE_THEME = [[50, 2], [53, 2], [57, 2], [62, 3], [0, 1], [62], [65], [69], [[50, 74, 77, 81], 5]];
+const DRAGON_FANFARE = [[74, .5], [78, .5], [81, .5], [86, 1.5], [83, .5], [86, .5], [90, 2], [[62, 86, 90, 93]], [[50, 62, 90, 93, 98], 7]];
+
+// Rainbow fire: a ring of flame in every colour that closes in around the
+// screen and opens again. Drawn small and scaled up, so it stays pixel art.
+function rainbowFire(ms) {
+  const cv = $('rainbow'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height, img = ctx.createImageData(W, H);
+  const cols = [[220, 38, 38], [249, 115, 22], [251, 191, 36], [34, 197, 94], [56, 189, 248], [99, 102, 241], [168, 85, 247]];
+  const t0 = performance.now(), scene = cur;
+  cv.style.display = 'block';
+  (function frame(now) {
+    const t = (now - t0) / ms;
+    if (t >= 1 || cur !== scene) { cv.style.display = 'none'; return; }
+    const hole = .12 + .85 * Math.abs(1 - t * 2);   // how much of the middle is still clear
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const dx = (x - W / 2) / (W / 2), dy = (y - H / 2) / (H / 2), r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
+        const i = (y * W + x) * 4;
+        const lick = Math.sin(a * 9 + now / 90) * .06 + Math.sin(a * 23 - now / 60) * .03;   // the flickering inner edge
+        if (r + lick < hole) { img.data[i + 3] = 0; continue; }
+        const c = cols[((Math.floor((a / (Math.PI * 2) + .5) * 14 + r * 3 - now / 250) % 7) + 7) % 7];
+        img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 235;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    requestAnimationFrame(frame);
+  })(t0);
+}
+
+const Dragon = {
+  ROUNDS: [3, 4, 5, 6],
+  TONES: [392, 494, 587, 698],
+  timers: [],
+  enter() {
+    this.reset();
+    Music.play('dragon');   // also the way back from the last dance, which ends in silence
+    $('dragon-btn').style.display = '';
+    $('dragon-text').textContent = 'The masters Ran and Shaw stare right through you. They dance first. You follow.';
+  },
+  leave() { this.reset(); },
+  reset() {
+    this.timers.forEach(clearTimeout);
+    this.timers = []; this.seq = []; this.busy = false; this.round = 0;
+    document.body.classList.remove('epic-on');
+    this.quake(false);
+  },
+  quake(on) { [$('dance'), $('dragon-text')].forEach(e => e.classList.toggle('quake', on)); },
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  last() { return this.round === this.ROUNDS.length - 1; },
+  flash(p) {
+    const b = $('dance').children[p];
+    b.classList.add('on'); beep(this.TONES[p], .3);
+    setTimeout(() => b.classList.remove('on'), 330);
+    if (!this.last()) return;
+    beep(this.TONES[p] / 4, .35, 'sawtooth');   // in the last round the dragons move with every step
+    document.querySelectorAll('.epic').forEach(e => { e.classList.add('beat'); setTimeout(() => e.classList.remove('beat'), 220); });
+  },
+  start() { this.reset(); $('dragon-btn').style.display = 'none'; this.next(); },
+  next() {
+    const len = this.ROUNDS[this.round];
+    this.seq = Array.from({ length: len }, () => Math.floor(Math.random() * 4));
+    this.pos = 0; this.busy = true;
+    const name = this.last() ? 'The final dance' : `Round ${this.round + 1} of ${this.ROUNDS.length}`;
+    $('dragon-text').textContent = `${name} — watch closely…`;
+    this.seq.forEach((p, i) => this.later(() => this.flash(p), 800 + i * 620));
+    this.later(() => { this.busy = false; $('dragon-text').textContent = `${name} — your turn!`; }, 800 + len * 620);
+  },
+  roar() {
+    beep(48, 1.1, 'sawtooth'); beep(72, .9, 'square');
+    document.querySelectorAll('.epic').forEach(e => { e.classList.remove('roar'); void e.offsetWidth; e.classList.add('roar'); });
+  },
+  // Before the last round the masters themselves come out of the mountain to judge it.
+  rise() {
+    const say = text => { $('dragon-text').textContent = text; };
+    say('The ground begins to shake.');
+    Music.play(null);   // the masters bring their own music
+    this.quake(true);
+    [55, 58, 62, 65, 69, 73, 78, 82].forEach((f, i) => this.later(() => beep(f, .5, 'sawtooth'), i * 280));
+    this.later(() => {
+      document.body.classList.add('epic-on');
+      chip(RISE_THEME, .16);
+      say('Something enormous is climbing out of the mountain on either side of you.');
+    }, 1200);
+    this.later(() => {
+      this.quake(false);
+      this.roar();
+      say('Ran and Shaw, the last of the dragons. The final dance is theirs to judge.');
+    }, 4300);
+    this.later(() => { Music.play('dragonFinal'); this.next(); }, 6800);
+  },
+  press(p) {
+    if (this.busy || !this.seq.length) return;
+    this.flash(p);
+    if (p !== this.seq[this.pos]) {
+      this.busy = true;
+      beep(110, .5, 'sawtooth');
+      if (this.last()) this.roar();
+      $('dragon-text').textContent = this.last()
+        ? 'The masters roar. Smoke everywhere. Once more, from the first step.'
+        : 'The dragons snort. A puff of smoke. Try again.';
+      this.later(() => this.next(), this.last() ? 2200 : 1600);
+      return;
+    }
+    if (++this.pos < this.seq.length) return;
+    this.busy = true;
+    if (++this.round < this.ROUNDS.length - 1) {
+      $('dragon-text').textContent = 'The masters nod.';
+      this.later(() => this.next(), 1000);
+    } else if (this.round === this.ROUNDS.length - 1) {
+      this.rise();
+    } else {   // the last dance, done: judged worthy, in fire of every colour
+      this.seq = [];
+      this.round = this.ROUNDS.length - 1;
+      $('dragon-text').textContent = 'The masters rear up over you, and breathe.';
+      Music.play(null);
+      this.roar();
+      this.later(() => {
+        rainbowFire(4200);
+        chip(DRAGON_FANFARE, .13);
+        $('dragon-text').textContent = 'Ran and Shaw surround you with fire in colors you have never imagined.';
+      }, 1300);
+      this.later(() => unlock('dragon', () => Dragon.enter()), 5700);   // once the fire has cleared
+    }
+  },
+};
+SCENES['s-dragon'] = Dragon;
+$('dragon-btn').onclick = () => Dragon.start();
+document.querySelectorAll('.dpad').forEach(b => b.onclick = () => Dragon.press(+b.dataset.p));
+
+// ══════════════════════════════════════════════
+// THE SPIRIT WORLD — Koh the Face Stealer
+// ══════════════════════════════════════════════
+// Reached by lighting the four stones under the map in reverse order.
+
+function spiritWorld() {
+  document.body.classList.add('spirit-shift');
+  Music.play(null);
+  [660, 554, 440, 370, 294].forEach((f, i) => setTimeout(() => beep(f, .9, 'triangle'), i * 220));
+  setTimeout(() => { document.body.classList.remove('spirit-shift'); go('s-koh'); }, 1700);
+}
+
+const Koh = {
+  // Each round has one answer that shows nothing; anything else costs you your face.
+  ROUNDS: [
+    { text: '“My old friend, the Avatar. It\'s been a long time.”\nHe circles you slowly, waiting for the smallest expression.',
+      feels: ['Gasp!', 'Smile politely', 'Nervous laugh'], calm: '(say nothing)' },
+    { text: 'He blinks, and is suddenly wearing the face of someone you love.',
+      feels: ['…!', '…?', '…no.'], calm: '…' },
+  ],
+  enter() {
+    document.body.classList.add('spirit');
+    this.stop();
+    $('koh').classList.remove('lunge');
+    $('koh-barwrap').style.display = 'none';
+    this.setFace(1);
+    this.blink = setInterval(() => this.setFace(1 + Math.floor(Math.random() * 4)), 2600);
+    $('koh-text').textContent = 'A hollow tree, in a place with no bending and no sun. Something very long uncoils in the dark.\n“Welcome!”';
+    this.buttons(['Step closer, showing no emotion at all'], () => this.ask(0));
+  },
+  leave() { this.stop(); document.body.classList.remove('spirit'); },
+  stop() { clearInterval(this.blink); clearInterval(this.iv); this.chasing = false; },
+  setFace(n) { $('koh').innerHTML = art('koh-' + n); },
+  buttons(labels, onPick) { return choices('koh-opts', labels, onPick); },
+  ask(i) {
+    if (i >= this.ROUNDS.length) { this.lunge(); return; }
+    const r = this.ROUNDS[i];
+    if (i === 1) { clearInterval(this.blink); this.setFace(3); }
+    $('koh-text').textContent = r.text;
+    this.buttons(shuffle([...r.feels, r.calm]), label => label === r.calm ? this.ask(i + 1) : this.fail());
+  },
+  // Last test: he lunges, every answer is a scream, and the answers come after
+  // your cursor. The only way through is to click none of them until he gives up.
+  lunge() {
+    clearInterval(this.blink);
+    this.setFace(4);
+    $('koh').classList.add('lunge');
+    beep(70, .8, 'sawtooth');
+    $('koh-text').textContent = 'He lunges, close enough to touch. Every instinct you have wants to react.';
+    this.buttons(['AAAH!', 'EEK!', 'NOPE!', 'MOMMY!'], () => this.fail()).classList.add('chase');
+    $('koh-barwrap').style.display = '';
+    this.chasing = true; this.left = 7;
+    this.iv = setInterval(() => {
+      this.left -= .1;
+      $('koh-bar').style.width = (100 - this.left / 7 * 100) + '%';
+      if (this.left <= 0) this.win();
+    }, 100);
+  },
+  win() {
+    this.stop();
+    $('koh').classList.remove('lunge');
+    this.setFace(1);
+    $('koh-barwrap').style.display = 'none';
+    $('koh-opts').innerHTML = '';
+    $('koh-text').textContent = 'Nothing. Not a twitch. Koh studies your face for a long, disappointed moment and sinks back into the dark.\n“We\'ll meet again.”';
+    setTimeout(() => { if (cur === 's-koh') unlock('koh', () => go('s-map')); }, 1800);
+  },
+  fail() {
+    this.stop();
+    beep(90, .9, 'sawtooth');
+    say('noface', 'Your face moved. His is the last thing you see with it.\nKoh has stolen your face. Fortunately you can find the map by feel.', 'Mmmph!', () => go('s-map'));
+  },
+};
+SCENES['s-koh'] = Koh;
+window.addEventListener('pointermove', e => {
+  if (!Koh.chasing) return;
+  document.querySelectorAll('#koh-opts .option').forEach(b => {
+    const r = b.getBoundingClientRect();   // where the button would sit if it were not chasing
+    const cx = r.left + r.width / 2 - (b._tx || 0), cy = r.top + r.height / 2 - (b._ty || 0);
+    const dx = e.clientX - cx, dy = e.clientY - cy, dist = Math.hypot(dx, dy) || 1;
+    const pull = Math.min(dist, 90) * .85;
+    b._tx = dx / dist * pull; b._ty = dy / dist * pull;
+    b.style.transform = `translate(${b._tx}px, ${b._ty}px)`;
+  });
+});
+
+// ══════════════════════════════════════════════
+// EMBER ISLAND THEATER — "The Boy in the Iceberg"
+// ══════════════════════════════════════════════
+// Reached by clicking the first card in the binder, which carries the play's
+// name. The Ember Island Players get nearly everything wrong, and this is
+// their theater: the right answer is whatever happened on stage.
+
+const Play = {
+  STRIKES: 3,
+  // One entry per scene of the play: what it shows (`play`), what really
+  // happened (`truth`), and how it goes down in the balcony (`then`).
+  // An entry with only `pause` is an intermission.
+  ACTS: [
+    { act: 1, art: 'actress-aang', q: 'The iceberg splits open. Who is the Avatar?',
+      play: 'A woman, here to spread joy and fun', truth: 'A twelve-year-old boy', other: ['King Bumi', 'A platter of meaty dumplings'],
+      then: 'Aang: “I don\'t do that! That\'s not what I\'m like! And I\'m not a woman!”\nToph: “Oh, they nailed you, Twinkle Toes!”' },
+    { act: 1, art: 'actor-zuko', q: 'Prince Zuko scans the sea from the bow of his ship. Which eye is his scar over?',
+      play: 'His right eye', truth: 'His left eye', other: ['Both eyes', 'Neither. It is a birthmark'],
+      then: 'Young boy: “Your Zuko costume\'s pretty good, but your scar\'s on the wrong side.”\nZuko: “The scar\'s not on the wrong side!”' },
+    { act: 1, art: 'sokka', q: 'The Great Divide, the biggest canyon in the Earth Kingdom. What does the gang do?',
+      play: 'Keep flying', truth: 'Cross it on foot, with two feuding tribes', other: ['Fill it with water', 'Camp in it for a week'],
+      then: 'Actress Aang: “Look! It\'s the Great Divide! The biggest canyon in the Earth Kingdom!”\nActor Sokka: “Eh, let\'s keep flying.”' },
+    { pause: 'Intermission.\nZuko: “So far, this intermission is the best part of the play.”', btn: 'Back to your seat' },
+    { act: 2, art: 'actor-toph', q: 'Toph is blind. So how does Toph see?',
+      play: 'By releasing a sonic wave from his mouth', truth: 'By feeling the earth through her feet', other: ['Momo describes everything', 'With a very small telescope'],
+      then: 'Actor Toph: “I release a sonic wave from my mouth.” He screams at the whole theater.\nToph: “I wouldn\'t have cast it any other way!”' },
+    { act: 2, art: '', q: 'Under Lake Laogai, a rock comes down on top of Jet. Did Jet just... die?',
+      play: 'It was really unclear', other: ['Yes', 'No', 'He was never there'],
+      then: 'Zuko: “Did Jet just... die?”\nSokka: “You know, it was really unclear.”' },
+    { act: 3, art: 'ozai', q: 'The comet arrives. How does the war end?',
+      play: 'The Fire Lord wins', truth: 'The Avatar takes the Fire Lord\'s bending away', other: ['In a draw', 'Everyone agrees to share'],
+      then: 'Actor Ozai: “The world... is... mine!”\nThe audience gives it a standing ovation. This is, after all, a Fire Nation theater.' },
+  ],
+  enter() {
+    this.left = this.STRIKES;
+    this.lives(); this.actor('');
+    $('play-text').textContent = 'The nosebleed section of the Ember Island Theater. Tonight\'s play is the story of your own adventure.\nToph: “...what you\'re seeing up there on that stage is the truth.”';
+    choices('play-opts', ['Curtain up'], () => this.scene(0));
+  },
+  leave() { clearTimeout(this.t); document.body.classList.remove('shake'); },
+  actor(key) { $('play-actor').innerHTML = key ? art(key) : ''; },
+  lives() { $('play-lives').innerHTML = art('heart').repeat(Math.max(0, this.left)); },
+  scene(i) {
+    const s = this.ACTS[i], next = () => this.scene(i + 1);
+    if (!s) { this.verdict(); return; }
+    if (s.pause) {
+      this.actor('');
+      $('play-text').textContent = s.pause;
+      choices('play-opts', [s.btn], next);
+      return;
+    }
+    const ask = `Act ${s.act}. ${s.q}`;
+    this.actor(s.art);
+    $('play-text').textContent = ask;
+    const box = choices('play-opts', shuffle([s.play, ...(s.truth ? [s.truth] : []), ...s.other]), (label, b) => {
+      if (label === s.play) {
+        SFX.correct();
+        $('play-text').textContent = s.then;
+        choices('play-opts', ['Keep watching'], next);
+        return;
+      }
+      b.classList.add('wrong'); b.disabled = true;
+      SFX.wrong();
+      this.left--; this.lives();
+      if (this.left <= 0) { box.classList.add('locked'); this.out(); return; }
+      $('play-text').textContent = (label === s.truth
+        ? 'That is how it happened. It is not how the play tells it.'
+        : 'Not even the Ember Island Players went that far.') + ' The whole row in front turns round to shush you.\n' + ask;
+    });
+  },
+  // Three interruptions and you are shown out. The play is on again tomorrow.
+  out() {
+    say('actor-zuko', '“You sicken me!”\nThree interruptions. An usher walks you out of the theater, and the audience applauds that too. The play is on every night; your first card still gets you in.', 'Honor!', () => go('s-map'));
+  },
+  verdict() {
+    this.actor('');
+    $('play-opts').innerHTML = '';
+    $('play-text').textContent = 'The curtain falls. The audience is still cheering as you file out.';
+    say('zuko', 'Zuko: “That... wasn\'t a good play.”\nAang: “I\'ll say.”\nKatara: “No kidding.”\nSuki: “Horrible.”\nToph: “You said it.”',
+      'Sokka: “But the effects were decent.”', () => this.effects(), 'Outside the theater');
+  },
+  // "But the effects were decent": everything the game has, all at once.
+  effects() {
+    if (cur !== 's-play') return;
+    document.body.classList.add('shake');
+    rainbowFire(2600); confetti(260); chip(DRAGON_FANFARE, .11);
+    this.t = setTimeout(() => {
+      document.body.classList.remove('shake');
+      unlock('players', () => go('s-map'));
+    }, 2700);
+  },
+};
+SCENES['s-play'] = Play;
+
+// ══════════════════════════════════════════════
+// EMBER ISLAND BEACH — a forced vacation
+// ══════════════════════════════════════════════
+// The one place that is found by not playing. Leave the world map alone for a
+// while (another tab, another window) and Lo and Li are waiting when you come
+// back. After that first visit the island has a pin of its own.
+
+const Vacation = {
+  AWAY: 10,   // seconds away from the game that count as a holiday
+  since: 0, due: false,
+  leave() { if (!this.since && cur === 's-map') this.since = Date.now(); },
+  back() {
+    if (this.since && Date.now() - this.since >= this.AWAY * 1000) this.due = true;
+    this.since = 0;
+    this.check();
+  },
+  check() {
+    if (!this.due || S.ember || cur !== 's-map' || document.querySelector('.overlay.show')) return;
+    this.due = false;
+    S.ember = true; save();
+    say('loli', 'You stopped playing. It was noticed, and you are being sent away on a forced vacation.\n“Welcome to Ember Island, kids.”', 'Time to hit the beach!', () => go('s-beach'));
+  },
+};
+document.addEventListener('visibilitychange', () => document.hidden ? Vacation.leave() : Vacation.back());
+window.addEventListener('blur', () => Vacation.leave());
+window.addEventListener('focus', () => Vacation.back());
+
+// Kuai ball, the way Azula plays it. Her plan is given word for word; the catch
+// is that the girl with the pigtails is facing you, so her left is your right.
+const Beach = {
+  WIN: 5,
+  SPOTS: [22, 50, 78],   // where the other team stands, in % across the court
+  timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  enter() {
+    document.body.classList.add('smooth');
+    this.reset();
+    $('beach-text').textContent = 'Lo: “The beach has a special way...”\nLi: “...of smoothing even the most ragged edges.”';
+    say('azula', '“Hey, beach bums, we\'re playing next.”\n“See that girl with the silly pigtails? When she runs toward the ball, there\'s just the slightest hesitation of her left foot. I\'m willing to bet a childhood injury has weakened her. Keep serving the ball to her left, and we\'ll destroy her and the rest of her team.”', 'Dismissed.', () => {
+      if (cur === 's-beach') this.ready();
+    });
+  },
+  leave() {
+    this.timers.forEach(clearTimeout); this.timers = [];
+    document.body.classList.remove('smooth', 'shake');
+  },
+  reset() {
+    const st = $('beach-stage');
+    this.timers.forEach(clearTimeout); this.timers = [];
+    st.querySelectorAll('.kp, .netfire').forEach(e => e.remove());
+    this.us = this.them = 0; this.busy = true;
+    // the girl with the pigtails stands somewhere else every match
+    this.team = shuffle(['kuai-1', 'kuai-2', 'kuai-3']).map((key, i) => {
+      const el = document.createElement('div');
+      el.className = 'kp'; el.innerHTML = art(key); el.style.left = this.SPOTS[i] + '%';
+      st.append(el);
+      return { el, x: this.SPOTS[i], weak: key === 'kuai-1' };
+    });
+    $('kuai-ball').classList.remove('boom');
+    this.fly(50, 88, 0);
+    this.score();
+  },
+  ready() {
+    this.busy = false;
+    $('beach-text').textContent = `Kuai ball, first to ${this.WIN}. Click on the far side of the net to serve the ball there.`;
+  },
+  score() { $('beach-score').textContent = `You ${this.us} · ${this.them} Them`; },
+  // sends the ball in an arc to a spot on the court (both in % of the scene)
+  fly(x, y, ms = 550) {
+    const b = $('kuai-ball'), x0 = parseFloat(b.style.left) || 50, y0 = parseFloat(b.style.top) || 88;
+    b.style.left = x + '%'; b.style.top = y + '%';
+    if (ms) b.animate([
+      { left: x0 + '%', top: y0 + '%', easing: 'ease-out' },
+      { left: (x0 + x) / 2 + '%', top: Math.max(4, Math.min(y0, y) - 42) + '%', easing: 'ease-in' },
+      { left: x + '%', top: y + '%' },
+    ], ms);
+  },
+  serve(x) {
+    if (this.busy) return;
+    this.busy = true;
+    const who = this.team.reduce((a, b) => Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a);
+    const off = x - who.x;   // she is facing you across the net: anything above zero is to her left
+    const late = who.weak && off > 3;
+    who.el.classList.toggle('late', who.weak && off > 0);
+    who.el.style.left = x + '%';
+    beep(330, .12, 'square');
+    this.fly(x, 55);
+    this.later(() => {
+      if (late) { this.point(true, pick(['She starts a beat late. The ball is in the sand before she gets there.', 'Her left again. She does not make it.', 'The hesitation, right on cue. Your point.'])); return; }
+      // returned, and nobody on your side of the net is in the mood to chase it
+      beep(220, .12, 'square');
+      this.fly(rnd(25, 75), 86, 500);
+      this.later(() => this.point(false, who.weak
+        ? (off > 0 ? 'She stumbles, and still gets a toe to it. So close.' : 'The girl with the pigtails gets there easily, off her good foot.')
+        : pick(['Returned, hard. It lands between Zuko and Mai. Neither of them moves.', 'Straight back over the net. Ty Lee was busy waving at someone.', "Returned. Azula's eye twitches."])), 520);
+    }, 560);
+  },
+  point(ours, text) {
+    ours ? this.us++ : this.them++;
+    this.score();
+    ours ? SFX.correct() : SFX.wrong();
+    $('beach-text').textContent = text;
+    if (this.us >= this.WIN) { this.burn(); return; }
+    if (this.them >= this.WIN) {
+      this.later(() => say('azula', 'Their game. Azula says nothing at all for a moment, which is worse than shouting. Then she walks back to the serving line and repeats the plan, slowly.', 'Rematch', () => {
+        if (cur === 's-beach') { this.reset(); this.ready(); }
+      }), 900);
+      return;
+    }
+    this.later(() => {
+      this.team.forEach(p => { p.el.classList.remove('late'); p.el.style.left = p.x + '%'; });
+      this.fly(50, 88, 400);
+      this.busy = false;
+    }, 1100);
+  },
+  // The last serve, as in the show: the ball swells, bursts, and takes the net with it.
+  burn() {
+    $('kuai-ball').classList.add('boom');
+    this.later(() => {
+      beep(70, .9, 'sawtooth');
+      document.body.classList.add('shake');
+      for (let x = 10; x <= 90; x += 10) {
+        const f = document.createElement('div');
+        f.className = 'netfire'; f.innerHTML = art('el-fire'); f.style.left = x + '%';
+        $('beach-stage').append(f);
+      }
+      $('beach-text').textContent = 'The ball swells, bursts, and sets the net on fire.';
+    }, 550);
+    this.later(() => {
+      document.body.classList.remove('shake');
+      say('azula', '“Yes! We defeated you for all time! You will never rise from the ashes of your shame and humiliation!”', '“Well. That was fun.”', () => unlock('beach', () => go('s-map')));
+    }, 1900);
+  },
+};
+SCENES['s-beach'] = Beach;
+$('beach-stage').addEventListener('click', e => {
+  if (Beach.busy) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  if ((e.clientY - r.top) / r.height > .68) { $('beach-text').textContent = 'That is your own side of the net.'; return; }
+  Beach.serve(clamp((e.clientX - r.left) / r.width * 100, 8, 92));
+});
+
+// ══════════════════════════════════════════════
+// THE SOUTH POLE — fishing, the way the series opens
+// ══════════════════════════════════════════════
+// Reached through the little canoe at the bottom of the map. Sokka's spear
+// (a click) never catches anything, in this scene or any other. What works is
+// what Katara does: hold on to the water, wait for a fish to swim into it, and
+// lift. It ends the way it does in the show.
+
+const Fishing = {
+  SURFACE: .3125,   // how far down the scene the waterline is drawn
+  tok: 0, timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  enter() {
+    const st = this.st = $('fish-stage');
+    st.querySelectorAll('.swim').forEach(e => e.remove());
+    this.fish = Array.from({ length: 5 }, (_, i) => {
+      const el = document.createElement('div');
+      el.className = 'swim'; el.innerHTML = art('fish');
+      st.append(el);
+      const y = .44 + i * .11;
+      return { el, x: rnd(.1, .9), y, home: y, v: rnd(.07, .13) * (i % 2 ? 1 : -1), dart: 0 };
+    });
+    this.held = this.bending = this.floating = this.done = false;
+    this.caught = null; this.misses = 0; this.bx = this.by = .5;
+    this.run = true; this.last = performance.now();
+    $('fish-text').textContent = 'The icy South Pole seas, where it all began. Sokka has a spear and a plan. Click on a fish to throw it.';
+    const tok = ++this.tok;
+    const frame = now => { if (tok !== this.tok || !this.run) return; this.tick(now); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+  },
+  leave() {
+    this.run = false; this.tok++;
+    this.timers.forEach(clearTimeout); this.timers = [];
+    clearTimeout(this.holdT); clearTimeout(this.spearT);
+    $('bubble').style.display = 'none';
+    $('spear').classList.remove('throw');
+  },
+  tick(now) {
+    const dt = Math.min(.05, (now - this.last) / 1000);
+    this.last = now;
+    const W = this.st.clientWidth, H = this.st.clientHeight, R = W * .085;   // R: the ball of water
+    if (this.floating) {   // drifting over to hang above Sokka's head
+      this.bx += (.47 - this.bx) * Math.min(1, dt * 3);
+      this.by += (.12 - this.by) * Math.min(1, dt * 3);
+    }
+    const b = $('bubble');
+    b.style.display = this.bending || this.floating ? 'block' : 'none';
+    b.style.left = this.bx * 100 + '%'; b.style.top = this.by * 100 + '%';
+    for (const f of this.fish) {
+      if (f === this.caught) { f.x = this.bx; f.y = this.by; }
+      else {
+        f.dart = Math.max(0, f.dart - dt);
+        f.x += f.v * (f.dart ? 5 : 1) * dt;
+        if (f.x < .04 || f.x > .96) { f.v = -f.v; f.x = clamp(f.x, .04, .96); }
+        f.y += clamp(f.home - f.y, -dt * .3, dt * .8);   // back to its own depth
+        // water that is being held takes along whatever swims into it
+        if (this.bending && !this.caught && this.by > this.SURFACE && Math.hypot((f.x - this.bx) * W, (f.y - this.by) * H) < R * .7) {
+          this.caught = f;
+          beep(660, .2, 'triangle');
+          $('fish-text').textContent = 'There is a fish in it. Lift it out of the sea, gently.';
+        }
+      }
+      f.el.style.transform = `translate(${f.x * W}px, ${f.y * H}px) translate(-50%,-50%) scaleX(${f.v < 0 ? -1 : 1})`;
+    }
+    if (this.bending && this.caught && this.by < this.SURFACE - .08) this.landed();
+  },
+  press(x, y) {
+    if (this.done) return;
+    this.held = true; this.bx = x; this.by = y;
+    clearTimeout(this.holdT);
+    this.holdT = setTimeout(() => {   // held rather than jabbed, and in the water: it answers
+      if (!this.held || this.by <= this.SURFACE) return;
+      this.bending = true;
+      beep(520, .3, 'triangle');
+      $('fish-text').textContent = 'You hold your hand still, and the water rises to meet it. Now it needs a fish.';
+    }, 350);
+  },
+  move(x, y) { if (this.held && !this.done) { this.bx = x; this.by = y; } },
+  release(x, y) {
+    if (!this.held || this.done) return;
+    this.held = false;
+    clearTimeout(this.holdT);
+    if (!this.bending) { this.strike(x, y); return; }
+    this.bending = false;
+    $('fish-text').textContent = this.caught
+      ? 'You let go too soon. The water drops back into the sea and takes the fish with it.'
+      : 'You let go, and the water drops back with a slap.';
+    if (this.caught) { this.caught.dart = .6; this.caught = null; }
+  },
+  // The spear. Every fish near it is gone before it lands.
+  strike(x, y) {
+    const sp = $('spear');
+    sp.style.left = x * 100 + '%'; sp.style.top = y * 100 + '%';
+    sp.classList.remove('throw'); void sp.offsetWidth; sp.classList.add('throw');
+    clearTimeout(this.spearT);
+    this.spearT = setTimeout(() => sp.classList.remove('throw'), 450);
+    beep(240, .1, 'square');
+    if (y <= this.SURFACE) { $('fish-text').textContent = 'That is the sky. The fish are further down.'; return; }
+    for (const f of this.fish) {
+      if (Math.abs(f.x - x) < .16 && Math.abs(f.y - y) < .12) { f.dart = .5; f.v = Math.abs(f.v) * (f.x < x ? -1 : 1); }
+    }
+    const lines = [
+      'Sokka: “It\'s not getting away from me this time. Watch and learn, Katara. This is how you catch a fish.”\nIt gets away.',
+      'A miss. The fish does not even look worried.',
+      'Sokka: “Mmmm ... I can already smell it cookin\'.”\nThat is the only place it is cooking.',
+      'Another miss. Behind Sokka, Katara has taken off her glove and is holding her hand out over the water.',
+      'Miss. Katara is not stabbing the sea. She holds on to it, waits, and lifts.',
+    ];
+    $('fish-text').textContent = lines[this.misses < lines.length ? this.misses : 1 + this.misses % (lines.length - 1)];
+    this.misses++;
+  },
+  // Caught, by waterbending. What happens next is what happened in the show.
+  landed() {
+    this.done = true; this.held = this.bending = false; this.floating = true;
+    beep(784, .4, 'triangle');
+    $('fish-text').textContent = 'Katara: “Sokka, look!”\nSokka: “Sshh! Katara, you\'re going to scare it away.”';
+    this.later(() => { $('fish-text').textContent = 'Katara: “But, Sokka! I caught one!”\nSokka raises his spear to strike, and the blunt end goes straight into the bubble.'; }, 2800);
+    this.later(() => this.burst(), 5000);
+  },
+  burst() {
+    this.floating = false;
+    this.caught.dart = .8; this.caught = null;   // the fish tumbles back into the sea
+    beep(140, .5, 'sawtooth');
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'cabp'; p.innerHTML = art('el-water');
+      p.style.left = this.bx * 100 + rnd(-7, 7) + '%'; p.style.top = this.by * 100 + rnd(-7, 7) + '%';
+      p.style.setProperty('--dx', rnd(-90, 90) + 'px');
+      p.style.setProperty('--dy', rnd(60, 200) + 'px');
+      p.style.setProperty('--r', rnd(-90, 90) + 'deg');
+      this.st.append(p);
+      setTimeout(() => p.remove(), 1250);
+    }
+    $('fish-text').textContent = 'All of it comes down on Sokka. The fish drops back into the sea.';
+    this.later(() => say('sokka', '“Why is it that every time you play with magic water, I get soaked?”', 'It is not magic!', () =>
+      say('katara', '“It\'s not ‘magic’, it\'s waterbending! And it\'s...”', 'Yeah, yeah. Blah, blah, blah.', () =>
+        unlock('fish', () => go('s-map')))), 1400);
+  },
+};
+SCENES['s-fish'] = Fishing;
+(() => {
+  const st = $('fish-stage');
+  const at = e => { const r = st.getBoundingClientRect(); return [clamp((e.clientX - r.left) / r.width, 0, 1), clamp((e.clientY - r.top) / r.height, 0, 1)]; };
+  st.addEventListener('pointerdown', e => { Fishing.press(...at(e)); st.setPointerCapture(e.pointerId); });
+  st.addEventListener('pointermove', e => Fishing.move(...at(e)));
+  ['pointerup', 'pointercancel'].forEach(type => st.addEventListener(type, e => Fishing.release(...at(e))));
+})();
+
+// ══════════════════════════════════════════════
+// FINALE — Sozin's Comet
+// ══════════════════════════════════════════════
+
+const Ozai = {
+  enter() {
+    this.phase = 'quiz';
+    clearInterval(this.iv);
+    const box = $('ozai-box');
+    box.innerHTML = `
+      <div class="scene-text" id="ozai-text">"So you are the card collector. You like quizzes so much? Then answer my question — or burn."</div>
+      <div class="card" style="padding:20px">
+        <div class="question-label">The final question</div>
+        <div class="question-text">Who is the rightful ruler of the entire world?</div>
+        <div class="options" id="ozai-opts"></div>
+      </div>`;
+    ['Fire Lord Ozai', 'Phoenix King Ozai', 'Ozai (but with a cape)', "Zuko's dad"].forEach((o, i) => {
+      const b = document.createElement('button');
+      b.className = 'option'; b.innerHTML = `<span class="letter">${'ABCD'[i]}</span>`; b.append(o);
+      b.onclick = () => this.burn();
+      $('ozai-opts').append(b);
+    });
+  },
+  leave() { clearInterval(this.iv); this.phase = null; },
+  burn() {
+    if (this.phase !== 'quiz') return;
+    this.phase = 'burning';
+    SFX.wrong(); beep(80, .9, 'sawtooth');
+    document.querySelectorAll('#ozai-opts .option').forEach((b, i) => setTimeout(() => b.classList.add('burn'), i * 120));
+    $('ozai-text').textContent = '"WRONG! The correct answer was: ME. And I am done with multiple choice."';
+    setTimeout(() => { if (this.phase === 'burning') this.elements(); }, 2200);
+  },
+  elements() {
+    this.phase = 'elements';
+    $('ozai-box').innerHTML = `
+      <div class="scene-text">Your answers are ashes. Quizzing will not save you now.<br>But you learned more than answers along the way…</div>
+      <div class="pads" id="ozai-pads"></div>`;
+    makePads($('ozai-pads'), [[CYCLE, () => avatarState(() => { if (this.phase === 'elements') this.bend(); })]]);
+  },
+  bend() {
+    this.phase = 'bend'; this.v = 30; this.surged = false; this.started = false;
+    Music.play('ozaiBend');
+    $('ozai-box').innerHTML = `
+      <div class="scene-text" id="ozai-text">The Avatar State! Put your hand on his forehead and take his firebending away.<br><b>Click as fast as you can</b> (or hammer the space bar).</div>
+      <div class="tug"><div id="tug-bar"></div></div>
+      <button class="btn btn-bend" id="bend-btn">Energybend!</button>`;
+    $('bend-btn').onclick = () => this.push();
+    this.iv = setInterval(() => {
+      if (!this.started) return;   // he only pushes back once you have started
+      this.v -= 1;
+      $('tug-bar').style.width = Math.max(0, this.v) + '%';
+      if (this.v <= 0) this.lose();
+    }, 100);
+  },
+  push() {
+    if (this.phase !== 'bend') return;
+    this.started = true;
+    this.v += 4.5;
+    beep(300 + this.v * 6, .08);
+    if (this.v >= 72 && !this.surged) {   // Ozai pushes back once, like in the show
+      this.surged = true; this.v = 30;
+      $('ozai-text').innerHTML = '“Even with all the power in the world, you are still weak!”<br>His spirit floods yours… <b>don\'t give up!</b>';
+      $('s-ozai').classList.remove('surge'); void $('s-ozai').offsetWidth; $('s-ozai').classList.add('surge');
+      beep(60, 1.2, 'sawtooth');
+    }
+    $('tug-bar').style.width = Math.min(100, this.v) + '%';
+    if (this.v >= 100) this.win();
+  },
+  // Losing is not the end: it turns out to have been a training exercise.
+  lose() {
+    this.phase = 'lost';
+    clearInterval(this.iv);
+    beep(55, 1.6, 'sawtooth');
+    Music.play(null);
+    document.body.classList.add('blackout');
+    setTimeout(() => {
+      document.body.classList.remove('blackout');
+      if (cur !== 's-ozai') return;
+      const again = () => go('s-ozai');
+      if (has('melon')) { say('melon', 'Flattened again. The Melon Lord shows no mercy.', 'Again!', again); return; }
+      say('melon', 'You open your eyes. No comet. No Fire Lord. Just a scarecrow with a melon for a head, and a very pleased earthbender hiding behind it.\n“I am not Toph. I am Melon Lord!”', 'It was only training?!', () => unlock('melon', again));
+    }, 1500);
+  },
+  win() {
+    this.phase = 'won';
+    clearInterval(this.iv);
+    Music.play(null);
+    avatarState(() => {
+      $('ozai-box').innerHTML = '<div class="scene-text">“What? What did you do to me?”<br>You took away his firebending. And his last card.</div>';
+      unlock('energy', () => go('s-end'));
+    });
+  },
+};
+SCENES['s-ozai'] = Ozai;
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && cur === 's-ozai' && Ozai.phase === 'bend') {
+    e.preventDefault();
+    if (!e.repeat) Ozai.push();
+  }
+});
+
+// ══════════════════════════════════════════════
+// THE END
+// ══════════════════════════════════════════════
+
+SCENES['s-end'] = {
+  enter() {
+    const name = CONFIG.name ? `, ${CONFIG.name}` : '';
+    $('end-title').textContent = `Happy Birthday${name}!`;
+    $('end-text').innerHTML = `All ${CARDS.length} cards found. The world is saved, the tea is brewed and the cabbage merchant is bankrupt.<br>Well played, master of all four elements.`;
+    $('end-grid').innerHTML = CARDS.map(c => cardHTML(c, true)).join('');
+    const left = SECRETS.length - secretsFound();
+    $('end-tease').textContent = left
+      ? `…and yet the spirits whisper of ${left} secret card${left > 1 ? 's' : ''} still hidden out there. Uncle Iroh may know more.`
+      : 'Every secret found as well. There is truly nothing left to hide.';
+    $('end-secrets').innerHTML = SECRETS.map(c => cardHTML(c, true, !has(c.id))).join('');
+    confetti(400);
+    this.iv = setInterval(() => confetti(200), 6000);
+  },
+  leave() { clearInterval(this.iv); },
+};
+$('end-back').onclick = () => go('s-map');
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+
+document.querySelectorAll('[data-art]').forEach(e => { e.innerHTML = art(e.dataset.art); });
+makePads($('map-pads'), [
+  [CYCLE, () => avatarState(() => unlock('avatar'))],
+  [CYCLE.slice().reverse(), spiritWorld],   // the cycle run backwards opens the Spirit World
+]);
+Object.keys(ART).forEach(k => probeArt(k));
+ALL_CARDS.forEach(c => probeArt('card-' + c.id));
+Object.keys(STAGES).forEach(s => probeArt('stage-' + s));
+probeArt('stage-cave-dark');
+SCENE_NAMES.forEach(s => probeArt('bg-' + s));
+
+if (CONFIG.name) $('start-sub').textContent = `Birthday Edition for ${CONFIG.name}`;
+$('start-progress').textContent = `${mainFound()} / ${CARDS.length} cards found`;
+$('btn-start').textContent = S.found.length ? 'Continue' : 'Start the quiz';
+$('btn-start').onclick = () => go(S.stage === 'map' ? 's-map' : 's-quiz');
+updateHud();
+Music.play(tuneFor(cur));
+
+if (localStorage.getItem(LS_KEY + '_reborn')) {   // this life began with "Erase everything"
+  const again = +localStorage.getItem(LS_KEY + '_lives') > 1;
+  setTimeout(() => say('roku', again
+    ? 'Reborn again. At this point you are collecting lifetimes, not cards.'
+    : 'Everything is gone: the cards, the map, the quiz. And yet here you are, as if you had done all this before.\nYou have. That is rather the point of being the Avatar.',
+    'A new life', () => { localStorage.removeItem(LS_KEY + '_reborn'); unlock('cycle'); }), 700);
+}
+</script>
+</body>
+</html>
