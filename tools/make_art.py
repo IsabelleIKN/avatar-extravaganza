@@ -608,6 +608,19 @@ ART['pin-desert'] = grid([
     'ttTTTTTTTTTTTTTTTT',
 ], edge='N')
 
+ART['pin-swamp'] = grid([                                  # the banyan-grove tree, roots hanging into the water
+    '....lllll',
+    '..llleeee',
+    '.lleeeeee',
+    'leeeeeEee',
+    'EEeEEEEEE',
+    '.N..N..nn',
+    '.N..N..nn',
+    '....N..nn',
+    '......nNN',
+    'EEEEEnNNN',
+], mirror=True)
+
 ART['pin-cave'] = grid([
     '........w',
     '.......ww',
@@ -735,25 +748,26 @@ def teapot():
 ART['teapot'] = teapot()
 
 
+def koi_fish(im, a0, body, spot):
+    """One koi, curled along a circle in a 28 x 28 box, its head at angle a0."""
+    pts = []
+    for i in range(60):
+        t = i / 59
+        a = a0 - t * math.pi * .92
+        pts.append((14 + 8 * math.cos(a), 14 + 8 * math.sin(a), 3.4 * (1 - t) ** .7 + .7))
+    for x, y, r in reversed(pts):
+        disc(im, x, y, r, body)
+    tx, ty, _ = pts[-1]                                     # tail fin
+    disc(im, tx + (tx - 14) * .25, ty + (ty - 14) * .25, 1.6, body)
+    hx, hy, _ = pts[4]
+    disc(im, hx, hy, 1.3, spot)
+
+
 def koi():
     """Tui and La: a white and a black koi circling each other."""
     im = new(28, 28)
-
-    def fish(a0, body, spot):
-        pts = []
-        for i in range(60):
-            t = i / 59
-            a = a0 - t * math.pi * .92
-            pts.append((14 + 8 * math.cos(a), 14 + 8 * math.sin(a), 3.4 * (1 - t) ** .7 + .7))
-        for x, y, r in reversed(pts):
-            disc(im, x, y, r, body)
-        tx, ty, _ = pts[-1]                                 # tail fin
-        disc(im, tx + (tx - 14) * .25, ty + (ty - 14) * .25, 1.6, body)
-        hx, hy, _ = pts[4]
-        disc(im, hx, hy, 1.3, spot)
-
-    fish(0, P['w'], P['D'])
-    fish(math.pi, P['D'], P['w'])
+    koi_fish(im, 0, P['w'], P['D'])
+    koi_fish(im, math.pi, P['D'], P['w'])
     return outline(im, P['B'])
 
 
@@ -2397,6 +2411,555 @@ def card_fish():
 ART['card-players'] = card_players()
 ART['card-beach'] = card_beach()
 ART['card-fish'] = card_fish()
+
+
+# ── the Spirit Oasis, broken and mended: Zhao and Yue ───────────
+
+def koi_alone(white):
+    """Tui (white) or La (black) on its own. La keeps its place in the 28 x 28
+    box, so it can stand in for the pair once Tui is gone; Tui is cropped."""
+    im = new(28, 28)
+    if white:
+        koi_fish(im, 0, P['w'], P['D'])
+        im = im.crop(im.getbbox())
+    else:
+        koi_fish(im, math.pi, P['D'], P['w'])
+    return outline(im, P['B'])
+
+
+def zhao():
+    D, a = P['D'], P['a']
+    im, d = bust(P['T'], col('#3a2a2e'), P['R'], hair=D, hair_box=(9, 3, 22, 11), face_box=(10, 6, 21, 24))
+    d.rectangle((14, 1, 17, 4), fill=D)                    # topknot
+    d.rectangle((14, 0, 17, 0), fill=a)                    # and its crown piece
+    d.polygon([(9, 10), (10, 10), (11, 16), (12, 21), (9, 23), (6, 20), (7, 14)], fill=D)     # those sideburns,
+    d.polygon([(22, 10), (21, 10), (20, 16), (19, 21), (22, 23), (25, 20), (24, 14)], fill=D) # flaring out to a point
+    dots(im, [(7, 20), (8, 21), (24, 20), (23, 21)], P['d'])
+    dots(im, [(11, 12), (12, 12), (13, 12), (14, 13), (20, 12), (19, 12), (18, 12), (17, 13)], D)   # heavy brows
+    dots(im, [(12, 14), (13, 14), (18, 14), (19, 14)], D)
+    dots(im, [(15, 16), (16, 16)], P['s'])
+    dots(im, [(13, 20), (14, 20), (15, 20), (16, 20), (17, 19), (18, 18)], D)                       # the smirk
+    for side in (1, -1):                                   # admiral's shoulder plates
+        x0 = 0 if side == 1 else 31
+        d.polygon([(x0, 28), (x0 + side * 6, 22), (x0 + side * 11, 27)], fill=P['R'])
+        d.line((x0, 28, x0 + side * 6, 22), fill=a)
+    return outline(im, P['k'])
+
+
+def yue():
+    w, D = P['w'], P['D']
+    im, d = bust(P['S'], col('#5d6fc4'), w, hair=w, hair_box=(6, 4, 25, 22))
+    d.rectangle((6, 13, 9, 31), fill=w)                    # long white hair, down past the shoulders
+    d.rectangle((22, 13, 25, 31), fill=w)
+    d.ellipse((9, 8, 22, 24), fill=P['S'])
+    d.polygon([(9, 12), (12, 7), (19, 7), (22, 12), (19, 9), (12, 9)], fill=w)
+    d.ellipse((12, 0, 19, 6), fill=w)                      # the knot on top, with its blue band
+    d.line((12, 5, 19, 5), fill=P['b'])
+    for x, bead in ((9, 10), (22, 21)):                    # hair loopies
+        dots(im, [(x, 12), (x, 13), (x, 14), (x, 15), (bead, 16)], w)
+        dots(im, [(bead, 12), (bead, 13)], P['c'])
+    dots(im, [(11, 15), (20, 15)], D)
+    dots(im, [(12, 15), (19, 15)], P['b'])
+    dots(im, [(11, 13), (12, 13), (19, 13), (20, 13)], P['W'])
+    dots(im, [(15, 17), (16, 17)], P['N'])
+    dots(im, [(14, 20), (15, 21), (16, 21), (17, 20)], D)
+    return outline(im, P['k'])
+
+
+def red_moon():
+    return recolor(ART['moon'], {P['w']: col('#ef6a5a'), P['W']: P['r'], P['g']: P['R'], col('#9fb4d8'): col('#5a1218')})
+
+
+def card_zhao():
+    im, d = scene(('#1c0406', '#4a0e12', '#8c1f24'))
+    rnd = random.Random(11)
+    for _ in range(16):
+        dots(im, [(rnd.randrange(CW), rnd.randrange(26))], col('#ef6a5a'))
+    put(im, red_moon(), 33, 2)
+    d.rectangle((0, 38, CW, CH), fill=col('#3a0a0e'))                                          # the oasis, red
+    d.ellipse((6, 39, 54, 52), fill=col('#5a1218'))
+    d.arc((10, 41, 50, 51), 190, 350, fill=P['R'])
+    D = P['D']
+    d.polygon([(10, 44), (12, 27), (22, 27), (24, 44)], fill=D)                                # Zhao, from behind the light
+    disc(im, 17, 22, 4.5, D)
+    d.rectangle((15, 15, 18, 18), fill=D)                                                      # topknot
+    d.polygon([(6, 30), (12, 24), (14, 28)], fill=D)                                           # shoulder plates
+    d.polygon([(28, 30), (22, 24), (20, 28)], fill=D)
+    d.line((22, 29, 27, 18), fill=D, width=2)                                                  # the arm, holding up the sack
+    sack, tie = col('#8a7448'), col('#4a3a2a')
+    d.ellipse((22, 7, 33, 19), fill=sack)
+    d.polygon([(25, 8), (27, 3), (29, 3), (30, 8)], fill=sack)                                 # gathered at the neck
+    d.line((25, 7, 30, 7), fill=tie)
+    put(im, ART['tui'].resize((9, 9), Image.NEAREST), 29, 0)                                   # a white tail, sticking out
+    return im
+
+
+def card_yue():
+    im, d = scene(('#070b24', '#152a66', '#2a4f94'))
+    rnd = random.Random(12)
+    for _ in range(18):
+        dots(im, [(rnd.randrange(CW), rnd.randrange(30))], P['w'])
+    px = im.load()
+    for y in range(CH):                                                                        # moonlight, dithered
+        for x in range(CW):
+            dist = math.hypot(x - 15, y - 13)
+            if dist < 18 and (BAYER[y % 4][x % 4] + .5) / 16 > dist / 18 + .15:
+                px[x, y] = P['c']
+    put(im, ART['moon'], 2, 0)
+    d.rectangle((0, 43, CW, CH), fill=col('#16305a'))                                          # the pond, lit up
+    d.line((0, 43, CW, 43), fill=P['C'])
+    for y in range(44, CH, 2):
+        d.line((24, y, 50, y), fill=col('#3f6fb0'))
+    glow = col('#bfe6f5')
+    d.polygon([(37, 18), (28, 44), (46, 44)], fill=glow)                                       # Yue, rising out of the light
+    d.polygon([(37, 21), (31, 44), (43, 44)], fill=P['w'])
+    d.rectangle((32, 13, 34, 30), fill=P['w'])                                                 # her long white hair
+    d.rectangle((40, 13, 42, 30), fill=P['w'])
+    disc(im, 37, 14, 4, P['w'])
+    disc(im, 37, 15, 3, P['S'])
+    d.rectangle((35, 8, 39, 10), fill=P['w'])                                                  # the knot on top
+    d.line((35, 10, 39, 10), fill=P['b'])
+    dots(im, [(36, 15), (38, 15)], P['D'])
+    put(im, ART['koi'].resize((12, 12), Image.NEAREST), 6, 36)
+    return im
+
+
+# ── Lake Laogai: the room where Joo Dees are made ──────────────
+
+def joodee():
+    D = P['D']
+    im, d = bust(P['T'], P['e'], P['l'], hair=D, hair_box=(7, 3, 24, 18))
+    d.ellipse((11, 0, 20, 7), fill=D)                      # hair up in a bun, with a green band
+    d.line((11, 5, 20, 5), fill=P['l'])
+    d.ellipse((9, 8, 22, 24), fill=P['T'])
+    d.polygon([(9, 12), (12, 7), (19, 7), (22, 12), (19, 9), (12, 9)], fill=D)
+    dots(im, [(11, 15), (12, 14), (13, 15), (18, 15), (19, 14), (20, 15)], D)   # eyes shut, smiling
+    dots(im, [(15, 17), (16, 17)], P['s'])
+    d.line((12, 19, 19, 19), fill=D)                       # and the smile, as wide as it goes
+    d.line((13, 20, 18, 20), fill=P['w'])
+    dots(im, [(11, 18), (20, 18), (12, 20), (19, 20)], D)
+    d.line((14, 21, 17, 21), fill=D)
+    dots(im, [(10, 18), (21, 18)], P['m'])
+    return outline(im, P['k'])
+
+
+LANTERN = [
+    '..k..',
+    '.kAk.',
+    'oyyyo',
+    'oyYyo',
+    'oyYyo',
+    'oyyyo',
+    '.oOo.',
+    '..k..',
+]
+
+# the ring track the lantern runs on, in backdrop pixels (the game moves the lantern along the same ellipse)
+RING = (88, 52, 44, 12)
+
+
+def stage_laogai():
+    im = new(SW, SH, col('#141c18'))
+    d = ImageDraw.Draw(im)
+    stone, seam = col('#26332c'), col('#1a241f')
+    d.rectangle((0, 0, SW, 60), fill=stone)                 # the back wall, in blocks
+    for y in range(0, 60, 8):
+        d.line((0, y, SW, y), fill=seam)
+        for x in range((y // 8 % 2) * 10, SW, 20):
+            d.line((x, y, x, y + 8), fill=seam)
+    vgrad(im, 60, SH, [col(c) for c in ('#2e3b33', '#222c26', '#161d19')])   # the floor
+    px = im.load()
+    for y in range(SH):                                     # one pool of light in the middle
+        for x in range(SW):
+            dist = math.hypot((x - 88) / 1.6, y - 50)
+            if dist < 40 and (BAYER[y % 4][x % 4] + .5) / 16 > dist / 40 + .25:
+                px[x, y] = col('#3d5244') if y < 60 else col('#465c4c')
+    for x0 in (22, 140):                                    # Dai Li banners
+        d.rectangle((x0, 6, x0 + 13, 40), fill=P['E'])
+        d.polygon([(x0, 40), (x0 + 6, 46), (x0 + 13, 40)], fill=P['E'])
+        d.rectangle((x0 + 2, 8, x0 + 11, 38), fill=P['e'])
+        d.ellipse((x0 + 3, 16, x0 + 10, 23), fill=P['a'])
+        d.ellipse((x0 + 5, 18, x0 + 8, 21), fill=P['E'])
+    cx, cy, rx, ry = RING                                   # the ring track, on three posts
+    for x in (cx - rx + 4, cx, cx + rx - 4):
+        d.line((x, cy + 3, x, 70), fill=col('#3a3f44'))
+    d.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), outline=col('#8a9096'))
+    d.ellipse((cx - rx + 1, cy - ry + 1, cx + rx - 1, cy + ry - 1), outline=col('#4a5056'))
+    return im
+
+
+def card_laogai():
+    im, d = scene(('#0e1a14', '#1e3326', '#2e4a38'))
+    face = ART['joodee'].resize((22, 22), Image.NEAREST)
+    for i, (x, y) in enumerate(((-3, -2), (17, -2), (37, -2), (7, 14), (27, 14), (47, 14), (-3, 30), (17, 30), (37, 30))):
+        put(im, face, x, y)
+    put(im, ART['lantern'], 54, 2)
+    return im
+
+
+ART['joodee'] = joodee()
+ART['lantern'] = grid(LANTERN)
+ART['stage-laogai'] = stage_laogai()
+ART['card-laogai'] = card_laogai()
+
+# ── Appa's dream: the Eastern Air Temple, the day they met ─────
+
+def young_aang():
+    """Aang as a small boy, before his arrows, one arm held out."""
+    im = new(22, 34)
+    d = ImageDraw.Draw(im)
+    T, D = P['T'], P['D']
+    d.ellipse((3, 0, 14, 11), fill=T)                      # head
+    dots(im, [(6, 5), (11, 5), (6, 6), (11, 6)], D)
+    dots(im, [(7, 8), (8, 9), (9, 9), (10, 8)], D)
+    dots(im, [(5, 7), (12, 7)], P['m'])
+    d.rectangle((4, 12, 13, 24), fill=P['y'])              # yellow shirt
+    d.polygon([(4, 12), (8, 12), (6, 24), (4, 24)], fill=P['o'])   # orange sash over one shoulder
+    d.rectangle((13, 14, 20, 16), fill=P['y'])             # the arm, held out
+    d.rectangle((19, 14, 21, 16), fill=T)
+    d.rectangle((5, 24, 12, 30), fill=P['o'])              # trousers and shoes
+    d.rectangle((5, 31, 7, 33), fill=P['N'])
+    d.rectangle((10, 31, 12, 33), fill=P['N'])
+    return outline(im, P['k'])
+
+
+APPLE = [
+    '..e.',
+    '.re.',
+    'rYrr',
+    'rrrR',
+    '.RR.',
+]
+
+
+def sepia(im):
+    """Old photo colours, the way the show draws a memory."""
+    out = im.copy()
+    px = out.load()
+    ramp = [col(c) for c in ('#2a1d12', '#5a4128', '#8c6a44', '#bf9b6a', '#e8d2a6', '#fbf1d8')]
+    for y in range(out.size[1]):
+        for x in range(out.size[0]):
+            r, g, b, a = px[x, y]
+            lum = (r * .3 + g * .59 + b * .11) / 255
+            px[x, y] = ramp[min(5, int(lum * 6))][:3] + (a,)
+    return out
+
+
+def stage_dream():
+    im = new(SW, SH)
+    vgrad(im, 0, 70, [col(c) for c in ('#7fbfea', '#b5dff3', '#e8f1e2')])
+    put(im, ART['cloud'], 6, 10)
+    put(im, ART['cloud'], 120, 22)
+    ridge(im, 60, 10, col('#9fb0c0'), 31)
+    d = ImageDraw.Draw(im)
+    for x, top, w in ((126, 14, 7), (140, 6, 9), (156, 18, 7)):          # the temple's spires on their peaks
+        d.polygon([(x - 14, 70), (x, top + 18), (x + 14, 70)], fill=col('#c9c0b0'))
+        d.rectangle((x - w // 2, top + 6, x + w // 2, top + 22), fill=col('#efe6d0'))
+        d.polygon([(x - w // 2 - 2, top + 7), (x, top), (x + w // 2 + 2, top + 7)], fill=col('#3f8fd6'))
+        d.rectangle((x - 1, top + 12, x + 1, top + 15), fill=col('#5a4128'))
+    vgrad(im, 70, SH, [col(c) for c in ('#d8cdb4', '#bfb196', '#a8987a')])   # the stone terrace
+    d.line((0, 70, SW, 70), fill=col('#efe6d0'))
+    for x in range(0, SW, 22):
+        d.line((x, 71, x - 8, SH), fill=col('#a8987a'))
+    return im
+
+
+def card_friend():
+    im, d = scene(('#4f7f9c', '#7f9fb0', '#9fb0b8'))
+    ridge(im, 30, 6, col('#5f6f7c'), 4)
+    d.rectangle((0, 38, CW, CH), fill=col('#8a7f6a'))
+    put(im, ART['appa'].resize((34, 22), Image.NEAREST), 1, 18)        # a calf, sniffing
+    put(im, ART['young-aang'], 36, 10)
+    im = sepia(im)
+    put(im, ART['apple'], 54, 9)                                        # the one thing in the memory with its colour
+    return im
+
+
+ART['young-aang'] = young_aang()
+ART['apple'] = grid(APPLE)
+ART['stage-dream'] = sepia(stage_dream())
+ART['card-friend'] = card_friend()
+
+# ── the Serpent's Pass: the other way into Ba Sing Se ──────────
+
+SERPENT = (col('#2f9f8f'), col('#1d6b60'), col('#d6e8a8'), col('#b8324a'))   # body, shadow, belly, fins
+
+
+def serpent():
+    """Rearing up out of the water, facing right."""
+    body, dark, belly, fin = SERPENT
+    im = new(50, 76)
+    d = ImageDraw.Draw(im)
+    path = spline([(21, 75), (31, 61), (15, 45), (25, 30), (29, 20)], 30)
+    n = len(path)
+    for i, (x, y) in enumerate(path):                      # from the water up, so the neck ends on top
+        t = i / (n - 1)
+        r = 7 - 2.6 * t
+        if i % 11 == 5:                                    # fins down its back
+            d.polygon([(x - r + 1, y - 2), (x - r - 5, y - 1), (x - r + 1, y + 3)], fill=fin)
+        disc(im, x, y, r, body)
+        disc(im, x + r * .5, y, r * .42, belly)
+        if i % 3 == 0:
+            dots(im, [(int(x - r * .3), int(y))], dark)    # scales
+    d.ellipse((21, 8, 39, 23), fill=body)                  # head
+    d.polygon([(36, 13), (48, 15), (47, 19), (36, 22)], fill=body)   # snout
+    d.polygon([(37, 18), (48, 18), (40, 22)], fill=P['m'])           # and an open mouth
+    d.line((37, 18, 48, 18), fill=dark)
+    dots(im, [(42, 18), (45, 18)], P['w'])                 # teeth
+    d.polygon([(22, 12), (14, 3), (27, 8)], fill=fin)      # the crest
+    d.polygon([(27, 8), (25, 0), (33, 7)], fill=fin)
+    d.polygon([(23, 18), (15, 22), (24, 21)], fill=fin)
+    d.rectangle((31, 12, 33, 14), fill=P['Y'])             # eye
+    dots(im, [(33, 13)], P['D'])
+    return outline(im, P['k'])
+
+
+WALKER = [
+    '..TT..',
+    '..TT..',
+    '.nnnNN',
+    'nnnnNN',
+    '.nnnNN',
+    '.nnn..',
+    '.nnn..',
+    '.n.n..',
+    '.N.N..',
+]
+
+
+def stage_serpent():
+    im = new(SW, SH)
+    vgrad(im, 0, 40, [col(c) for c in ('#5f8fc0', '#8fb8dc', '#c8dcea')])
+    ridge(im, 30, 8, col('#7f93a8'), 12)                  # far mountains
+    vgrad(im, 38, 54, [col(c) for c in ('#4f86b8', '#3f76a8')])   # the far lake
+    d = ImageDraw.Draw(im)
+    rock, rock_hi, rock_lo = col('#8a7f6a'), col('#b5a888'), col('#5f5646')
+    d.polygon([(132, 96), (140, 30), (152, 12), (166, 6), (176, 4), (176, 96)], fill=rock_lo)   # the mountainside
+    d.polygon([(140, 30), (152, 12), (166, 6), (160, 40), (150, 60)], fill=rock)
+    vgrad(im, 58, SH, [col(c) for c in ('#2f6aa0', '#24578a', '#1a4470', '#123358')], 0, 140)  # the near lake
+    for x0 in range(4, 136, 18):                           # ripples
+        d.line((x0, 70 + x0 % 7, x0 + 7, 70 + x0 % 7), fill=col('#5f9fd0'))
+        d.line((x0 + 9, 84 + x0 % 5, x0 + 15, 84 + x0 % 5), fill=col('#4f8fc0'))
+    d.rectangle((0, 52, 146, 58), fill=rock)               # the pass itself: a sliver of rock between them
+    d.line((0, 52, 146, 52), fill=rock_hi)
+    d.line((0, 58, 146, 58), fill=rock_lo)
+    for x in range(6, 140, 11):
+        dots(im, [(x, 55), (x + 4, 56)], rock_lo)
+    d.rectangle((9, 38, 10, 52), fill=P['N'])              # and the sign at the start of it
+    d.rectangle((3, 36, 17, 43), fill=P['n'])
+    d.line((5, 39, 15, 39), fill=P['N'])
+    d.line((5, 41, 12, 41), fill=P['N'])
+    return im
+
+
+def card_serpent():
+    im, d = scene(('#8fb8dc', '#c8dcea', '#c8dcea'))
+    vgrad(im, 30, CH, [col(c) for c in ('#2f6aa0', '#1a4470')])
+    d.rectangle((0, 33, CW, 36), fill=col('#8a7f6a'))
+    d.line((0, 33, CW, 33), fill=col('#b5a888'))
+    put(im, ART['serpent'].resize((38, 58), Image.NEAREST), 12, -4)
+    for x in (4, 50, 55):
+        put(im, ART['walker'], x, 24)
+    return im
+
+
+ART['serpent'] = serpent()
+ART['walker'] = grid(WALKER)
+ART['stage-serpent'] = stage_serpent()
+ART['card-serpent'] = card_serpent()
+
+# ── Zuko, practising his speech for the gang ───────────────────
+
+BADGERFROG = [                                              # a frog, with a badger's stripe down its head
+    '.ee.....ee.',
+    'eYDe...eYDe',
+    'eeeDDwDDeee',
+    'eeeeDwDeeee',
+    'lllllllllll',
+    '.lE.....El.',
+]
+
+
+def card_zuko():
+    """The Western Air Temple hangs upside down under its cliff; Zuko rehearses on the grass above."""
+    im, d = scene(('#7fbfea', '#b5dff3', '#e8f1e2'))
+    d.rectangle((0, 30, CW, CH), fill=col('#6e6a68'))                                        # the cliff, and the drop below it
+    d.rectangle((0, 28, CW, 31), fill=P['e'])
+    for x, top, w in ((40, 32, 6), (50, 32, 8)):                                              # spires, hanging down
+        d.rectangle((x - w // 2, top, x + w // 2, top + 9), fill=col('#efe6d0'))
+        d.polygon([(x - w // 2 - 1, top + 9), (x, top + 16), (x + w // 2 + 1, top + 9)], fill=col('#c9362c'))
+    put(im, ART['zuko'], 0, 14)
+    put(im, ART['badgerfrog'], 28, 20)
+    return im
+
+
+ART['badgerfrog'] = grid(BADGERFROG)
+ART['card-zuko'] = card_zuko()
+
+# ── the secret dance party, in a cave ───────────────────────────
+
+DANCER = [                                                  # a Fire Nation schoolkid, in uniform
+    '.....DDDD.....',
+    '....DDDDDD....',
+    '....DTTTTD....',
+    '....TDTTDT....',
+    '....TTTTTT....',
+    '.....TssT.....',
+    '......TT......',
+    '...rrrrrrrr...',
+    '..rr.rRRr.rr..',
+    '..T..rRRr..T..',
+    '.....rrrr.....',
+    '.....DDDD.....',
+    '.....DD.DD....',
+    '.....DD.DD....',
+    '.....DD.DD....',
+    '....NNN.NNN...',
+]
+DANCER_GIRL = [
+    '.....DDDD.....',
+    '...DDDDDDDD...',
+    '...DDTTTTDD...',
+    '...DTDTTDTD...',
+    '...DTTTTTTD...',
+    '...D.TssT.D...',
+    '...D..TT..D...',
+    '...rrrrrrrr...',
+    '..rr.rRRr.rr..',
+    '..T..rRRr..T..',
+    '.....rrrr.....',
+    '....rrrrrr....',
+    '...rrrrrrrr...',
+    '.....TT.TT....',
+    '.....TT.TT....',
+    '....NNN.NNN...',
+]
+AANG_DANCER = [                                             # Kuzon, from the colonies, headband on
+    '.....TTTT.....',
+    '....TTTTTT....',
+    '....RRRRRR....',
+    '....TDTTDT....',
+    '....TTTTTT....',
+    '.....TssT.....',
+    '......TT......',
+    '...rrrrrrrr...',
+    '..rr.raar.rr..',
+    '..T..raar..T..',
+    '.....rrrr.....',
+    '.....DDDD.....',
+    '.....DD.DD....',
+    '.....DD.DD....',
+    '.....DD.DD....',
+    '....NNN.NNN...',
+]
+KATARA_DANCER = [
+    '.....NNNN.....',
+    '...NNNNNNNN...',
+    '..NNNSSSSNNN..',
+    '..cNSDSSDSNc..',
+    '..NNSSSSSSNN..',
+    '..N..SNNS..N..',
+    '..N...SS...N..',
+    '...rrrrrrrr...',
+    '..rr.RrrR.rr..',
+    '..S..rrrr..S..',
+    '.....RRRR.....',
+    '....rrrrrr....',
+    '...rrrrrrrr...',
+    '.....SS.SS....',
+    '.....SS.SS....',
+    '....NNN.NNN...',
+]
+
+
+def teacher():
+    D = P['D']
+    im, d = bust(P['T'], P['R'], P['a'], hair=D, hair_box=(9, 4, 22, 12))
+    d.rectangle((14, 1, 17, 5), fill=D)                    # topknot
+    dots(im, [(11, 14), (12, 14), (19, 14), (20, 14)], D)  # stern little eyes
+    dots(im, [(10, 12), (11, 12), (12, 12), (19, 12), (20, 12), (21, 12)], P['G'])
+    dots(im, [(15, 16), (16, 16)], P['s'])
+    d.line((12, 19, 14, 18), fill=D)                       # a thin, disapproving moustache
+    d.line((17, 18, 19, 19), fill=D)
+    d.line((14, 21, 17, 21), fill=D)
+    return outline(im, P['k'])
+
+
+def stage_dance():
+    im = new(SW, SH, col('#1c120c'))
+    d = ImageDraw.Draw(im)
+    d.ellipse((-30, -40, SW + 30, 88), fill=col('#2e2016'))   # the cave
+    d.ellipse((10, -20, SW - 10, 80), fill=col('#3a2a1c'))
+    vgrad(im, 70, SH, [col(c) for c in ('#4a3826', '#3a2a1c', '#2a1e14')])   # the dance floor
+    d.rectangle((52, 34, 124, 52), fill=col('#6e5a40'))      # the stage Toph raised
+    d.rectangle((52, 34, 124, 35), fill=col('#96805a'))
+    d.rectangle((52, 52, 124, 54), fill=col('#4a3a2a'))
+    for x in (66, 84, 102):                                   # the band, the Flamey-O's
+        d.rectangle((x, 22, x + 5, 33), fill=col('#1a1420'))
+        disc(im, x + 2.5, 19, 3, col('#1a1420'))
+        d.line((x + 5, 26, x + 9, 24), fill=P['a'])
+    px = im.load()
+    for cx, cy in ((14, 40), (32, 30), (144, 30), (162, 40), (24, 58), (152, 58)):   # candles along the walls
+        for y in range(cy - 7, cy + 4):
+            for x in range(cx - 7, cx + 8):
+                dist = math.hypot(x - cx, (y - cy) * 1.3)
+                if 0 <= x < SW and dist < 7 and (BAYER[y % 4][x % 4] + .5) / 16 > dist / 7 + .2:
+                    px[x, y] = col('#7a5a30')
+        d.rectangle((cx - 1, cy, cx + 1, cy + 4), fill=P['w'])
+        dots(im, [(cx, cy - 1), (cx, cy - 2)], P['y'])
+        dots(im, [(cx, cy - 1)], P['Y'])
+    return im
+
+
+def card_dance():
+    im = new(CW, CH, col('#2e2016'))
+    d = ImageDraw.Draw(im)
+    for r, c in ((26, '#4a3826'), (18, '#6e5030'), (10, '#8a6a3a')):     # candlelight in the middle
+        disc(im, 30, 30, r, col(c))
+    put(im, ART['aang-dancer'].resize((24, 30), Image.NEAREST), 7, 16)
+    put(im, flip(ART['katara-dancer']).resize((24, 30), Image.NEAREST), 29, 16)
+    for x, y in ((4, 6), (50, 4), (28, 2)):                  # music notes
+        d.rectangle((x + 2, y, x + 3, y + 6), fill=P['y'])
+        d.rectangle((x, y + 5, x + 2, y + 7), fill=P['y'])
+        d.rectangle((x + 3, y, x + 5, y + 1), fill=P['y'])
+    return im
+
+
+ART['dancer-1'] = grid(DANCER)
+ART['dancer-2'] = grid(DANCER_GIRL)
+ART['dancer-3'] = recolor(grid(DANCER), {P['D']: P['N'], P['r']: P['o'], P['R']: P['O'], P['T']: P['s'], P['s']: P['S']})
+ART['dancer-4'] = recolor(grid(DANCER_GIRL), {P['D']: P['d'], P['r']: P['R'], P['R']: P['r'], P['T']: P['s'], P['s']: P['S']})
+ART['aang-dancer'] = grid(AANG_DANCER)
+ART['katara-dancer'] = grid(KATARA_DANCER)
+ART['teacher'] = teacher()
+ART['stage-dance'] = stage_dance()
+ART['card-dance'] = card_dance()
+
+# ── the banyan-grove tree, seen from far enough away ───────────
+
+def card_banyan():
+    im, d = scene(('#7fbfea', '#b5dff3', '#d6e8c0'))
+    vgrad(im, 30, CH, [col(c) for c in ('#5a8a55', '#3b6a43', '#24452f')])   # the swamp, out to the horizon
+    for x0 in range(-4, CW, 9):                                              # its roots, glowing, all one tree
+        d.line((30, 31, x0, CH), fill=col('#86efac'))
+    d.polygon([(26, 31), (34, 31), (33, 18), (27, 18)], fill=col('#3b2a1c'))  # trunk
+    d.ellipse((4, 8, 56, 22), fill=col('#3b6a43'))                           # one wide canopy
+    d.ellipse((8, 6, 52, 18), fill=col('#4e9c45'))
+    d.ellipse((16, 5, 44, 13), fill=col('#93cf56'))
+    rnd = random.Random(15)
+    for x in range(7, 54, 3):                                                # roots hanging from the branches
+        d.line((x, 18, x, 18 + rnd.randrange(4, 12)), fill=col('#3b2a1c'))
+    return im
+
+
+ART['card-banyan'] = card_banyan()
+
+ART['tui'] = koi_alone(True)
+ART['koi-la'] = koi_alone(False)
+ART['zhao'] = zhao()
+ART['yue'] = yue()
+ART['card-zhao'] = card_zhao()
+ART['card-yue'] = card_yue()
 
 
 # ── write everything out ────────────────────────────────────────

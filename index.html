@@ -195,6 +195,23 @@
     #swamp-stage { background: #24452f; }
     #swamp-appa { position: absolute; left: 56%; bottom: 7%; transform: rotate(-8deg); font-size: 120px; line-height: 1; }
     #swamp-loot { left: 21%; bottom: 26%; }
+    /* the great banyan-grove tree (where it stands on the backdrop), and how far its roots go */
+    #banyan { position: absolute; left: 21%; top: 0; width: 28%; height: 74%; }
+    #banyan-glow {
+      position: absolute; width: 60px; height: 60px; border-radius: 50%; pointer-events: none; z-index: 2;
+      transform: translate(-50%,-50%) scale(0); transition: transform 2.4s ease-in, opacity 1s;
+      background: radial-gradient(circle, rgba(187,247,208,.95), rgba(74,222,128,.5) 45%, transparent 70%);
+    }
+    #banyan-glow.on { transform: translate(-50%,-50%) scale(2.4); }
+    #banyan-glow.full { transform: translate(-50%,-50%) scale(10); opacity: .85; }
+    #banyan-vision { position: absolute; inset: 0; z-index: 5; opacity: 0; pointer-events: none; transition: opacity 1.6s; background: #24452f center / 100% 100% no-repeat; }
+    #banyan-vision.show { opacity: 1; }
+    #banyan-vision svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    #banyan-vision path {
+      fill: none; stroke: #86efac; stroke-width: .55; stroke-linecap: round; filter: drop-shadow(0 0 4px #4ade80);
+      stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 2.2s ease-out;
+    }
+    #banyan-vision.grow path { stroke-dashoffset: 0; }
 
     /* map */
     .map {
@@ -230,8 +247,8 @@
       background: url('art/check.png') center / contain no-repeat;
     }
     .pin.comet-pin { display: none; font-size: 46px; animation: pulse 1.2s ease-in-out infinite; }
-    .pin.ember-pin { display: none; }
-    .pin.comet-pin.show, .pin.ember-pin.show { display: flex; }
+    .pin.ember-pin, .pin.swamp-pin { display: none; }
+    .pin.comet-pin.show, .pin.ember-pin.show, .pin.swamp-pin.show { display: flex; }
     /* two children out fishing by the southern ice: small, and easy to miss */
     #map-canoe { position: absolute; left: 40%; top: 85%; z-index: 2; font-size: 20px; line-height: 1; cursor: pointer; animation: canoebob 2.6s ease-in-out infinite; }
     @keyframes canoebob { 50% { transform: translateY(3px) rotate(-2deg); } }
@@ -330,13 +347,39 @@
     /* water */
     #water-stage { background: linear-gradient(#0b1437, #1e3a8a 80%); }
     #water-stage .star { position: absolute; color: #fff; font-size: 10px; opacity: .7; }
-    #moon { position: absolute; font-size: 78px; line-height: 1; transform: translate(-50%,-50%); cursor: grab; z-index: 1; filter: drop-shadow(0 0 22px #e0f2fe); }
+    #moon { position: absolute; font-size: 78px; line-height: 1; transform: translate(-50%,-50%); cursor: grab; z-index: 1; filter: drop-shadow(0 0 22px #e0f2fe); transition: opacity 2.5s; }
     #moon:active { cursor: grabbing; }
+    #moon.gone { opacity: 0; pointer-events: none; }
     #sea {
       position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; pointer-events: none; overflow: hidden;
       background: linear-gradient(#38bdf8, #0c4a6e 70%, #082f49);
-      border-top: 3px solid rgba(255,255,255,.55); transition: height .15s linear;
+      border-top: 3px solid rgba(255,255,255,.55); transition: height .15s linear, filter 1.5s;
     }
+    #sea.lit { filter: brightness(1.9) saturate(.5); }
+    /* Tui, the white koi: lifted out of the pond in a ball of water, or floating in it, still */
+    #oasis-bubble {
+      position: absolute; width: 13%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%);
+      display: none; align-items: center; justify-content: center; pointer-events: none; z-index: 4;
+      background: rgba(143,211,238,.4); box-shadow: inset 0 0 0 4px #d6f1fa, inset -12px -12px 0 0 rgba(35,90,156,.3);
+      font-size: 40px; line-height: 1;
+    }
+    #oasis-bubble.show { display: flex; }
+    #oasis-bubble .art-img { height: 52px; }
+    #tui { position: absolute; left: 44%; top: 6px; display: none; font-size: 40px; line-height: 1; pointer-events: auto; cursor: pointer; transform: rotate(180deg); }
+    #tui .art-img { height: 52px; }
+    #tui.glow { animation: tuiglow 1.8s ease-in forwards; }
+    @keyframes tuiglow { to { filter: brightness(1.7) drop-shadow(0 0 18px #fff); } }
+    .tui-fire { position: absolute; z-index: 5; transform: translate(-50%,-75%); font-size: 50px; line-height: 1; pointer-events: none; animation: flicker .35s infinite alternate; }
+    .tui-fire .art-img { height: 64px; }
+    /* With Tui out of the pond the moon goes red, and then everything else does; once
+       the moon has gone out, so has every colour. One layer over the whole window
+       lends everything beneath it its own colour: red, and then none at all. */
+    #moonlight {
+      position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+      mix-blend-mode: color; background: #c9362c; opacity: 0; transition: opacity 2.5s, background-color 2.5s;
+    }
+    body.moon-red #moonlight { opacity: 1; }
+    body.moon-dark #moonlight { opacity: 1; background: #808080; }
     #sea .koi { position: absolute; left: 22%; top: 30px; font-size: 40px; animation: spin 6s linear infinite; }
     #sea .koi.has-art { font-size: 90px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -432,6 +475,62 @@
     #spear { height: 25%; display: none; z-index: 3; font-size: 100px; transform: translate(-50%,-100%) rotate(180deg); }
     #spear.throw { display: block; animation: spearin .2s ease-out; }
     @keyframes spearin { from { transform: translate(-50%,-190%) rotate(180deg); } }
+
+    /* lake laogai: a lantern circling a Dai Li agent, and a row of Joo Dees */
+    #laogai-stage { background: #141c18; height: min(46vh, 380px); min-height: 270px; }   /* shorter, so the answers stay on screen */
+    #laogai-agent, #laogai-lantern, .jd { position: absolute; line-height: 1; pointer-events: none; }
+    :is(#laogai-agent, #laogai-lantern, .jd) .art-img { height: 100%; }
+    #laogai-agent { left: 50%; bottom: 40%; height: 30%; transform: translateX(-50%); z-index: 2; font-size: 90px; }
+    #laogai-lantern { height: 9%; transform: translate(-50%,-50%); font-size: 30px; filter: drop-shadow(0 0 10px #fbbf24); }
+    #laogai-stage.flash { animation: laoflash .45s ease-out; }
+    @keyframes laoflash { from { filter: brightness(4) saturate(0); } }
+    .jd { bottom: 2%; height: 27%; transform: translateX(-50%); z-index: 4; font-size: 70px; }
+    #laogai-row.say .jd { animation: jdsay .25s steps(2) 6 alternate; }
+    @keyframes jdsay { to { margin-bottom: 5px; } }
+    #laogai-opts { width: 100%; max-width: 640px; margin-top: 0; }
+    #laogai-opts .option { text-align: center; }
+
+    /* the eastern air temple: Appa's dream, in the colours of a memory (all but the apple) */
+    #dream-stage { background: #bf9b6a; }
+    #dream-mother, #dream-aang, #dream-apple, .calf { position: absolute; line-height: 1; pointer-events: none; }
+    :is(#dream-mother, #dream-aang, #dream-apple, .calf) .art-img { height: 100%; }
+    #dream-mother, #dream-aang, .calf { filter: sepia(1) saturate(.7); }
+    #dream-mother { left: 30%; top: 27%; height: 24%; transform: translate(-50%,-50%); z-index: 2; font-size: 90px; animation: kpbob 1.4s ease-in-out infinite alternate; }
+    .calf { height: 10%; transform: translate(-50%,-50%); font-size: 34px; }
+    #dream-stage.choose .calf { pointer-events: auto; cursor: pointer; }
+    #dream-stage.choose .calf:hover { filter: sepia(1) saturate(.7) brightness(1.2); }
+    .calf.chosen { height: 19%; transition: left 1.8s ease-in-out, top 1.8s ease-in-out, height 1.8s; }
+    #dream-aang { left: 78%; bottom: 14%; height: 34%; transform: translateX(-50%); transform-origin: 50% 100%; transition: transform .25s; z-index: 3; font-size: 80px; }
+    #dream-aang.down { transform: translateX(-50%) rotate(-80deg); }
+    #dream-apple { left: 84%; bottom: 31%; height: 6%; transform: translateX(-50%); z-index: 4; font-size: 22px; }
+
+    /* the serpent's pass: it follows you, and going round it whips up a whirlpool */
+    #serpent-stage { background: #3f76a8; cursor: crosshair; height: min(50vh, 420px); }
+    #serpent, .walker { position: absolute; line-height: 1; pointer-events: none; }
+    :is(#serpent, .walker) .art-img { height: 100%; }
+    #serpent { left: 50%; bottom: -4%; height: 76%; z-index: 3; transform: translate(-50%, 110%); transform-origin: 50% 100%; font-size: 200px; }
+    #serpent.thrown { transition: transform 1.1s cubic-bezier(.5,0,1,.6); }
+    .walker { bottom: 42%; height: 10%; transform: translateX(-50%); z-index: 2; font-size: 30px; }
+    .walker.cheer { animation: kpbob .3s steps(2) infinite alternate; }
+    #whirl { position: absolute; left: 50%; top: 88%; width: 40%; aspect-ratio: 1; transform: translate(-50%,-50%) scaleY(.3); z-index: 4; pointer-events: none; opacity: 0; }
+    #whirl::before {
+      content: ''; position: absolute; inset: 0; border-radius: 50%; animation: spin .9s linear infinite;
+      background: repeating-conic-gradient(rgba(214,241,250,.9) 0 14deg, transparent 14deg 40deg);
+      -webkit-mask: radial-gradient(closest-side, transparent 16%, #000 30%, #000 78%, transparent);
+      mask: radial-gradient(closest-side, transparent 16%, #000 30%, #000 78%, transparent);
+    }
+
+    /* the secret dance party: everyone bobs once a beat (--beat is set from the music) */
+    #dance-stage { background: #2e2016; --beat: .48s; }
+    #dance-aang, #dance-katara, .dk { position: absolute; bottom: 8%; height: 26%; transform: translateX(-50%); line-height: 1; font-size: 60px; pointer-events: none; }
+    :is(#dance-aang, #dance-katara, .dk) .art-img { height: 100%; }
+    #dance-aang { left: 50%; z-index: 3; transition: left 1.4s ease-in-out; }
+    #dance-aang.move { animation: dmove .3s steps(2); }
+    @keyframes dmove { 50% { transform: translateX(-50%) translateY(-14%) rotate(-12deg); } }
+    #dance-katara { left: 92%; z-index: 2; transition: left 1.4s ease-in-out; }
+    .dk.on, #dance-katara.on, #dance-stage.party #dance-aang { animation: dbop var(--beat) steps(2) infinite alternate; }
+    @keyframes dbop { from { transform: translateX(-50%) rotate(-7deg); } to { transform: translateX(-50%) translateY(-6%) rotate(7deg); } }
+    #dance-stage.ask #dance-katara { pointer-events: auto; cursor: pointer; filter: drop-shadow(0 0 12px #fde68a); }
 
     /* ozai */
     body.blackout::after {
@@ -568,18 +667,22 @@
     <button class="pin" style="left:31%;top:23%" data-go="s-flight" data-cards="yipyip"><i data-art="appa"></i><span>Fly with Appa</span></button>
     <button class="pin comet-pin" style="left:13%;top:15%" data-go="s-ozai" data-cards="energy"><i data-art="comet"></i><span>Sozin's Comet</span></button>
     <button class="pin ember-pin" style="left:21%;top:30%" data-go="s-beach" data-cards="beach"><i data-art="pin-ember"></i><span>Ember Island</span></button>
+    <button class="pin swamp-pin" style="left:49%;top:62%" data-go="s-swamp" data-cards="swamp banyan"><i data-art="pin-swamp"></i><span>Foggy Swamp</span></button>
     <div id="map-canoe" data-art="canoe"></div>
     <div id="cart" data-art="cart" title="Fresh cabbages!"></div>
   </div>
   <div class="pads" id="map-pads"></div>
 </div>
 
-<!-- SWAMP (secret: crash the flight) -->
+<!-- SWAMP (secret: crash the flight; after that it has a pin of its own on the map) -->
 <div id="s-swamp" class="screen wide">
   <div class="scene-title">The Foggy Swamp</div>
   <div class="stage" id="swamp-stage">
+    <div id="banyan"></div>
+    <div id="banyan-glow"></div>
     <div id="swamp-appa" data-art="appa"></div>
     <div class="loot" id="swamp-loot" data-art="card"></div>
+    <div id="banyan-vision"><svg viewBox="0 0 100 100" preserveAspectRatio="none"></svg></div>
   </div>
   <div class="scene-text" id="swamp-text"></div>
 </div>
@@ -625,6 +728,50 @@
     <div id="spear" data-art="spear"></div>
   </div>
   <div class="scene-text" id="fish-text"></div>
+</div>
+
+<!-- LAKE LAOGAI (secret: click the Ba Sing Se card in the binder, and accept the invitation) -->
+<div id="s-laogai" class="screen wide">
+  <div class="scene-title">Lake Laogai</div>
+  <div class="stage" id="laogai-stage">
+    <div id="laogai-agent" data-art="daili"></div>
+    <div id="laogai-lantern" data-art="lantern"></div>
+    <div id="laogai-row"></div>
+  </div>
+  <div class="scene-text" id="laogai-text"></div>
+  <div class="options" id="laogai-opts"></div>
+</div>
+
+<!-- THE EASTERN AIR TEMPLE (secret: fly with Appa again and reach land without a single hit) -->
+<div id="s-dream" class="screen wide">
+  <div class="scene-title">The Eastern Air Temple</div>
+  <div class="stage" id="dream-stage">
+    <div id="dream-mother" data-art="appa"></div>
+    <div id="dream-aang" data-art="young-aang"></div>
+    <div id="dream-apple" data-art="apple"></div>
+  </div>
+  <div class="scene-text" id="dream-text"></div>
+</div>
+
+<!-- THE SERPENT'S PASS (secret: stop the cabbage cart again once it has been wrecked: it is off to the ferry) -->
+<div id="s-serpent" class="screen wide">
+  <div class="scene-title">The Serpent's Pass</div>
+  <div class="stage" id="serpent-stage">
+    <div id="serpent" data-art="serpent"></div>
+    <div id="whirl"></div>
+  </div>
+  <div class="scene-text" id="serpent-text"></div>
+  <div class="options" id="serpent-opts"></div>
+</div>
+
+<!-- THE SECRET DANCE PARTY (secret: tap the space bar in time with the music, anywhere) -->
+<div id="s-dance" class="screen wide">
+  <div class="scene-title">Secret Dance Party</div>
+  <div class="stage" id="dance-stage">
+    <div id="dance-aang" data-art="aang-dancer"></div>
+    <div id="dance-katara" data-art="katara-dancer"></div>
+  </div>
+  <div class="scene-text" id="dance-text"></div>
 </div>
 
 <!-- DESERT -->
@@ -686,7 +833,8 @@
     <div id="moon" data-art="moon"></div>
     <div id="seabed"></div>
     <div class="loot" id="water-loot" data-art="card"></div>
-    <div id="sea"><div class="koi" data-art="koi"></div></div>
+    <div id="sea"><div class="koi" data-art="koi"></div><div id="tui" data-art="tui"></div></div>
+    <div id="oasis-bubble"><span data-art="tui"></span></div>
   </div>
   <div class="scene-text" id="water-text"></div>
 </div>
@@ -763,6 +911,7 @@
 <div class="epic epic-ran" data-art="ran-epic"></div>
 <canvas id="rainbow" width="96" height="54"></canvas>
 <canvas id="confetti"></canvas>
+<div id="moonlight"></div>
 
 <script>
 // ══════════════════════════════════════════════
@@ -777,33 +926,41 @@ const CONFIG = {
 // One line per card to find. `prize` is optional: the real card he wins for it
 // (e.g. 'Foil Appa'). Leave empty to just say "collect your card".
 const CARDS = [
-  { id: 'iceberg',  el: 'air',    emoji: '🧊', name: 'The Boy in the Iceberg',        text: 'A hundred years on ice, and still got the first one right.', prize: '' },
-  { id: 'nowar',    el: 'earth',  emoji: '🏯', name: 'There Is No War in Ba Sing Se', text: 'Joo Dee is smiling. Joo Dee is always smiling.', prize: '' },
-  { id: 'yipyip',   el: 'air',    emoji: '🦬', name: 'Yip Yip!',                      text: 'Six legs, one enormous tail, zero traffic laws.', prize: '' },
+  { id: 'iceberg',  el: 'air',    emoji: '🧊', name: 'The Boy in the Iceberg',        text: 'A hundred years on ice, and still got the first one right.', prize: 'The Boy in the Iceberg' },
+  { id: 'nowar',    el: 'earth',  emoji: '🏯', name: 'There Is No War in Ba Sing Se', text: 'Joo Dee is smiling. Joo Dee is always smiling.', prize: 'Joo Dee, Public Servant' },
+  { id: 'yipyip',   el: 'air',    emoji: '🦬', name: 'Yip Yip!',                      text: 'Six legs, one enormous tail, zero traffic laws.', prize: 'Appa, Steadfast Guardian' },
   { id: 'cabbages', el: 'earth',  emoji: '🥬', name: 'My Cabbages!',                  text: 'This cart survived the entire war. Then you came along.', prize: '' },
-  { id: 'rough',    el: 'fire',   emoji: '🌙', name: "That's Rough, Buddy",           text: '“My first girlfriend turned into the moon.”', prize: '' },
-  { id: 'cactus',   el: 'earth',  emoji: '🌵', name: 'The Quenchiest',                text: "“It'll quench ya! Nothing's quenchier.”", prize: '' },
-  { id: 'tunnel',   el: 'earth',  emoji: '💎', name: 'Secret Tunnel',                 text: '“Love is brightest in the dark.”', prize: '' },
-  { id: 'tea',      el: 'fire',   emoji: '🍵', name: 'The Jasmine Dragon',            text: "“Sharing tea with a fascinating stranger is one of life's true delights.”", prize: '' },
-  { id: 'moon',     el: 'water',  emoji: '🎏', name: 'Tui and La',                    text: 'Push and pull. Moon and ocean. Circling each other for all time.', prize: '' },
-  { id: 'dragon',   el: 'fire',   emoji: '🐉', name: 'The Dancing Dragon',            text: '“Fire is life, not just destruction.”', prize: '' },
-  { id: 'avatar',   el: 'water',  emoji: '🌀', name: 'The Avatar State',              text: 'Water. Earth. Fire. Air. All four, at once.', prize: '' },
-  { id: 'energy',   el: 'spirit', emoji: '✋', name: 'Energybending',                 text: '“In the era before the Avatar, we bent not the elements but the energy within ourselves.”', prize: '' },
+  { id: 'rough',    el: 'fire',   emoji: '🌙', name: "That's Rough, Buddy",           text: '“My first girlfriend turned into the moon.”', prize: 'Imprisoned in the Moon' },
+  { id: 'cactus',   el: 'earth',  emoji: '🌵', name: 'The Quenchiest',                text: "“It'll quench ya! Nothing's quenchier.”", prize: 'Fevered Visions' },
+  { id: 'tunnel',   el: 'earth',  emoji: '💎', name: 'Secret Tunnel',                 text: '“Love is brightest in the dark.”', prize: 'Fabled Passage' },
+  { id: 'tea',      el: 'fire',   emoji: '🍵', name: 'The Jasmine Dragon',            text: "“Sharing tea with a fascinating stranger is one of life's true delights.”", prize: 'Prosperity' },
+  { id: 'moon',     el: 'water',  emoji: '🎏', name: 'Tui and La',                    text: 'Push and pull. Moon and ocean. Circling each other for all time.', prize: 'Mystic Remora' },
+  { id: 'dragon',   el: 'fire',   emoji: '🐉', name: 'The Dancing Dragon',            text: '“Fire is life, not just destruction.”', prize: 'Mirrorwing Dragon' },
+  { id: 'avatar',   el: 'water',  emoji: '🌀', name: 'The Avatar State',              text: 'Water. Earth. Fire. Air. All four, at once.', prize: 'The Legend of Kyoshi' },
+  { id: 'energy',   el: 'spirit', emoji: '✋', name: 'Energybending',                 text: '“In the era before the Avatar, we bent not the elements but the energy within ourselves.”', prize: 'Force of Negation' },
 ];
 
 // Secret cards. They are not counted in the total above and stay out of sight
 // until one is found, or until all the normal cards are in.
 const SECRETS = [
-  { id: 'swamp', el: 'secret', emoji: '🌳', name: 'The Foggy Swamp',      text: '“Time is an illusion and so is death.”', prize: '' },
-  { id: 'melon', el: 'secret', emoji: '🍉', name: 'The Melon Lord',       text: '“I am not Toph. I am Melon Lord!”', prize: '' },
-  { id: 'koh',   el: 'secret', emoji: '🎭', name: 'Koh the Face Stealer', text: '“Show no fear. Show no emotion at all.”', prize: '' },
-  { id: 'lovers', el: 'secret', emoji: '💞', name: 'Oma and Shu',         text: '“The two lovers learned earthbending from the badgermoles; they became the first earthbenders.”', prize: '' },
-  { id: 'owl',   el: 'secret', emoji: '🦉', name: 'He Who Knows Ten Thousand Things', text: '“I am Wan Shi Tong, He Who Knows Ten Thousand Things.”', prize: '' },
-  { id: 'players', el: 'secret', emoji: '🎟️', name: 'The Ember Island Players', text: '“That... wasn\'t a good play.” “But the effects were decent.”', prize: '' },
-  { id: 'beach', el: 'secret', emoji: '🏖️', name: 'The Beach',            text: '“The beach has a special way of smoothing even the most ragged edges.”', prize: '' },
-  { id: 'fish',  el: 'secret', emoji: '🐟', name: 'Magic Water',          text: '“Why is it that every time you play with magic water, I get soaked?”', prize: '' },
+  { id: 'swamp', el: 'secret', emoji: '🌳', name: 'The Foggy Swamp',      text: '“Time is an illusion and so is death.”', prize: 'Foggy Swamp Visions' },
+  { id: 'melon', el: 'secret', emoji: '🍉', name: 'The Melon Lord',       text: '“I am not Toph. I am Melon Lord!”', prize: 'Toph, the First Metalbender (Neon Ink)' },
+  { id: 'koh',   el: 'secret', emoji: '🎭', name: 'Koh the Face Stealer', text: '“Show no fear. Show no emotion at all.”', prize: 'Koh, the Face Stealer' },
+  { id: 'lovers', el: 'secret', emoji: '💞', name: 'Oma and Shu',         text: '“The two lovers learned earthbending from the badgermoles; they became the first earthbenders.”', prize: 'Heartbeat of Spring' },
+  { id: 'owl',   el: 'secret', emoji: '🦉', name: 'He Who Knows Ten Thousand Things', text: '“I am Wan Shi Tong, He Who Knows Ten Thousand Things.”', prize: 'Wan Shi Tong, Librarian' },
+  { id: 'players', el: 'secret', emoji: '🎟️', name: 'The Ember Island Players', text: '“That... wasn\'t a good play.” “But the effects were decent.”', prize: 'Clone' },
+  { id: 'beach', el: 'secret', emoji: '🏖️', name: 'The Beach',            text: '“The beach has a special way of smoothing even the most ragged edges.”', prize: 'Azula, Flame of Ember Island' },
+  { id: 'fish',  el: 'secret', emoji: '🐟', name: 'Magic Water',          text: '“Why is it that every time you play with magic water, I get soaked?”', prize: 'The Unagi of Kyoshi Island' },
+  { id: 'zhao',  el: 'secret', emoji: '🌑', name: 'The Moon Slayer',      text: '“They will call me, Zhao the Conqueror, Zhao the Moon Slayer, Zhao the Invincible!”', prize: 'Zhao, the Moon Slayer (art card)' },
+  { id: 'yue',   el: 'secret', emoji: '🌕', name: 'The Moon Spirit',      text: '“It gave me life, maybe I can give it back.”', prize: 'Yue, the Moon Spirit (art card)' },
+  { id: 'laogai', el: 'secret', emoji: '🏮', name: 'Lake Laogai',         text: '“I\'m Joo Dee. Welcome to Ba Sing Se.”', prize: 'Clone Legion' },
+  { id: 'friend', el: 'secret', emoji: '🍎', name: 'A Companion for Life', text: '“I guess this means we\'ll always be together.”', prize: 'Lifelong Friendship' },
+  { id: 'serpent', el: 'secret', emoji: '🐍', name: 'The Serpent\'s Pass',  text: '“I think I just figured out why they call it the Serpent\'s Pass!”', prize: 'The Monstrous Serpent' },
+  { id: 'zuko',  el: 'secret', emoji: '🐸', name: 'Hello, Zuko Here',     text: '“Why am I so bad at being good?”', prize: 'Zuko, Redeemed' },
+  { id: 'dance', el: 'secret', emoji: '💃', name: 'Secret Dance Party',   text: '“That\'s the sound of happy feet.”', prize: 'Join the Dance' },
+  { id: 'banyan', el: 'secret', emoji: '🌿', name: 'Everything Is Connected', text: '“We all have the same roots and we are all branches of the same tree.”', prize: 'The Banyan Tree' },
   // keep this one last: Uncle Iroh hints at the secrets in this order, and it erases all the others
-  { id: 'cycle', el: 'secret', emoji: '♻️', name: 'The Avatar Cycle',     text: 'Everything was erased. One memory came along anyway.', prize: '' },
+  { id: 'cycle', el: 'secret', emoji: '♻️', name: 'The Avatar Cycle',     text: 'Everything was erased. One memory came along anyway.', prize: 'Brought Back' },
 ];
 
 // Uncle Iroh's advice: three hints per card, from vague to literal.
@@ -901,6 +1058,46 @@ const HINTS = {
     'Two children are out fishing by the southern ice. One of them has a spear. Watch the other one.',
     'Click the little canoe at the bottom of the world map. The spear never works: press and hold on the water instead, wait for a fish to swim into it, and lift it out of the sea.',
   ],
+  zhao: [
+    'Some fish should never be caught. That has never stopped a man with a map and an ambition.',
+    'At the Northern Water Tribe, Tui and La are not only there to be looked at. Katara showed you how to catch a fish.',
+    'In the Spirit Oasis, press and hold on the two koi until the water takes the white one, then lift it out of the pond.',
+  ],
+  yue: [
+    'The moon once gave a princess her life. She has been waiting to give it back.',
+    'The moon will not come back by itself. Go back to the oasis and take care of Tui, as gently as you took it.',
+    'In the Spirit Oasis, press and hold on the white koi floating in the pond, and keep holding.',
+  ],
+  laogai: [
+    'An invitation from the Earth King is not something one turns down. You accepted one, remember? You just never went.',
+    'When you won your Ba Sing Se card, Long Feng invited you to Lake Laogai. That card is still in your binder, and a binder is not only for looking at.',
+    'Open the card binder and click "There Is No War in Ba Sing Se". Under the lake, repeat every line exactly as it was said, even once it is gone.',
+  ],
+  friend: [
+    'Appa remembers every fireball. He also remembers every flight without one.',
+    'Fly with Appa again, and bring him all the way to land without a single scorch mark.',
+    'Fly with Appa from the map and reach the island without being hit even once.',
+  ],
+  serpent: [
+    'The cabbage merchant is a stubborn man. When one road wrecks his cart, he simply takes another.',
+    'Once you have the cabbage card, the cart keeps rolling past. Stop it again: it is on its way to the ferry to Ba Sing Se.',
+    'Click the cabbage cart on the map again, after you already have its card. At the Serpent\'s Pass, circle your mouse around the serpent until the water turns into a whirlpool.',
+  ],
+  zuko: [
+    'Every answer to the Fire Lord\'s last question is the Fire Lord. Someone in his own family would disagree.',
+    'At Sozin\'s Comet, the rightful ruler is not on the list. But nobody said you had to pick from the list. You could simply say a name.',
+    'At Sozin\'s Comet, before you click anything, type "Zuko" on your keyboard.',
+  ],
+  dance: [
+    'At a Fire Nation school, dancing is not allowed. Which is exactly why your feet keep tapping.',
+    'Every place in the world has its own music. Tap along with it, in time, for a while. (The music needs to be on.)',
+    'On any screen with music playing, tap the space bar right on the beat, eight times in a row.',
+  ],
+  banyan: [
+    'A wise swampbender found enlightenment under one tree in particular. You may have crashed right next to it.',
+    'Once you have crash-landed in the Foggy Swamp, it is on the map. Go back, and do not just look at the great tree. Put your hand on it, and be patient.',
+    'Click the Foggy Swamp on the world map (it appears after your first crash), then press and hold on the great tree.',
+  ],
   cycle: [
     'When everything has been found, only one thing is left to do: let it all go.',
     'The Avatar is never truly gone. Whatever is erased comes back. Have you tried erasing?',
@@ -936,22 +1133,35 @@ const ART = {
   // the Ember Island Players, the beach and the fishing trip
   azula: '😏', katara: '🌊', loli: '👵👵', 'actress-aang': '💃', 'actor-toph': '💪', 'actor-zuko': '😤',
   ball: '🏐', 'kuai-1': '👧', 'kuai-2': '🧒', 'kuai-3': '👦', canoe: '🛶', fish: '🐟', spear: '🔱',
+  // the Spirit Oasis: Tui and La apart, and the two who decide what happens to the moon
+  tui: '🐟', 'koi-la': '🐟', zhao: '😼', yue: '🌙',
+  // Lake Laogai
+  joodee: '😁', lantern: '🏮',
+  // Appa's dream of the day they met
+  'young-aang': '🧒', apple: '🍎',
+  // the Serpent's Pass
+  serpent: '🐉', walker: '🚶',
+  // Zuko's rehearsal partner
+  badgerfrog: '🐸',
+  // the secret dance party
+  teacher: '🧑‍🏫', 'aang-dancer': '🕺', 'katara-dancer': '💃', 'dancer-1': '🕺', 'dancer-2': '💃', 'dancer-3': '🕺', 'dancer-4': '💃',
   // the four element stones
   'el-water': '💧', 'el-earth': '⛰️', 'el-fire': '🔥', 'el-air': '🌪️',
   // map pins
-  'pin-water': '❄️', 'pin-university': '🏯', 'pin-tea': '🍵', 'pin-desert': '🌵', 'pin-cave': '⛰️', 'pin-sun': '🐉', 'pin-ember': '🏖️',
+  'pin-water': '❄️', 'pin-university': '🏯', 'pin-tea': '🍵', 'pin-desert': '🌵', 'pin-cave': '⛰️', 'pin-sun': '🐉', 'pin-ember': '🏖️', 'pin-swamp': '🌳',
 };
-const STAGES = { map: 'map', flight: 'flight-stage', desert: 'desert-stage', cave: 'cave-stage', water: 'water-stage', swamp: 'swamp-stage', koh: 'koh-stage', play: 'play-stage', beach: 'beach-stage', fish: 'fish-stage' };
-const SCENE_NAMES = ['start', 'quiz', 'flight', 'map', 'desert', 'cave', 'tea', 'water', 'dragon', 'ozai', 'end', 'swamp', 'koh', 'play', 'beach', 'fish'];
+const STAGES = { map: 'map', flight: 'flight-stage', desert: 'desert-stage', cave: 'cave-stage', water: 'water-stage', swamp: 'swamp-stage', koh: 'koh-stage', play: 'play-stage', beach: 'beach-stage', fish: 'fish-stage', laogai: 'laogai-stage', dream: 'dream-stage', serpent: 'serpent-stage', dance: 'dance-stage' };
+const SCENE_NAMES = ['start', 'quiz', 'flight', 'map', 'desert', 'cave', 'tea', 'water', 'dragon', 'ozai', 'end', 'swamp', 'koh', 'play', 'beach', 'fish', 'laogai', 'dream', 'serpent', 'dance'];
 const ART_URL = {};   // name → url, for every image that actually exists
 
 const art = key => ART_URL[key] ? `<img class="art-img" src="${ART_URL[key]}" alt="" draggable="false">` : ART[key];
 
-// How a backdrop fills its scene box. The map, the cave, the beach and the
-// fishing spot are stretched to fit exactly, because what sits on top of them
-// (the pins, the glowing tunnel, the net, the waterline) has to line up with
-// what is drawn; the other backdrops are cropped to fit instead.
-const stageBg = (name, url) => `url("${url}") center / ${['map', 'cave', 'beach', 'fish'].includes(name) ? '100% 100%' : 'cover'} no-repeat`;
+// How a backdrop fills its scene box. The map, the cave, the beach, the
+// fishing spot, Lake Laogai and the Serpent's Pass are stretched to fit exactly,
+// because what sits on top of them (the pins, the glowing tunnel, the net, the
+// waterline, the lantern's track, the path) has to line up with what is drawn;
+// the other backdrops are cropped to fit instead.
+const stageBg = (name, url) => `url("${url}") center / ${['map', 'cave', 'beach', 'fish', 'laogai', 'serpent'].includes(name) ? '100% 100%' : 'cover'} no-repeat`;
 
 function probeArt(key) {
   const img = new Image();
@@ -1289,6 +1499,32 @@ const GLOW = { D: 'a5 d6 f#6 d6', E: 'g5 b5 e6 b5', G: 'g5 b5 d6 b5', B: 'f#5 b5
 TRACKS.caveDark = { ...TRACKS.cave, voices: [...TRACKS.cave.voices,
   { wave: 'sine', echo: true, vol: .45, notes: [...'DDDEEDDGGDDBBGGGGDDDDGGGBBBFGBDFGGAAFBDDDDD']
     .map(chord => (GLOW[chord].replace(/\S+/g, '$&:2') + ' ').repeat(2)).join('| ') }] };
+// Lake Laogai: the university's tune, slowed down until it is the only thought left
+TRACKS.laogai = { bpm: 56, voices: [
+  { wave: 'sine', echo: true, notes: TRACKS.uni.voices[0].notes },
+  { wave: 'triangle', vol: .7, notes: 'g2:8 | e2:8 | c2:8 | d2:8' },
+] };
+// the secret dance party: the band on Toph's stage, with a drum on every beat to dance to
+TRACKS.dance = { bpm: 124, voices: [
+  { wave: 'square', pluck: true, notes: `
+    a4 . c5 a4 e5 . d5 c5 | d5 . c5 a4 g4 . a4 . | a4 . c5 a4 e5 . g5 e5 | d5 . c5 d5 a4 - - .
+    c5 . e5 c5 g5 . e5 d5 | e5 . d5 c5 a4 . g4 . | a4 . c5 d5 e5 . g5 a5 | g5 . e5 d5 e5 - - .` },
+  { wave: 'triangle', notes: 'a2 . a3 . a2 . a3 . | d2 . d3 . d2 . d3 . | a2 . a3 . a2 . a3 . | e2 . e3 . e2 . e3 .' },
+  { drums: 'k h s h k h s h' },
+] };
+// the Serpent's Pass: something large under the water
+TRACKS.serpent = { bpm: 108, voices: [
+  { wave: 'pulse', notes: `
+    d5 - - - c5 - a4 - | bb4 - - - a4 - - . | d5 - - - f5 - e5 - | d5 - - - - - . .
+    a5 - - - g5 - f5 - | e5 - - - d5 - - . | f5 - e5 - d5 - c#5 - | d5 - - - - - . .` },
+  { wave: 'triangle', notes: 'd2 d2 a2 d2 d2 a2 d2 a2 | bb1 bb1 f2 bb1 bb1 f2 bb1 f2 | d2 d2 a2 d2 d2 a2 d2 a2 | a1 a1 e2 a1 a1 e2 a1 e2' },
+  { drums: 'k . . k . . s . | k . . k . . s s' },
+] };
+// Appa's dream: the title tune, slow and far away
+TRACKS.dream = { bpm: 66, voices: [
+  { wave: 'sine', echo: true, notes: TRACKS.start.voices[0].notes },
+  { wave: 'triangle', vol: .6, notes: TRACKS.start.voices[1].notes },
+] };
 TRACKS.ozaiBend = { ...TRACKS.ozai, voices: [...TRACKS.ozai.voices,   // the last struggle
   { wave: 'square', pluck: true, vol: .4, notes: `
     a5 d6 f6 d6 a5 d6 f6 d6   | a5 d6 f6 d6 a5 d6 f6 d6 | bb5 d6 f6 d6 bb5 d6 f6 d6 | g5 c6 e6 c6 g5 c6 e6 c6
@@ -1449,6 +1685,14 @@ const Music = {
     this.lfo.frequency.value = hz;
     this.wobble.gain.setTargetAtTime(cents, actx.currentTime, .1);
   },
+  // How long a beat lasts, in seconds, and how far into the current one the
+  // music is, from 0 (right on it) to 1; null while nothing plays.
+  beat() { return 60 / this.track.bpm / this.rate; },
+  phase() {
+    if (!this.track || !actx) return null;
+    const per = this.track.div || 2, pos = this.step - (this.at - actx.currentTime) / (this.beat() / per);
+    return ((pos / per) % 1 + 1) % 1;
+  },
   toggle() {
     this.on = !this.on;
     localStorage.setItem(LS_KEY + '_music', this.on ? 'on' : 'off');
@@ -1508,6 +1752,7 @@ const CAST = {
   iroh: 'Uncle Iroh', comet: "Sozin's Comet", world: 'The Four Nations',
   melon: 'The Melon Lord', noface: 'You, more or less', roku: 'Avatar Roku', owl: 'Wan Shi Tong',
   azula: 'Princess Azula', katara: 'Katara', loli: 'Lo and Li', 'actor-zuko': 'Actor Zuko',
+  zhao: 'Admiral Zhao', yue: 'Princess Yue', teacher: 'Music teacher',
 };
 let sayCb = null;
 function say(who, text, btn = 'Okay', cb = null, name = CAST[who], cancel = '') {
@@ -1573,14 +1818,20 @@ function openBinder() {
 }
 $('hud-count').onclick = openBinder;
 $('binder-close').onclick = () => $('binder').classList.remove('show');
-// The first card is named after a play. Once you are out in the world, clicking
-// it in the binder gets you into the theater where that play is on.
+// Two cards in the binder do more than sit there, once you are out in the world.
+// The first is named after a play, and gets you into the theater where it is on.
+// The Ba Sing Se card came with Long Feng's invitation, which still stands.
 $('binder-grid').onclick = e => {
   const card = e.target.closest('.tcg'), c = card && CARDS[[...$('binder-grid').children].indexOf(card)];
-  if (!c || c.id !== 'iceberg' || !has('iceberg') || S.stage !== 'map') return;
-  $('binder').classList.remove('show');
-  say('sokka', '“The Boy in the Iceberg is a new production from acclaimed playwright Pu-on Tim, who scoured the globe gathering information on the Avatar, from the icy South Pole to the heart of Ba Sing Se. His sources include singing nomads, pirates, prisoners of war, and a surprisingly knowledgeable merchant of cabbage.”',
-    'To the theater!', () => go('s-play'), 'Sokka, reading a poster', 'Not tonight');
+  if (!c || !has(c.id) || S.stage !== 'map') return;
+  if (c.id === 'iceberg') {
+    $('binder').classList.remove('show');
+    say('sokka', '“The Boy in the Iceberg is a new production from acclaimed playwright Pu-on Tim, who scoured the globe gathering information on the Avatar, from the icy South Pole to the heart of Ba Sing Se. His sources include singing nomads, pirates, prisoners of war, and a surprisingly knowledgeable merchant of cabbage.”',
+      'To the theater!', () => go('s-play'), 'Sokka, reading a poster', 'Not tonight');
+  } else if (c.id === 'nowar') {
+    $('binder').classList.remove('show');
+    say('longfeng', '“The Earth King has invited you to Lake Laogai.”', 'I am honored to accept his invitation.', () => go('s-laogai'), CAST.longfeng, 'Not today');
+  }
 };
 // The Avatar is never really gone: erasing everything starts a new life, and
 // that new life begins with one secret card (see the end of this file).
@@ -1601,7 +1852,8 @@ $('hud-map').onclick = () => go('s-map');
 // ── Uncle Iroh's advice ──
 $('hud-hint').onclick = () => {
   const left = CARDS.filter(c => !has(c.id));
-  const c = left.find(c => c.id !== 'energy') || left[0] || SECRETS.find(c => !has(c.id));
+  const c = S.dark ? SECRETS.find(c => c.id === 'yue')   // with the moon gone, nothing else matters
+    : left.find(c => c.id !== 'energy') || left[0] || SECRETS.find(c => !has(c.id));
   if (!c) { say('iroh', 'You have found everything. Now it is time for tea.', 'Cheers'); return; }
   const lvl = S.hints[c.id] || 0;
   S.hints[c.id] = lvl + 1; save();
@@ -1998,8 +2250,13 @@ const Flight = {
   },
   finish() {
     this.run = false;
+    const first = !has('yipyip'), clean = this.lives === 3;
     S.stage = 'map'; save();   // landed, whatever happens during the card reveal
+    // Not a single hit. On the very first flight Appa only takes note; on any
+    // later one he lands, falls asleep and dreams (see the Eastern Air Temple).
+    if (clean && !first && !has('friend')) { go('s-dream'); return; }
     unlock('yipyip', () => go('s-map'));
+    if (clean && first) setTimeout(() => toast('Not a single singed hair. Appa will remember that.', 4500), 1200);
   },
   showLives() { $('flight-lives').innerHTML = art('heart').repeat(Math.max(0, this.lives)); },
   // Three hits and Appa goes down, which is the only way to find the swamp.
@@ -2014,6 +2271,7 @@ const Flight = {
     setTimeout(() => {
       if (cur !== 's-flight') return;
       S.stage = 'map'; save();
+      Swamp.crashed = true;
       go('s-swamp');
     }, 1200);
   },
@@ -2024,15 +2282,87 @@ $('flight-stage').addEventListener('pointermove', e => {
   Flight.py = clamp((e.clientY - r.top) / r.height, .08, .92);
 });
 
-SCENES['s-swamp'] = {
+// After the first crash the swamp has a pin on the map, so it can also be
+// reached the gentle way.
+const Swamp = {
+  crashed: false,   // set by a flight that went down; any other way in is through the pin
   enter() {
+    Banyan.reset();
+    const crashed = this.crashed;
+    this.crashed = false;
     $('swamp-loot').style.display = has('swamp') ? 'none' : '';
-    $('swamp-text').textContent = has('swamp')
-      ? 'Appa is up to his knees in swamp again. He has stopped being surprised.'
-      : 'A crash landing in the Foggy Swamp. Appa is up to his knees in mud and will never forgive you. But something glimmers between the roots of the great tree…';
+    $('swamp-text').textContent = !has('swamp')
+      ? 'A crash landing in the Foggy Swamp. Appa is up to his knees in mud and will never forgive you. But something glimmers between the roots of the great tree…'
+      : (crashed ? 'Appa is up to his knees in swamp again. He has stopped being surprised.' : 'Back in the Foggy Swamp, and this time Appa landed on purpose. He still does not like it here.')
+        + (has('banyan') ? '' : '\nBehind him, the great tree creaks, as if it had something to say.');
+  },
+  leave() { Banyan.reset(); },
+};
+SCENES['s-swamp'] = Swamp;
+$('swamp-loot').onclick = () => { $('swamp-loot').style.display = 'none'; unlock('swamp', () => go('s-map')); };
+
+// The great tree itself, once the swamp's own card has been found (so: any
+// visit after the first crash). Hold a hand on it, the way Aang does, and it
+// shows how far its roots go: Huu's "one tree spread out over miles", all the
+// way under the world map.
+const Banyan = {
+  SWAMP: [49, 62],   // where the Foggy Swamp is on the world map, in %
+  timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  reset() {
+    this.timers.forEach(clearTimeout); this.timers = [];
+    clearTimeout(this.holdT);
+    this.holding = this.busy = false;
+    $('banyan-glow').className = '';
+    $('banyan-vision').classList.remove('show', 'grow');
+  },
+  press(e) {
+    if (!has('swamp') || has('banyan') || this.busy) return;
+    this.holding = true;
+    const r = $('swamp-stage').getBoundingClientRect(), g = $('banyan-glow');
+    g.style.left = e.clientX - r.left + 'px'; g.style.top = e.clientY - r.top + 'px';
+    g.className = 'on';
+    $('swamp-text').textContent = 'You put your hand on the great tree, and keep it there.';
+    this.holdT = setTimeout(() => this.connect(), 2400);
+  },
+  release() {
+    if (!this.holding) return;
+    this.holding = false;
+    clearTimeout(this.holdT);
+    if (this.busy) return;
+    $('banyan-glow').className = '';
+    $('swamp-text').textContent = 'You take your hand away, and the tree goes quiet again.';
+  },
+  connect() {
+    this.busy = true;
+    $('banyan-glow').className = 'on full';
+    [196, 262, 330, 392].forEach((f, i) => setTimeout(() => beep(f, 1, 'triangle'), i * 200));
+    $('swamp-text').textContent = 'Under your hand, a light runs down into the roots, and on, and on.\nAang: “Everything is connected.”';
+    this.later(() => this.vision(), 2600);
+  },
+  // the world map, with a root running from the swamp to every place you know
+  vision() {
+    const [sx, sy] = this.SWAMP, v = $('banyan-vision');
+    const ends = [...document.querySelectorAll('#map .pin')]
+      .filter(p => !(p.classList.contains('comet-pin') && !S.comet) && !(p.classList.contains('ember-pin') && !S.ember))
+      .map(p => [parseFloat(p.style.left), parseFloat(p.style.top)]);
+    ends.push([40, 85]);   // and the canoe at the South Pole
+    v.querySelector('svg').innerHTML = ends.map(([x, y], i) => {
+      const mx = (sx + x) / 2 + (y - sy) * .25, my = (sy + y) / 2 - (x - sx) * .25;   // a little crooked, like a root
+      return `<path d="M${sx} ${sy} Q${mx} ${my} ${x} ${y}" pathLength="1" style="transition-delay:${.6 + i * .25}s"/>`;
+    }).join('');
+    if (ART_URL['stage-map']) v.style.backgroundImage = `url("${ART_URL['stage-map']}")`;
+    v.classList.add('show');
+    this.later(() => v.classList.add('grow'), 60);
+    $('swamp-text').textContent = 'Huu: “See this whole swamp is actually just one tree spread out over miles. Branches spread and sink, take root, and spread some more. One big, living organism. Just like the entire world.”';
+    this.later(() => unlock('banyan', () => go('s-map')), 7500);
   },
 };
-$('swamp-loot').onclick = () => { $('swamp-loot').style.display = 'none'; unlock('swamp', () => go('s-map')); };
+(() => {
+  const st = $('swamp-stage');
+  $('banyan').addEventListener('pointerdown', e => { Banyan.press(e); if (Banyan.holding) st.setPointerCapture(e.pointerId); });
+  ['pointerup', 'pointercancel'].forEach(type => st.addEventListener(type, () => Banyan.release()));
+})();
 
 // ══════════════════════════════════════════════
 // WORLD MAP
@@ -2083,6 +2413,7 @@ const MapScene = {
       p.classList.toggle('done', p.dataset.cards.split(' ').every(has)));
     document.querySelector('#map .comet-pin').classList.toggle('show', S.comet);   // stays for rematches
     document.querySelector('#map .ember-pin').classList.toggle('show', !!S.ember);   // once you have been sent there
+    document.querySelector('#map .swamp-pin').classList.toggle('show', has('swamp'));   // once you have crashed there
     this.t1 = setTimeout(() => { this.runCart(); this.t2 = setInterval(() => this.runCart(), 22000); }, 5000);
     if (!S.mapIntro) {
       S.mapIntro = true; save();
@@ -2119,9 +2450,19 @@ const MapScene = {
     beep(90, .5, 'sawtooth');
     setTimeout(() => { s.remove(); unlock('cabbages'); }, 1400);
   },
+  // Wrecked once, the merchant tries the ferry to Ba Sing Se, which is where it
+  // happens to him in "The Serpent's Pass". Without a passport you fare no better.
+  ferry() {
+    $('cart').classList.add('gone');
+    say('cart', 'The cabbage merchant has reached the ferry to Ba Sing Se.\nTicket lady: “I told you already ... no vegetables on the ferry! One cabbage slug could destroy the entire ecosystem of Ba Sing Se! Security!”\nA platypus bear wrecks the cart.\nCabbage merchant: “Ahhh! My cabbages!”',
+      'Four tickets to Ba Sing Se, please', () =>
+      say('cart', 'Ticket lady: “Passports?”\nYou have no passport. For anyone without one, the only other way into Ba Sing Se is a narrow sliver of land between two lakes.',
+        'The Serpent\'s Pass, then', () => go('s-serpent'), 'The ferry station', 'Not today'),
+      'The ferry station');
+  },
 };
 SCENES['s-map'] = MapScene;
-$('cart').onclick = () => MapScene.boom();
+$('cart').onclick = () => has('cabbages') && !has('serpent') ? MapScene.ferry() : MapScene.boom();
 $('map-canoe').onclick = () => go('s-fish');
 document.querySelectorAll('#map .pin').forEach(p => p.onclick = () => go(p.dataset.go));
 
@@ -2134,6 +2475,11 @@ window.addEventListener('keydown', e => {
     keybuf = '';
     toast('YIP YIP!');
     go('s-flight');
+  }
+  // and a name that is not among Ozai's answers (see the finale)
+  if (cur === 's-ozai' && keybuf.endsWith('zuko') && !document.querySelector('.overlay.show')) {
+    keybuf = '';
+    Ozai.zuko();
   }
 });
 
@@ -2589,7 +2935,14 @@ $('tea-btn').onclick = () => Tea.start();
 // NORTHERN WATER TRIBE — the moon pulls the tide
 // ══════════════════════════════════════════════
 
+// The pond holds two secrets as well. Katara's way of fishing works here too:
+// hold still on the koi and the water takes the white one, Tui. Lifting it out
+// is what Admiral Zhao came here for, and what follows is what followed in the
+// show: the moon goes red, then out, and every colour in the game goes with it
+// (S.dark) until Tui is taken care of. Holding it, as Iroh did, brings Yue.
 const Water = {
+  timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
   enter() {
     const st = $('water-stage');
     if (!st.querySelector('.star') && !ART_URL['stage-water']) {
@@ -2600,10 +2953,150 @@ const Water = {
         st.prepend(s);
       }
     }
+    this.reset();
     $('water-loot').style.display = has('moon') ? 'none' : '';
     this.mx = .28; this.my = .2;
     this.update();
-    $('water-text').textContent = 'The Spirit Oasis. Tui and La circle each other, as they always have. Something glints deep under the water.';
+    this.koi(!S.dark);
+    $('tui').style.display = S.dark ? 'block' : 'none';
+    $('moon').classList.toggle('gone', !!S.dark);
+    if (S.dark) { Music.warp(35, .4, .8); this.warped = true; }
+    $('water-text').textContent = S.dark
+      ? 'The Spirit Oasis, without its moon. La circles alone. Tui floats at the surface and does not move.'
+      : 'The Spirit Oasis. Tui and La circle each other, as they always have. Something glints deep under the water.';
+  },
+  leave() {
+    this.reset();
+    paintMoonlight();   // in case you leave in the middle of it going dark
+    if (this.warped) { Music.warp(); this.warped = false; }
+  },
+  reset() {
+    this.timers.forEach(clearTimeout); this.timers = [];
+    clearTimeout(this.holdT); clearTimeout(this.mendT);
+    this.held = this.carrying = this.mending = this.busy = false;
+    $('oasis-bubble').classList.remove('show');
+    $('tui').classList.remove('glow');
+    $('sea').classList.remove('lit');
+    document.querySelectorAll('.tui-fire').forEach(f => f.remove());
+  },
+  // the pond's koi: both of them, or La circling on its own
+  koi(both) {
+    const k = document.querySelector('#sea .koi');
+    k.dataset.art = both ? 'koi' : 'koi-la';
+    k.innerHTML = art(k.dataset.art);
+  },
+  // x and y: where the pointer is, in pixels from the top left of the scene
+  press(x, y, e) {
+    if (this.busy) return;
+    if (S.dark) { if (e.target.closest('#tui')) this.mend(); return; }
+    const k = document.querySelector('#sea .koi').getBoundingClientRect();
+    if (e.clientX < k.left || e.clientX > k.right || e.clientY < k.top || e.clientY > k.bottom) return;
+    this.held = true; this.bx = x; this.by = y;
+    this.holdT = setTimeout(() => {   // held rather than clicked: the water answers
+      if (!this.held) return;
+      if (has('zhao')) { $('water-text').textContent = 'Tui and La slip around your hand and keep circling. You have done enough fishing here.'; return; }
+      this.carrying = true;
+      this.koi(false);
+      this.bubble();
+      beep(520, .3, 'triangle');
+      $('water-text').textContent = 'You hold your hand still, and the water rises to meet it, and the white koi with it: Tui, the Moon Spirit.';
+    }, 350);
+  },
+  move(x, y) {
+    if (!this.held) return;
+    this.bx = x; this.by = y;
+    if (!this.carrying) return;
+    this.bubble();
+    const H = $('water-stage').clientHeight;
+    if (y < H * (1 - this.h / 100) - H * .08) this.caught();
+  },
+  release() {
+    if (!this.held) return;
+    this.held = false;
+    clearTimeout(this.holdT);
+    if (this.mending) {
+      this.mending = false; clearTimeout(this.mendT);
+      $('tui').classList.remove('glow');
+      $('water-text').textContent = 'You let go, and Tui drifts away from your hand. Whoever was kneeling beside you waits.';
+      return;
+    }
+    if (!this.carrying) return;
+    this.carrying = false;
+    $('oasis-bubble').classList.remove('show');
+    this.koi(true);
+    $('water-text').textContent = 'You let go. The water drops back, and Tui slips away to La.';
+  },
+  bubble() {
+    const b = $('oasis-bubble');
+    b.classList.add('show');
+    b.style.left = this.bx + 'px'; b.style.top = this.by + 'px';
+  },
+  // Out of the water. Saved at once: from here the moon is lost, even if the game is closed halfway through.
+  caught() {
+    this.held = this.carrying = false; this.busy = true;
+    S.dark = true; save();
+    document.body.classList.add('moon-red');
+    Music.warp(60, .5, .85); this.warped = true;
+    beep(90, 1.2, 'sawtooth');
+    $('water-text').textContent = 'The moon goes red. Then everything else does.';
+    this.later(() => say('zhao', 'Admiral Zhao rolls up his map, steps out of the fog and takes the koi from you.\n“I am ... a legend, now! The Fire Nation will, for generations, tell stories about the great Zhao, who darkened the moon.”', 'I caught that!', () => {
+      $('oasis-bubble').classList.remove('show');
+      unlock('zhao', () => say('iroh', '“Whatever you do to that spirit I\'ll unleash on you ten-fold! Let it go, now!”', 'Zhao lets go…', () => this.strike()));
+    }), 2400);
+  },
+  // He drops it back into the pond, hesitates, and strikes. The moon goes out, and every colour with it.
+  strike() {
+    if (cur !== 's-water') { paintMoonlight(); return; }
+    $('tui').style.display = 'block';
+    $('water-text').textContent = 'Zhao lets go, and Tui drops back into the pond. He hesitates. Then he strikes at it with fire.';
+    const t = $('tui').getBoundingClientRect(), s = $('water-stage').getBoundingClientRect();
+    const f = document.createElement('div');
+    f.className = 'tui-fire'; f.innerHTML = art('fireball');
+    f.style.left = t.left - s.left + t.width / 2 + 'px'; f.style.top = t.top - s.top + t.height / 2 + 'px';
+    $('water-stage').append(f);
+    beep(70, .9, 'sawtooth');
+    this.later(() => {
+      f.remove();
+      document.body.classList.replace('moon-red', 'moon-dark');
+      $('moon').classList.add('gone');
+      Music.warp(35, .4, .8);
+      $('water-text').textContent = 'The moon fades out, and the world goes grey. La circles alone around Tui, who does not move.';
+      this.busy = false;
+    }, 1400);
+  },
+  // Tui, held in the water the way Iroh held it, and someone kneeling beside you.
+  mend() {
+    this.held = this.mending = true;
+    $('tui').classList.add('glow');
+    $('water-text').textContent = 'You hold Tui gently in the water, the way Iroh did. Someone kneels down beside you.';
+    this.mendT = setTimeout(() => this.yue(), 1800);
+  },
+  yue() {
+    this.held = this.mending = false; this.busy = true;
+    say('iroh', '“You have been touched by the Moon Spirit. Some of its life is in you.”', 'Who is she?', () =>
+      say('yue', '“Yes, you\'re right. It gave me life, maybe I can give it back.”', 'Wait…', () => this.restore()),
+    'Uncle Iroh, to the girl beside you');
+  },
+  // The koi lights up, then the whole pond, and the moon comes back with every colour.
+  restore() {
+    if (cur !== 's-water') return;
+    $('tui').classList.add('glow');
+    [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .7, 'triangle'), i * 260));
+    $('water-text').textContent = 'She puts her hands on the koi. It begins to glow, and she is gone.';
+    this.later(() => {
+      $('sea').classList.add('lit');
+      $('water-text').textContent = 'The whole pond lights up. Above it, the light takes her shape.';
+    }, 2000);
+    this.later(() => say('yue', '“Goodbye, Sokka. I\'ll always be with you.”', 'Goodbye, Yue', () => {
+      $('tui').style.display = 'none';
+      this.koi(true);
+      $('sea').classList.remove('lit');
+      $('moon').classList.remove('gone');
+      document.body.classList.remove('moon-dark');
+      Music.warp(); this.warped = false;
+      $('water-text').textContent = 'The moon comes back, and brings the colour with it. Tui and La circle each other again.';
+      this.later(() => { S.dark = false; unlock('yue', () => Water.enter()); }, 2800);   // saved together with the card
+    }, 'Princess Yue, to someone who is not here'), 4200);
   },
   update() {
     const m = $('moon');
@@ -2634,7 +3127,21 @@ SCENES['s-water'] = Water;
     $('water-loot').style.display = 'none';
     unlock('moon');
   };
+  // holding on to the koi (the moon and the card on the seabed have their own handlers)
+  const at = e => { const r = st.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  st.addEventListener('pointerdown', e => {
+    if (e.target.closest('#moon, #water-loot')) return;
+    Water.press(...at(e), e);
+    if (Water.held) st.setPointerCapture(e.pointerId);
+  });
+  st.addEventListener('pointermove', e => Water.move(...at(e)));
+  ['pointerup', 'pointercancel'].forEach(type => st.addEventListener(type, () => Water.release()));
 })();
+// What the moon has done to every colour in the game, once the red has passed.
+const paintMoonlight = () => {
+  document.body.classList.remove('moon-red');
+  document.body.classList.toggle('moon-dark', !!S.dark);
+};
 
 // ══════════════════════════════════════════════
 // SUN WARRIORS — the Dancing Dragon
@@ -3001,7 +3508,7 @@ const Beach = {
     this.timers.forEach(clearTimeout); this.timers = [];
     st.querySelectorAll('.kp, .netfire').forEach(e => e.remove());
     this.us = this.them = 0; this.busy = true;
-    // the girl with the pigtails stands somewhere else every match
+    // the girl with the pigtails stands somewhere else every match, and again after every point
     this.team = shuffle(['kuai-1', 'kuai-2', 'kuai-3']).map((key, i) => {
       const el = document.createElement('div');
       el.className = 'kp'; el.innerHTML = art(key); el.style.left = this.SPOTS[i] + '%';
@@ -3059,8 +3566,9 @@ const Beach = {
       }), 900);
       return;
     }
-    this.later(() => {
-      this.team.forEach(p => { p.el.classList.remove('late'); p.el.style.left = p.x + '%'; });
+    this.later(() => {   // everyone back into position, though not necessarily the same one
+      const spots = shuffle(this.SPOTS.slice());
+      this.team.forEach((p, i) => { p.x = spots[i]; p.el.classList.remove('late'); p.el.style.left = p.x + '%'; });
       this.fly(50, 88, 400);
       this.busy = false;
     }, 1100);
@@ -3241,6 +3749,396 @@ SCENES['s-fish'] = Fishing;
 })();
 
 // ══════════════════════════════════════════════
+// LAKE LAOGAI — the invitation, accepted
+// ══════════════════════════════════════════════
+// Reached through the Ba Sing Se card in the binder. Under the lake the Dai Li
+// are making Joo Dees: a row of women saying each line back in unison while a
+// lantern circles the agent. Take the empty place in the row and say every
+// line exactly as it was said, after the flash has wiped it away.
+
+const Laogai = {
+  RING: [50, 54.2, 25, 12.5],   // the lantern's track as drawn on the backdrop: centre and radii, in % of the scene
+  ROW: [8, 22, 36, 64, 78, 92],  // where the Joo Dees stand; the gap in the middle is yours
+  // What the agent says, then three lines that are nearly it. The first two are
+  // what the women in the show are taught; the third is what the Dai Li told Jet.
+  LINES: [
+    ['I\'m Joo Dee. Welcome to Ba Sing Se.', 'I\'m Joo Dee. Welcome to Lake Laogai.', 'I\'m Jet. Welcome to Ba Sing Se.', 'I\'m not Joo Dee. Please help me.'],
+    ['We\'re so lucky to have our walls to create order.', 'We\'re so lucky to have our walls to keep order.', 'We\'re so lucky to have our walls to keep us in.', 'We\'re so lucky to have our war to create order.'],
+    ['There is no war within the walls. Here we are safe. Here, we are free.', 'There is no war within the walls. Here we are free. Here, we are safe.',
+      'There is a war within the walls. Here we are safe. Here, we are free.', 'There is no war within the walls. Here we are safe. Here, we are stuck.'],
+  ],
+  tok: 0, timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  enter() {
+    this.stop();
+    $('laogai-row').innerHTML = '';
+    this.ROW.forEach(x => this.joodee(x));
+    this.theta = -Math.PI / 2; this.run = true; this.last = performance.now();
+    const tok = ++this.tok;
+    const frame = now => { if (tok !== this.tok || !this.run) return; this.spin(now); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+    $('laogai-text').textContent = 'Under Lake Laogai, a Dai Li agent stands inside a ring of track, and a small orange lantern goes round and round him. In front of him, a row of women in green, all with the same smile. There is a gap in the row.';
+    choices('laogai-opts', ['Take your place in the row'], () => this.round(0));
+  },
+  leave() { this.stop(); },
+  stop() {
+    this.run = false; this.tok++;
+    this.timers.forEach(clearTimeout); this.timers = [];
+    $('laogai-opts').innerHTML = '';
+    $('laogai-row').classList.remove('say');
+  },
+  joodee(x) {
+    const j = document.createElement('div');
+    j.className = 'jd'; j.dataset.art = 'joodee'; j.innerHTML = art('joodee'); j.style.left = x + '%';
+    $('laogai-row').append(j);
+  },
+  spin(now) {
+    const dt = Math.min(.05, (now - this.last) / 1000), before = this.theta;
+    this.last = now;
+    this.theta += dt * 2.4;   // a lap every two and a half seconds or so
+    const [cx, cy, rx, ry] = this.RING, l = $('laogai-lantern');
+    l.style.left = cx + rx * Math.cos(this.theta) + '%';
+    l.style.top = cy + ry * Math.sin(this.theta) + '%';
+    l.style.zIndex = Math.sin(this.theta) > 0 ? 3 : 1;   // in front of the agent, or behind him
+    // a white flash every time it passes right in front of your eyes
+    const lap = a => Math.floor((a - Math.PI / 2) / (Math.PI * 2));
+    if (lap(before) !== lap(this.theta)) this.flash();
+  },
+  flash() {
+    const st = $('laogai-stage');
+    st.classList.remove('flash'); void st.offsetWidth; st.classList.add('flash');
+  },
+  round(i) {
+    if (i >= this.LINES.length) { this.done(); return; }
+    const [line, ...near] = this.LINES[i], row = $('laogai-row');
+    $('laogai-opts').innerHTML = '';
+    $('laogai-text').textContent = `Dai Li agent: “${line}”`;
+    this.later(() => {
+      row.classList.remove('say'); void row.offsetWidth; row.classList.add('say');
+      [392, 494, 587].forEach(f => beep(f, .5, 'triangle'));   // many voices, one note
+      $('laogai-text').textContent = `The whole row, at once: “${line}”`;
+    }, 2600);
+    this.later(() => {
+      this.flash();
+      $('laogai-text').textContent = 'The lantern passes your eyes, and for a moment everything is white. Your turn.';
+      choices('laogai-opts', shuffle([line, ...near]), label => {
+        $('laogai-opts').innerHTML = '';
+        if (label === line) {
+          SFX.correct();
+          $('laogai-text').textContent = pick(['Perfectly in time with everyone else.', 'Not a word out of place. The agent does not even look up.', 'You say it with the others, and it sounds just like them.']);
+          this.later(() => this.round(i + 1), 1500);
+          return;
+        }
+        SFX.wrong();
+        $('laogai-text').textContent = 'Every head in the row turns to look at you, all at exactly the same moment. The agent sighs. From the beginning.';
+        this.later(() => this.round(0), 2800);
+      });
+    }, 5400);
+  },
+  // The lantern stops, and the gap in the row is filled.
+  done() {
+    this.run = false;
+    this.joodee(50);
+    $('laogai-text').textContent = 'The lantern stops. The agent walks along the row, looks you over and nods. One more Joo Dee, ready for the Upper Ring.';
+    this.later(() => unlock('laogai', () => go('s-map')), 2600);
+  },
+};
+SCENES['s-laogai'] = Laogai;
+
+// ══════════════════════════════════════════════
+// THE EASTERN AIR TEMPLE — Appa's dream
+// ══════════════════════════════════════════════
+// Where a flight ends that reaches land without a single hit (any flight but
+// the first). Appa falls asleep and dreams of the day he met Aang, the way he
+// does in the show: five calves, a nun with apples, and one apple to offer.
+
+const Dream = {
+  tok: 0, timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  enter() {
+    this.stop();
+    const st = $('dream-stage');
+    st.querySelectorAll('.calf').forEach(c => c.remove());
+    st.classList.remove('choose');
+    $('dream-aang').classList.remove('down');
+    $('dream-apple').style.display = '';
+    this.chosen = null;
+    this.calves = Array.from({ length: 5 }, (_, i) => {
+      const calf = { el: document.createElement('div'), a: i / 5 * Math.PI * 2, free: true };
+      calf.el.className = 'calf'; calf.el.dataset.art = 'appa'; calf.el.innerHTML = art('appa');
+      calf.el.onclick = () => this.choose(calf);
+      st.append(calf.el);
+      return calf;
+    });
+    this.run = true; this.last = performance.now();
+    const tok = ++this.tok;
+    const frame = now => { if (tok !== this.tok || !this.run) return; this.fly(now); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+    $('dream-text').textContent = 'Appa lands on the island, curls up, and is asleep before you are off his back. He dreams of the Eastern Air Temple, a long time ago.';
+    this.later(() => {
+      $('dream-text').textContent = 'Five sky bison calves circle their mother. A nun with a bowl of apples hands one to a young airbender.\nSister Iio: “Choose well. A sky bison is a companion for life.”';
+      st.classList.add('choose');
+    }, 3800);
+  },
+  leave() { this.stop(); },
+  stop() { this.run = false; this.tok++; this.timers.forEach(clearTimeout); this.timers = []; },
+  // the calves circle their mother, passing in front of her and behind
+  fly(now) {
+    const dt = Math.min(.05, (now - this.last) / 1000);
+    this.last = now;
+    for (const c of this.calves) {
+      if (!c.free) continue;
+      c.a += dt * .9;
+      c.el.style.left = 30 + 20 * Math.cos(c.a) + '%';
+      c.el.style.top = 27 + 12 * Math.sin(c.a) + '%';
+      c.el.style.zIndex = Math.sin(c.a) > 0 ? 3 : 1;
+    }
+  },
+  // Whichever one you pick, it turns out to be him.
+  choose(c) {
+    if (this.chosen || !$('dream-stage').classList.contains('choose')) return;
+    this.chosen = c; c.free = false;
+    $('dream-stage').classList.remove('choose');
+    c.el.classList.add('chosen'); c.el.style.zIndex = 5;
+    c.el.style.left = '64%'; c.el.style.top = '64%';
+    $('dream-text').textContent = 'You hold out the apple. One calf leaves the others and comes down to you. Or it chose you; neither of you will ever be quite sure.';
+    this.later(() => {
+      $('dream-apple').style.display = 'none';
+      beep(330, .15, 'triangle');
+      $('dream-text').textContent = 'It sniffs the apple, very seriously. Then it eats it.';
+    }, 2400);
+    this.later(() => {
+      $('dream-aang').classList.add('down');
+      beep(120, .3, 'square');
+      $('dream-text').textContent = 'Then it knocks you flat on your back and licks your whole face.\nAang: “I guess this means we\'ll always be together.”';
+    }, 4600);
+    this.later(() => unlock('friend', () => {
+      go('s-map');
+      toast('Appa wakes up, licks you, and looks very pleased with himself.', 4000);
+    }), 8200);
+  },
+};
+SCENES['s-dream'] = Dream;
+
+// ══════════════════════════════════════════════
+// THE SERPENT'S PASS — the other way into Ba Sing Se
+// ══════════════════════════════════════════════
+// Reached by stopping the cabbage cart once more, after its card is won. A walk
+// along the pass until the serpent comes up; then, as Aang did, keep it busy:
+// it follows you, and going round and round it whips up the whirlpool that, in
+// the show, slams it into the mountain.
+
+const Serpent = {
+  TURNS: 3,   // times round the serpent that make a whirlpool
+  WALK: [4, 9, 14],   // where the travellers start on the path, in %
+  tok: 0, timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  enter() {
+    this.stop();
+    const st = $('serpent-stage'), sp = $('serpent');
+    st.querySelectorAll('.walker').forEach(w => w.remove());
+    this.walkers = this.WALK.map(x => {
+      const el = document.createElement('div');
+      el.className = 'walker'; el.dataset.art = 'walker'; el.innerHTML = art('walker'); el.style.left = x + '%';
+      st.append(el);
+      return { el, x };
+    });
+    sp.classList.remove('thrown');
+    this.x = this.tx = 50; this.rise = 110; this.tilt = 0; this.spin = 0; this.lastA = null;
+    this.walking = this.chasing = this.up = false; this.felt = false;
+    $('whirl').style.opacity = 0;
+    this.place();
+    this.run = true; this.last = performance.now();
+    const tok = ++this.tok;
+    const frame = now => { if (tok !== this.tok || !this.run) return; this.tick(now); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+    $('serpent-text').textContent = 'A sliver of rock between two lakes: for anyone without a passport, the only way into Ba Sing Se. There is a sign at the start of it.\nKatara: “It says, ‘abandon hope’.”';
+    choices('serpent-opts', ['Start across'], () => this.walk());
+  },
+  leave() { this.stop(); },
+  stop() {
+    this.run = false; this.tok++;
+    this.timers.forEach(clearTimeout); this.timers = [];
+    $('serpent-opts').innerHTML = '';
+    document.body.classList.remove('shake');
+  },
+  place() {
+    const sp = $('serpent');
+    sp.style.left = this.x + '%';
+    if (!sp.classList.contains('thrown')) sp.style.transform = `translate(-50%, ${this.rise}%) rotate(${this.tilt}deg)`;
+    $('whirl').style.left = this.x + '%';
+  },
+  walk() {
+    $('serpent-opts').innerHTML = '';
+    this.walking = true;
+    $('serpent-text').textContent = 'Single file, along the edge of the water. It is very quiet.';
+    this.later(() => { $('serpent-text').textContent = 'Something long and dark slides along under the water, right beside the path.'; }, 3500);
+    this.later(() => this.surface(), 6500);
+  },
+  surface() {
+    this.up = true;
+    document.body.classList.add('shake');
+    beep(55, 1.2, 'sawtooth'); beep(82, .9, 'square');
+    $('serpent-text').textContent = 'Sokka: “I think I just figured out why they call it the Serpent\'s Pass!”';
+    this.later(() => document.body.classList.remove('shake'), 900);
+    this.later(() => {
+      $('serpent-text').textContent = 'Aang: “I\'ll distract it. Katara, get everyone across!”\nIt is watching you now. Wherever you go, it goes.';
+      this.chasing = true;
+    }, 2800);
+  },
+  // Round and round it: the angle of the pointer around the serpent, added up.
+  move(px, py) {
+    this.tx = clamp(px / $('serpent-stage').clientWidth * 100, 14, 76);
+    if (!this.chasing) return;
+    const st = $('serpent-stage'), sx = this.x / 100 * st.clientWidth, sy = st.clientHeight * .5;
+    const a = Math.atan2(py - sy, px - sx);
+    if (this.lastA !== null) {
+      let d = a - this.lastA;
+      if (d > Math.PI) d -= Math.PI * 2;
+      if (d < -Math.PI) d += Math.PI * 2;
+      this.spin += d;
+    }
+    this.lastA = a;
+  },
+  tick(now) {
+    const dt = Math.min(.05, (now - this.last) / 1000);
+    this.last = now;
+    if (this.up && this.rise > 0) this.rise = Math.max(0, this.rise - dt * 90);   // coming up out of the water
+    if (this.chasing) {
+      this.x += (this.tx - this.x) * Math.min(1, dt * 1.1);   // it follows, a little behind
+      this.tilt = clamp((this.tx - this.x) * 1.2, -18, 18);
+      this.spin *= 1 - dt * .12;   // the water calms down again unless you keep going
+      const p = Math.min(1, Math.abs(this.spin) / (this.TURNS * Math.PI * 2));
+      $('whirl').style.opacity = p;
+      if (p > .3 && !this.felt) { this.felt = true; $('serpent-text').textContent = 'The water around it is starting to turn with you.'; }
+      if (p >= 1) this.whirlpool();
+    }
+    if (this.walking) {   // the travellers keep going, faster while it is busy with you
+      this.walkers.forEach((w, i) => {
+        w.x = Math.min(w.x + dt * (this.chasing ? 3.2 : 1.6), 76 - (this.walkers.length - 1 - i) * 5);   // and wait at the far end
+        w.el.style.left = w.x + '%';
+      });
+    }
+    this.place();
+  },
+  // As in the show: caught in the whirlpool and slammed into the mountain, then gone below.
+  whirlpool() {
+    this.chasing = false;
+    const sp = $('serpent');
+    sp.classList.add('thrown');
+    sp.style.transform = 'translate(160%, -8%) rotate(70deg)';
+    beep(70, 1, 'sawtooth');
+    $('serpent-text').textContent = 'The whirlpool spins it round and round, and slams it into the mountainside.';
+    this.later(() => { document.body.classList.add('shake'); beep(45, .8, 'square'); }, 1000);
+    this.later(() => {
+      document.body.classList.remove('shake');
+      sp.style.transform = 'translate(160%, 130%) rotate(95deg)';
+      $('whirl').style.opacity = 0;
+      $('serpent-text').textContent = 'It falls back below the water. On the far side of the pass, everyone cheers.';
+      this.walkers.forEach(w => { w.el.classList.add('cheer'); });
+    }, 1800);
+    this.later(() => unlock('serpent', () => go('s-map')), 4600);
+  },
+};
+SCENES['s-serpent'] = Serpent;
+
+// ══════════════════════════════════════════════
+// THE SECRET DANCE PARTY — keeping time
+// ══════════════════════════════════════════════
+// On any screen with music, tapping the space bar along with it, eight beats in
+// a row, gets you told off the way Aang is in music class in "The Headband". So
+// you go where he went: his secret dance party in a cave. Keep in time and the
+// shy kids join in, one after another, until only Katara is left by the wall.
+
+const Feet = {
+  NEED: 8, n: 0, last: 0,
+  // Counts taps that land on the beat (within a fifth of one, either way) and
+  // follow the one before within about a beat; says whether this one did.
+  tap() {
+    const ph = Music.phase();
+    if (ph === null) return false;
+    const on = ph < .2 || ph > .8, now = performance.now();
+    this.n = !on ? 0 : now - this.last < Music.beat() * 1600 ? this.n + 1 : 1;
+    this.last = now;
+    return on;
+  },
+};
+window.addEventListener('keydown', e => {
+  if (e.code !== 'Space' || e.repeat || e.target.closest?.('input') || ['s-ozai', 's-maze'].includes(cur)) return;   // there the space bar has a job already
+  e.preventDefault();   // tapping along must never press the last button clicked
+  if (cur === 's-dance') { Dance.tap(); return; }
+  if (has('dance') || document.querySelector('.overlay.show')) return;
+  if (Feet.tap() && Feet.n >= Feet.NEED) { Feet.n = 0; Dance.caught(); }
+});
+
+const Dance = {
+  KIDS: [[8, 'dancer-1'], [18, 'dancer-2'], [28, 'dancer-3'], [72, 'dancer-4'], [82, 'dancer-3']],
+  JOIN: ['One of them starts nodding along.', 'Another one joins in.', 'Aang: “All right, go with that! Everybody freestyle!”', 'Now most of the cave is dancing.', ''],
+  timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  // Caught dancing in your seat, the way Aang is in music class.
+  caught() {
+    say('teacher', 'Somewhere, a Fire Nation music teacher looks up from his podium.\n“No, child. That hullabaloo going on with your feet. Is that a nervous disorder?”', 'I was just dancing', () =>
+      say('teacher', '“Dancing is not conducive to a proper learning environment.”', 'Then we\'ll dance somewhere else', () => go('s-dance')));
+  },
+  enter() {
+    this.stop();
+    const st = $('dance-stage');
+    st.querySelectorAll('.dk').forEach(k => k.remove());
+    st.classList.remove('ask', 'party');
+    this.kids = this.KIDS.map(([x, key]) => {
+      const el = document.createElement('div');
+      el.className = 'dk'; el.dataset.art = key; el.innerHTML = art(key); el.style.left = x + '%';
+      st.append(el);
+      return el;
+    });
+    $('dance-aang').style.left = '50%';
+    $('dance-katara').style.left = '92%';
+    $('dance-katara').classList.remove('on');
+    this.joined = this.taps = 0; this.done = false;
+    // after go() has started the band's tune
+    setTimeout(() => { if (Music.track) st.style.setProperty('--beat', Music.beat() + 's'); });
+    $('dance-text').textContent = 'A cave, lit with candles. Toph has raised a stage, the band is playing, and the kids stand around the edges without moving.\nAang: “This is when you start dancing.”';
+  },
+  leave() { this.stop(); },
+  stop() { this.timers.forEach(clearTimeout); this.timers = []; },
+  // Every tap is a move; every second one on the beat gets one more kid dancing.
+  tap() {
+    if (this.done || this.joined >= this.kids.length) return;
+    const on = Feet.tap(), a = $('dance-aang');
+    a.classList.remove('move'); void a.offsetWidth; a.classList.add('move');
+    if (!on) { $('dance-text').textContent = pick(['A step out of time. Nobody saw. Probably.', 'Off the beat. Listen for the drum.', 'Your feet and the band disagree.']); return; }
+    if (++this.taps % 2) return;
+    this.kids[this.joined++].classList.add('on');
+    $('dance-text').textContent = this.JOIN[this.joined - 1];
+    if (this.joined === this.kids.length) {
+      $('dance-stage').classList.add('party', 'ask');
+      $('dance-text').textContent = 'Everybody is dancing. Everybody except Katara, over by the wall.';
+    }
+  },
+  ask() {
+    if (this.done || !$('dance-stage').classList.contains('ask')) return;
+    this.done = true;
+    $('dance-stage').classList.remove('ask');
+    say('katara', '“I don\'t know, Aang. These shoes aren\'t really right for dancing, and I-I\'m not sure that I know how to-”', 'Hold out your hand', () => {
+      $('dance-aang').style.left = '44%';
+      $('dance-katara').style.left = '56%';
+      $('dance-katara').classList.add('on');
+      $('dance-text').textContent = 'Everybody stops to watch the two of you dance.';
+      this.later(() => { $('dance-text').textContent = 'Toph: “Who knew Twinkle Toes could dance?”'; }, 3400);
+      this.later(() => unlock('dance', () => go('s-map')), 6600);
+    });
+  },
+};
+SCENES['s-dance'] = Dance;
+$('dance-katara').onclick = () => Dance.ask();
+(() => {
+  const st = $('serpent-stage');
+  st.addEventListener('pointermove', e => { const r = st.getBoundingClientRect(); Serpent.move(e.clientX - r.left, e.clientY - r.top); });
+  st.addEventListener('pointerleave', () => { Serpent.lastA = null; });
+})();
+
+// ══════════════════════════════════════════════
 // FINALE — Sozin's Comet
 // ══════════════════════════════════════════════
 
@@ -3264,6 +4162,24 @@ const Ozai = {
     });
   },
   leave() { clearInterval(this.iv); this.phase = null; },
+  // Every answer on offer is Ozai. Typing a name that is not on the list brings
+  // in the one person in his family who ends up disagreeing: his son, the way he
+  // came to his father on the Day of Black Sun, and then off to join the Avatar.
+  zuko() {
+    if (this.phase !== 'quiz') return;
+    if (has('zuko')) { $('ozai-text').textContent = '"Do not say that name in front of me."'; return; }
+    this.phase = 'zuko';
+    beep(70, .6, 'sawtooth');
+    const ozai = 'Phoenix King Ozai', zuko = CAST.zuko;
+    say('ozai', '"Zuko?"\nThe doors open, and in walks Prince Zuko, swords drawn, the way he came to his father on the Day of Black Sun.', 'Uh oh', () =>
+      say('zuko', '“I am going to speak my mind, and you are going to listen.”', '(listen)', () =>
+        say('zuko', '“I\'m going to join the Avatar and I\'m going to help him defeat you.”\nAnd he walks out.', 'Go, Zuko!', () =>
+          say('zuko', 'Joining the Avatar turns out to be harder than telling off the Fire Lord. On the way, Zuko practises what he is going to say. To a badgerfrog.\n“Hello ... Zuko here.”', 'Ribbit',
+            () => unlock('zuko', () => this.enter()), 'Prince Zuko, rehearsing'),
+        zuko),
+      zuko),
+    ozai);
+  },
   burn() {
     if (this.phase !== 'quiz') return;
     this.phase = 'burning';
@@ -3383,6 +4299,7 @@ $('start-progress').textContent = `${mainFound()} / ${CARDS.length} cards found`
 $('btn-start').textContent = S.found.length ? 'Continue' : 'Start the quiz';
 $('btn-start').onclick = () => go(S.stage === 'map' ? 's-map' : 's-quiz');
 updateHud();
+paintMoonlight();
 Music.play(tuneFor(cur));
 
 if (localStorage.getItem(LS_KEY + '_reborn')) {   // this life began with "Erase everything"
