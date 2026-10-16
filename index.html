@@ -252,6 +252,18 @@
     /* two children out fishing by the southern ice: small, and easy to miss */
     #map-canoe { position: absolute; left: 40%; top: 85%; z-index: 2; font-size: 20px; line-height: 1; cursor: pointer; animation: canoebob 2.6s ease-in-out infinite; }
     @keyframes canoebob { 50% { transform: translateY(3px) rotate(-2deg); } }
+    /* an island that never stays put */
+    #map-isle { position: absolute; z-index: 2; transform: translate(-50%,-50%); font-size: 26px; line-height: 1; cursor: pointer; }
+    #map-isle .art-img { height: 28px; }
+    #map-isle.awake .art-img { height: 44px; }
+    /* Kyoshi Island, the small one off the southern coast (drawn on the backdrop), and what lives in its bay */
+    #kyoshi { position: absolute; left: 91%; top: 89%; width: 7%; height: 9%; cursor: pointer; z-index: 2; }
+    #map-unagi {
+      position: absolute; left: 88%; bottom: -3%; height: 40%; z-index: 4; line-height: 1; font-size: 100px; pointer-events: none;
+      transform: translate(-50%, 110%); transition: transform .9s cubic-bezier(.2,.8,.3,1.2);
+    }
+    #map-unagi .art-img { height: 100%; }
+    #map-unagi.up { transform: translate(-50%, 0); }
     #cart {
       position: absolute; bottom: 3%; left: -14%; cursor: pointer; z-index: 3;
       font-size: 30px; line-height: .85; text-align: center; white-space: nowrap;
@@ -293,6 +305,10 @@
     #desert-stage.has-art .sun { display: none; }
     #cactus { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); font-size: 130px; line-height: 1; cursor: pointer; transition: transform .15s; }
     #cactus:hover { transform: translateX(-50%) scale(1.06) rotate(-3deg); }
+    /* an old man at a Pai Sho table, in the shade, at the edge of the scene */
+    #paisho { position: absolute; left: 15%; bottom: 9%; height: 36%; transform: translateX(-50%); font-size: 80px; line-height: 1; cursor: pointer; }
+    #paisho .art-img { height: 100%; }
+    body.trip #paisho { display: none; }
     .floater { position: absolute; line-height: 1; cursor: pointer; animation: floaty ease-in-out infinite alternate; }
     @keyframes floaty {
       from { transform: translate(0,0) rotate(-12deg) scale(1); }
@@ -340,6 +356,18 @@
     /* tea */
     .teapot { font-size: 110px; line-height: 1; }
     .teapot.brewing { animation: steam 1.6s ease-in-out infinite; }
+    /* waited long enough, the steam turns into two dragons circling each other */
+    .pot-wrap { position: relative; }
+    #steam-dragons { position: absolute; left: 50%; bottom: 62%; width: 300px; height: 170px; transform: translateX(-50%); pointer-events: none; opacity: 0; transition: opacity 3s; }
+    #steam-dragons.show { opacity: .85; }
+    #steam-dragons span { position: absolute; top: 25%; font-size: 64px; line-height: 1; filter: brightness(1.6) saturate(.6) blur(.4px) drop-shadow(0 0 10px rgba(255,255,255,.85)); }
+    #steam-dragons .art-img { height: 84px; }
+    #s-tea .scene-title { transition: opacity 2s; }
+    #s-tea.steam .scene-title { opacity: 0; }   /* the dragons need the room */
+    #steam-dragons span:first-child { left: 0; animation: steaml 5s ease-in-out infinite; }
+    #steam-dragons span:last-child { right: 0; animation: steamr 5s ease-in-out infinite; }
+    @keyframes steaml { 25% { transform: translate(60px,-30px); } 50% { transform: translate(120px,0); } 75% { transform: translate(60px,30px); } }
+    @keyframes steamr { 25% { transform: translate(-60px,30px); } 50% { transform: translate(-120px,0); } 75% { transform: translate(-60px,-30px); } }
     @keyframes steam { 50% { transform: translateY(-5px) rotate(-2deg); filter: drop-shadow(0 -8px 14px rgba(255,255,255,.5)); } }
     .bar { --px: 3px; --hi: rgba(0,0,0,.4); --lo: transparent; width: 100%; height: 18px; background: #0f172a; overflow: hidden; }
     .bar > div { height: 100%; width: 0; background: #84cc16; box-shadow: inset 0 -5px 0 0 #4d7c0f; }
@@ -433,8 +461,8 @@
     }
     #koh.lunge { transform: translate(-50%,-42%) scale(1.7); animation: none; }
     @keyframes kohsway { 50% { margin-left: 14px; margin-top: -6px; } }
-    #koh-opts, #play-opts { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 560px; margin-top: 0; }
-    #koh-opts .option, #play-opts .option { text-align: center; }
+    #koh-opts, #play-opts, #desert-opts { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 560px; margin-top: 0; }
+    #koh-opts .option, #play-opts .option, #desert-opts .option { text-align: center; }
     #koh-opts .option:only-child, #play-opts .option:only-child { grid-column: 1 / -1; }
     #koh-opts.chase .option { transition: transform .12s; }
 
@@ -459,6 +487,14 @@
     #kuai-ball.boom { transform: translate(-50%,-50%) scale(2.4); }
     .netfire { top: 46%; height: 24%; transform: translateX(-50%); z-index: 2; font-size: 90px; animation: flicker .35s infinite alternate; }
     #beach-score { position: absolute; left: 14px; top: 12px; z-index: 4; color: #f1f5f9; }
+    /* now and then a messenger hawk crosses the sky, and a raven eagle is waiting for it */
+    #hawk, #raven { position: absolute; top: 9%; height: 7.5%; line-height: 1; font-size: 30px; z-index: 5; display: none; }
+    :is(#hawk, #raven) .art-img { height: 100%; }
+    #hawk { cursor: pointer; transform: scaleX(-1); }   /* flying right to left */
+    #raven { height: 9.5%; }
+    #hawk.fly, #raven.fly { display: block; }
+    #beach-page { display: none; z-index: 5; font-size: 34px; transition: top 1.6s ease-in; }
+    #beach-page.show { display: block; }
     /* "The beach has a special way of smoothing even the most ragged edges":
        while you are on Ember Island's beach, every pixel frame is rounded off. */
     body.smooth :is(.btn, .hud-btn, .option, .card, .stage, .toast, .progress-badge) { border-radius: 18px; }
@@ -566,6 +602,8 @@
     .tcg.fire   { --c1:#dc2626; --c2:#7f1d1d; --c3:#fecaca; --glow:rgba(248,113,113,.45); }
     .tcg.spirit { --c1:#a855f7; --c2:#1e1b4b; --c3:#f5d0fe; --glow:rgba(192,132,252,.6); }
     .tcg.secret { --c1:#0f766e; --c2:#042f2e; --c3:#fde68a; --glow:rgba(45,212,191,.55); }
+    .tcg.notes  { --c1:#f1e4c4; --c2:#c9b088; --c3:#7a5a3a; --glow:rgba(241,228,196,.4); color: #3a2a1c; }
+    .tcg.notes .tcg-text { color: rgba(58,42,28,.85); }
     .tcg.locked { --c1:#1e293b; --c2:#0f172a; --c3:#334155; --glow:transparent; color: #475569; }
     .tcg.locked .tcg-art { filter: grayscale(1) brightness(.4); }
     .tcg.small { font-size: 9.5px; }
@@ -659,7 +697,7 @@
   <div class="scene-title" id="map-title">The Four Nations</div>
   <div class="stage map" id="map">
     <button class="pin" style="left:50%;top:12%" data-go="s-water" data-cards="moon"><i data-art="pin-water"></i><span>Northern Water Tribe</span></button>
-    <button class="pin" style="left:79%;top:27%" data-go="s-quiz" data-cards="rough nowar"><i data-art="pin-university"></i><span>Ba Sing Se University</span></button>
+    <button class="pin" style="left:91%;top:24%" data-go="s-quiz" data-cards="rough nowar"><i data-art="pin-university"></i><span>Ba Sing Se University</span></button>
     <button class="pin" style="left:86%;top:55%" data-go="s-tea" data-cards="tea"><i data-art="pin-tea"></i><span>The Jasmine Dragon</span></button>
     <button class="pin" style="left:66%;top:72%" data-go="s-desert" data-cards="cactus"><i data-art="pin-desert"></i><span>Si Wong Desert</span></button>
     <button class="pin" style="left:54%;top:46%" data-go="s-cave" data-cards="tunnel"><i data-art="pin-cave"></i><span>Cave of Two Lovers</span></button>
@@ -669,6 +707,9 @@
     <button class="pin ember-pin" style="left:21%;top:30%" data-go="s-beach" data-cards="beach"><i data-art="pin-ember"></i><span>Ember Island</span></button>
     <button class="pin swamp-pin" style="left:49%;top:62%" data-go="s-swamp" data-cards="swamp banyan"><i data-art="pin-swamp"></i><span>Foggy Swamp</span></button>
     <div id="map-canoe" data-art="canoe"></div>
+    <div id="map-isle" data-art="isle"></div>
+    <div id="kyoshi"></div>
+    <div id="map-unagi" data-art="unagi"></div>
     <div id="cart" data-art="cart" title="Fresh cabbages!"></div>
   </div>
   <div class="pads" id="map-pads"></div>
@@ -715,6 +756,9 @@
   <div class="stage" id="beach-stage">
     <div class="progress-badge" id="beach-score"></div>
     <div id="kuai-ball" data-art="ball"></div>
+    <div id="hawk" data-art="hawk"></div>
+    <div id="raven" data-art="raven-eagle"></div>
+    <div class="loot" id="beach-page" data-art="page"></div>
   </div>
   <div class="scene-text" id="beach-text"></div>
 </div>
@@ -780,8 +824,10 @@
   <div class="stage" id="desert-stage">
     <div class="sun">☀️</div>
     <div id="cactus" data-art="cactus"></div>
+    <div id="paisho" data-art="paisho-table"></div>
   </div>
   <div class="scene-text" id="desert-text"></div>
+  <div class="options" id="desert-opts"></div>
 </div>
 
 <!-- CAVE -->
@@ -820,7 +866,10 @@
 <!-- TEA -->
 <div id="s-tea" class="screen">
   <div class="scene-title">The Jasmine Dragon</div>
-  <div class="teapot" id="teapot" data-art="teapot"></div>
+  <div class="pot-wrap">
+    <div class="teapot" id="teapot" data-art="teapot"></div>
+    <div id="steam-dragons"><span data-art="ran"></span><span data-art="shaw"></span></div>
+  </div>
   <div class="scene-text" id="tea-text"></div>
   <div class="bar"><div id="tea-bar"></div></div>
   <button class="btn btn-primary" id="tea-btn">Brew tea</button>
@@ -877,6 +926,7 @@
     <div class="unlock-title" style="font-size:1.3rem">Card Binder</div>
     <div class="tcg-grid" id="binder-grid"></div>
     <div class="tcg-grid" id="binder-secrets"></div>
+    <div class="tcg-grid" id="binder-notes"></div>
     <div class="btn-row">
       <button class="btn btn-primary" id="binder-close" style="width:auto">Close</button>
       <button class="btn btn-ghost" id="binder-reset">Erase everything</button>
@@ -927,9 +977,9 @@ const CONFIG = {
 // (e.g. 'Foil Appa'). Leave empty to just say "collect your card".
 const CARDS = [
   { id: 'iceberg',  el: 'air',    emoji: '🧊', name: 'The Boy in the Iceberg',        text: 'A hundred years on ice, and still got the first one right.', prize: 'The Boy in the Iceberg' },
-  { id: 'nowar',    el: 'earth',  emoji: '🏯', name: 'There Is No War in Ba Sing Se', text: 'Joo Dee is smiling. Joo Dee is always smiling.', prize: 'Joo Dee, Public Servant' },
+  { id: 'nowar',    el: 'earth',  emoji: '🏯', name: 'There Is No War in Ba Sing Se', text: 'Joo Dee is smiling. Joo Dee is always smiling.', prize: 'The Walls of Ba Sing Se (field notes)' },
   { id: 'yipyip',   el: 'air',    emoji: '🦬', name: 'Yip Yip!',                      text: 'Six legs, one enormous tail, zero traffic laws.', prize: 'Appa, Steadfast Guardian' },
-  { id: 'cabbages', el: 'earth',  emoji: '🥬', name: 'My Cabbages!',                  text: 'This cart survived the entire war. Then you came along.', prize: '' },
+  { id: 'cabbages', el: 'earth',  emoji: '🥬', name: 'My Cabbages!',                  text: 'This cart survived the entire war. Then you came along.', prize: 'Nature\'s Claim' },
   { id: 'rough',    el: 'fire',   emoji: '🌙', name: "That's Rough, Buddy",           text: '“My first girlfriend turned into the moon.”', prize: 'Imprisoned in the Moon' },
   { id: 'cactus',   el: 'earth',  emoji: '🌵', name: 'The Quenchiest',                text: "“It'll quench ya! Nothing's quenchier.”", prize: 'Fevered Visions' },
   { id: 'tunnel',   el: 'earth',  emoji: '💎', name: 'Secret Tunnel',                 text: '“Love is brightest in the dark.”', prize: 'Fabled Passage' },
@@ -948,9 +998,9 @@ const SECRETS = [
   { id: 'koh',   el: 'secret', emoji: '🎭', name: 'Koh the Face Stealer', text: '“Show no fear. Show no emotion at all.”', prize: 'Koh, the Face Stealer' },
   { id: 'lovers', el: 'secret', emoji: '💞', name: 'Oma and Shu',         text: '“The two lovers learned earthbending from the badgermoles; they became the first earthbenders.”', prize: 'Heartbeat of Spring' },
   { id: 'owl',   el: 'secret', emoji: '🦉', name: 'He Who Knows Ten Thousand Things', text: '“I am Wan Shi Tong, He Who Knows Ten Thousand Things.”', prize: 'Wan Shi Tong, Librarian' },
-  { id: 'players', el: 'secret', emoji: '🎟️', name: 'The Ember Island Players', text: '“That... wasn\'t a good play.” “But the effects were decent.”', prize: 'Clone' },
+  { id: 'players', el: 'secret', emoji: '🎟️', name: 'The Ember Island Players', text: '“That... wasn\'t a good play.” “But the effects were decent.”', prize: 'Thespian\'s Stage' },
   { id: 'beach', el: 'secret', emoji: '🏖️', name: 'The Beach',            text: '“The beach has a special way of smoothing even the most ragged edges.”', prize: 'Azula, Flame of Ember Island' },
-  { id: 'fish',  el: 'secret', emoji: '🐟', name: 'Magic Water',          text: '“Why is it that every time you play with magic water, I get soaked?”', prize: 'The Unagi of Kyoshi Island' },
+  { id: 'fish',  el: 'secret', emoji: '🐟', name: 'Magic Water',          text: '“Why is it that every time you play with magic water, I get soaked?”', prize: 'Katara, Water Tribe\'s Hope' },
   { id: 'zhao',  el: 'secret', emoji: '🌑', name: 'The Moon Slayer',      text: '“They will call me, Zhao the Conqueror, Zhao the Moon Slayer, Zhao the Invincible!”', prize: 'Zhao, the Moon Slayer (art card)' },
   { id: 'yue',   el: 'secret', emoji: '🌕', name: 'The Moon Spirit',      text: '“It gave me life, maybe I can give it back.”', prize: 'Yue, the Moon Spirit (art card)' },
   { id: 'laogai', el: 'secret', emoji: '🏮', name: 'Lake Laogai',         text: '“I\'m Joo Dee. Welcome to Ba Sing Se.”', prize: 'Clone Legion' },
@@ -959,8 +1009,20 @@ const SECRETS = [
   { id: 'zuko',  el: 'secret', emoji: '🐸', name: 'Hello, Zuko Here',     text: '“Why am I so bad at being good?”', prize: 'Zuko, Redeemed' },
   { id: 'dance', el: 'secret', emoji: '💃', name: 'Secret Dance Party',   text: '“That\'s the sound of happy feet.”', prize: 'Join the Dance' },
   { id: 'banyan', el: 'secret', emoji: '🌿', name: 'Everything Is Connected', text: '“We all have the same roots and we are all branches of the same tree.”', prize: 'The Banyan Tree' },
+  // all four pages of field notes (see PAGES); its cards are handed out page by page
+  { id: 'notes', el: 'secret', emoji: '📖', name: 'Field Notes',          text: '“Ooh, these illustrations are quite stylish.”', prizeText: 'All four pages are back in Wan Shi Tong\'s book.<br>Their cards are already yours.' },
   // keep this one last: Uncle Iroh hints at the secrets in this order, and it erases all the others
   { id: 'cycle', el: 'secret', emoji: '♻️', name: 'The Avatar Cycle',     text: 'Everything was erased. One memory came along anyway.', prize: 'Brought Back' },
+];
+
+// Field notes: four pages torn from a book of creatures in Wan Shi Tong's
+// library and scattered over the world. Each page is found on its own and wins
+// its own real card; with all four, the book is the secret card 'notes'.
+const PAGES = [
+  { id: 'page-lotus',   page: 1, el: 'notes', emoji: '🪷', name: 'White Lotus Tile',        text: 'Played in the center, it turns two strangers into brothers.', prize: 'White Lotus Tile (field notes)' },
+  { id: 'page-dragons', page: 2, el: 'notes', emoji: '🐉', name: 'Ran and Shaw',            text: 'The last of the dragons. Officially, there are none left.', prize: 'Ran and Shaw (field notes)' },
+  { id: 'page-eagle',   page: 3, el: 'notes', emoji: '🦅', name: 'Raven Eagle',             text: 'Trained to catch messenger hawks, and the messages they carry.', prize: 'Raven Eagle (field notes)' },
+  { id: 'page-unagi',   page: 4, el: 'notes', emoji: '🐍', name: 'The Unagi',               text: 'Lives in the bay of Kyoshi Island. Not for riding, whatever anyone tells you.', prize: 'The Unagi of Kyoshi Island (field notes)' },
 ];
 
 // Uncle Iroh's advice: three hints per card, from vague to literal.
@@ -1093,6 +1155,27 @@ const HINTS = {
     'Every place in the world has its own music. Tap along with it, in time, for a while. (The music needs to be on.)',
     'On any screen with music playing, tap the space bar right on the beat, eight times in a row.',
   ],
+  // the pages of field notes, one at a time (Iroh asks about the first one still missing)
+  'page-lotus': [
+    'Pai Sho is more than just a game. Even in the middle of a desert.',
+    'In the Si Wong Desert, an old man is waiting at a Pai Sho table. You are his guest, so you move first. Which tile would I play?',
+    'In the desert, click the Pai Sho table and play the white lotus tile in the center.',
+  ],
+  'page-dragons': [
+    'Good tea needs patience. A good story needs even more.',
+    'At the Jasmine Dragon, once you know how to brew tea, brew it again and keep waiting, long after it is ready. Watch the steam.',
+    'Brew tea at the Jasmine Dragon and do not touch anything for 45 seconds.',
+  ],
+  'page-eagle': [
+    'On Ember Island, not every message gets where it is going.',
+    'While you play kuai ball, look up now and then. A messenger hawk flies over the court.',
+    'On the beach, click the messenger hawk flying over the court, then pick up what falls onto the sand.',
+  ],
+  'page-unagi': [
+    'Some creatures live nowhere near a map pin. One lives in a bay, by an island full of warriors.',
+    'Kyoshi Island is on the world map: small, off the southern coast of the Earth Kingdom. Something very large lives in the water around it.',
+    'Click the little island in the bottom right corner of the world map. That is Kyoshi Island.',
+  ],
   banyan: [
     'A wise swampbender found enlightenment under one tree in particular. You may have crashed right next to it.',
     'Once you have crash-landed in the Foggy Swamp, it is on the map. Go back, and do not just look at the great tree. Put your hand on it, and be patient.',
@@ -1143,6 +1226,8 @@ const ART = {
   serpent: '🐉', walker: '🚶',
   // Zuko's rehearsal partner
   badgerfrog: '🐸',
+  // the field notes: a loose page, and where they turn up
+  page: '📄', 'paisho-table': '🀄', 'paisho-lotus': '🪷', hawk: '🐦', 'raven-eagle': '🦅', isle: '🏝️', 'lion-turtle': '🐢', unagi: '🐍',
   // the secret dance party
   teacher: '🧑‍🏫', 'aang-dancer': '🕺', 'katara-dancer': '💃', 'dancer-1': '🕺', 'dancer-2': '💃', 'dancer-3': '🕺', 'dancer-4': '💃',
   // the four element stones
@@ -1198,8 +1283,9 @@ if (location.search.includes('reset')) {   // a complete wipe, for the quizmaste
   history.replaceState(null, '', location.pathname);
 }
 // stage: 'quiz' (act 1) or 'map'; step: progress within act 1
-const S = Object.assign({ found: [], stage: 'quiz', step: 0, hints: {}, comet: false, mapIntro: false },
+const S = Object.assign({ found: [], stage: 'quiz', step: 0, hints: {}, comet: false, mapIntro: false, pages: [] },
   JSON.parse(localStorage.getItem(LS_KEY) || '{}'));
+S.pages = S.pages.filter(id => PAGES.some(p => p.id === id));   // only pages the book still has
 let erasing = false;
 const save = () => { if (!erasing) localStorage.setItem(LS_KEY, JSON.stringify(S)); };
 const has = id => S.found.includes(id);
@@ -1777,7 +1863,7 @@ function cardHTML(c, small, locked) {
   const n = CARDS.indexOf(c) + 1;
   const pic = ART_URL['card-' + c.id] ? `<img src="${ART_URL['card-' + c.id]}" alt="">` : c.emoji;
   return `<div class="tcg ${locked ? 'locked' : c.el}${small ? ' small' : ''}">
-    <div class="tcg-num">${n ? `${n} / ${CARDS.length}` : 'Secret'}</div>
+    <div class="tcg-num">${n ? `${n} / ${CARDS.length}` : c.page ? `Page ${c.page} / ${PAGES.length}` : 'Secret'}</div>
     <div class="tcg-art">${locked ? '?' : pic}</div>
     <div class="tcg-name">${locked ? '???' : c.name}</div>
     <div class="tcg-text">${locked ? '' : c.text}</div>
@@ -1792,7 +1878,7 @@ function unlock(id, cb = null) {
   $('unlock-title').textContent = SECRETS.includes(c) ? 'Secret card unlocked!' : 'Card unlocked!';
   $('hud-count').classList.remove('bump'); void $('hud-count').offsetWidth; $('hud-count').classList.add('bump');
   $('unlock-card').innerHTML = cardHTML(c);
-  $('unlock-prize').innerHTML = (c.prize ? `You win: <b>${c.prize}</b><br>` : '') + `Collect your card from ${CONFIG.quizmaster}!`;
+  $('unlock-prize').innerHTML = c.prizeText || (c.prize ? `You win: <b>${c.prize}</b><br>` : '') + `Collect your card from ${CONFIG.quizmaster}!`;
   unlockCb = cb;
   $('unlock').classList.add('show');
   confetti(id === 'energy' ? 320 : 140);
@@ -1810,10 +1896,30 @@ $('unlock-ok').onclick = () => {
   if (cb) cb();
 };
 
+// A page of field notes: shown like a card and handed over like one. The last
+// brings Wan Shi Tong to collect his book, which leaves you its card.
+function findPage(id, cb = null) {
+  if (S.pages.includes(id)) { if (cb) cb(); return; }
+  const p = PAGES.find(x => x.id === id);
+  S.pages.push(id); save();
+  const n = S.pages.length;
+  $('unlock-title').textContent = n === 1 ? 'A loose page!' : `Field notes · page ${n} of ${PAGES.length}`;
+  $('unlock-card').innerHTML = cardHTML(p);
+  $('unlock-prize').innerHTML = `You win: <b>${p.prize}</b><br>`
+    + (n === 1 ? 'It was torn out of a book from Wan Shi Tong\'s library. There must be more pages out there.<br>' : '')
+    + `Collect your card from ${CONFIG.quizmaster}!`;
+  unlockCb = n < PAGES.length ? cb : () => say('owl', 'A very large owl lands beside you and looks the four pages over, one by one.\n“First edition, very nice.”',
+    'They were his all along', () => unlock('notes', cb));
+  $('unlock').classList.add('show');
+  confetti(90);
+  setTimeout(() => chip(pick(JINGLES)), 350);
+}
+
 function openBinder() {
   $('binder-grid').innerHTML = CARDS.map(c => cardHTML(c, true, !has(c.id))).join('');
-  const showSecrets = secretsFound() || mainFound() === CARDS.length;
+  const showSecrets = secretsFound() || mainFound() === CARDS.length || S.pages.length;
   $('binder-secrets').innerHTML = showSecrets ? SECRETS.map(c => cardHTML(c, true, !has(c.id))).join('') : '';
+  $('binder-notes').innerHTML = S.pages.length ? PAGES.map(p => cardHTML(p, true, !S.pages.includes(p.id))).join('') : '';
   $('binder').classList.add('show');
 }
 $('hud-count').onclick = openBinder;
@@ -1855,10 +1961,11 @@ $('hud-hint').onclick = () => {
   const c = S.dark ? SECRETS.find(c => c.id === 'yue')   // with the moon gone, nothing else matters
     : left.find(c => c.id !== 'energy') || left[0] || SECRETS.find(c => !has(c.id));
   if (!c) { say('iroh', 'You have found everything. Now it is time for tea.', 'Cheers'); return; }
-  const lvl = S.hints[c.id] || 0;
-  S.hints[c.id] = lvl + 1; save();
-  say('iroh', HINTS[c.id][Math.min(lvl, 2)], lvl < 2 ? 'Thank you, Uncle' : "Can't be clearer than that", null,
-    SECRETS.includes(c) ? 'Uncle Iroh · a secret card' : `Uncle Iroh · card ${CARDS.indexOf(c) + 1}`);
+  const page = c.id === 'notes' && PAGES.find(p => !S.pages.includes(p.id)), key = page ? page.id : c.id;
+  const lvl = S.hints[key] || 0;
+  S.hints[key] = lvl + 1; save();
+  say('iroh', HINTS[key][Math.min(lvl, 2)], lvl < 2 ? 'Thank you, Uncle' : "Can't be clearer than that", null,
+    page ? 'Uncle Iroh · a page of field notes' : SECRETS.includes(c) ? 'Uncle Iroh · a secret card' : `Uncle Iroh · card ${CARDS.indexOf(c) + 1}`);
 };
 
 // ── confetti ──
@@ -2415,13 +2522,14 @@ const MapScene = {
     document.querySelector('#map .ember-pin').classList.toggle('show', !!S.ember);   // once you have been sent there
     document.querySelector('#map .swamp-pin').classList.toggle('show', has('swamp'));   // once you have crashed there
     this.t1 = setTimeout(() => { this.runCart(); this.t2 = setInterval(() => this.runCart(), 22000); }, 5000);
+    this.placeIsle();
     if (!S.mapIntro) {
       S.mapIntro = true; save();
       say('world', `You have landed. The quiz is nowhere to be found.\nBut there are still cards hidden all over the world — ${CARDS.length - mainFound()} of them.\nNobody will tell you how to find them. Except maybe an old tea lover, top left.`, 'Adventure!');
     }
     Vacation.check();
   },
-  leave() { clearTimeout(this.t1); clearInterval(this.t2); },
+  leave() { clearTimeout(this.t1); clearInterval(this.t2); clearTimeout(this.unagiT); $('map-unagi').classList.remove('up'); this.unagiUp = false; },
   runCart() {
     const c = $('cart');
     c.classList.remove('gone');
@@ -2450,6 +2558,55 @@ const MapScene = {
     beep(90, .5, 'sawtooth');
     setTimeout(() => { s.remove(); unlock('cabbages'); }, 1400);
   },
+  // An island that is somewhere else every time you look ("The whole island is
+  // moving!"): the lion turtle, there just to be found. (Rik has its card already.)
+  ISLES: [[38, 38], [36, 72], [80, 8], [44, 28]],   // stretches of open sea, in %
+  placeIsle() {
+    const el = $('map-isle'), here = this.isleAt;
+    this.isleAt = pick([0, 1, 2, 3].filter(i => i !== here));
+    const [x, y] = this.ISLES[this.isleAt];
+    el.style.left = x + '%'; el.style.top = y + '%';
+    el.classList.remove('awake');
+    el.dataset.art = 'isle'; el.innerHTML = art('isle');
+  },
+  isle() {
+    const el = $('map-isle');
+    if (el.classList.contains('awake')) return;
+    el.classList.add('awake');
+    el.dataset.art = 'lion-turtle'; el.innerHTML = art('lion-turtle');
+    beep(55, 1.4, 'triangle');
+    setTimeout(() => say('lion-turtle', 'The island lifts an enormous head out of the sea.\nAang: “A lion turtle!”\nIt looks at you for a long, long moment. Then it goes back to sleep.', 'Wow', null, 'The island'), 1000);
+  },
+  // Kyoshi Island, and the Unagi that lives in its bay. As Aang finds out in
+  // "The Warriors of Kyoshi", it comes up fast and sprays everything.
+  kyoshi() {
+    if (this.unagiUp) return;
+    this.unagiUp = true;
+    const u = $('map-unagi'), m = $('map');
+    u.classList.add('up');
+    beep(48, 1.4, 'sawtooth'); beep(96, .8, 'square');
+    this.unagiT = setTimeout(() => {   // the spray, right across the map
+      const r = u.getBoundingClientRect(), mr = m.getBoundingClientRect();
+      const x = r.left - mr.left + r.width * .75, y = r.top - mr.top + r.height * .2;
+      for (let i = 0; i < 26; i++) {
+        const p = document.createElement('div');
+        p.className = 'cabp'; p.innerHTML = art('el-water');
+        p.style.left = x + 'px'; p.style.top = y + 'px';
+        p.style.setProperty('--dx', rnd(-560, -60) + 'px');
+        p.style.setProperty('--dy', rnd(-240, 120) + 'px');
+        p.style.setProperty('--r', rnd(-90, 90) + 'deg');
+        m.append(p);
+        setTimeout(() => p.remove(), 1250);
+      }
+      beep(1400, .5, 'sawtooth');
+      this.unagiT = setTimeout(() => {
+        const sink = () => { u.classList.remove('up'); this.unagiUp = false; };
+        if (S.pages.includes('page-unagi')) { say('unagi', 'The Unagi glares at you, sprays you once more for good measure, and sinks back into the bay.', 'Fair enough', sink, 'Kyoshi Island'); return; }
+        say('unagi', 'The bay around Kyoshi Island erupts. Something enormous, with very long whiskers, comes up out of the water and sprays the whole map.\nAang: “Katara ... don\'t ride Unagi. Not fun.”\nWhen the spray settles, there is a soggy page floating in the bay.',
+          'Fish it out', () => { sink(); findPage('page-unagi'); }, 'Kyoshi Island');
+      }, 1300);
+    }, 900);
+  },
   // Wrecked once, the merchant tries the ferry to Ba Sing Se, which is where it
   // happens to him in "The Serpent's Pass". Without a passport you fare no better.
   ferry() {
@@ -2464,6 +2621,8 @@ const MapScene = {
 SCENES['s-map'] = MapScene;
 $('cart').onclick = () => has('cabbages') && !has('serpent') ? MapScene.ferry() : MapScene.boom();
 $('map-canoe').onclick = () => go('s-fish');
+$('map-isle').onclick = () => MapScene.isle();
+$('kyoshi').onclick = () => MapScene.kyoshi();
 document.querySelectorAll('#map .pin').forEach(p => p.onclick = () => go(p.dataset.go));
 
 // typing "yip yip" on the map = another flight
@@ -2490,12 +2649,34 @@ window.addEventListener('keydown', e => {
 const Desert = {
   enter() {
     $('desert-text').textContent = 'Sand. Sun. More sand. You are thirsty. So very thirsty.';
+    $('desert-opts').innerHTML = '';
     $('cactus').style.display = '';
+  },
+  // An old man at a Pai Sho table, as in "The Desert", where Iroh plays the
+  // white lotus gambit: the guest moves first, and the move is the lotus tile in
+  // the middle of the board. That is how members of the White Lotus know each other.
+  paisho() {
+    if (this.tripping) return;
+    if (S.pages.includes('page-lotus')) { $('desert-text').textContent = 'The old man nods at you like an old friend and goes back to his game.'; return; }
+    $('desert-text').textContent = 'An old man sits at a Pai Sho table in the shade, as if he has been waiting for someone.\n“The guest has the first move.”';
+    choices('desert-opts', shuffle(['The white lotus tile, in the center', 'A flower tile, on the edge', 'A rock tile, next to his', 'Ask him what the rules are']), label => {
+      $('desert-opts').innerHTML = '';
+      if (label === 'Ask him what the rules are') { $('desert-text').textContent = 'He smiles and points at the board.\n“The guest has the first move.”\nThat is all he will say.'; return; }
+      if (label !== 'The white lotus tile, in the center') {
+        $('desert-text').textContent = pick(['A polite nod. He wins in four moves and sets the board up again.', 'He studies your move for a long time. Then he wins.', 'He smiles, a little sadly, the way people smile at a tourist.']);
+        return;
+      }
+      const name = 'The old Pai Sho player';
+      say('paisho-lotus', '“I see you favor the white lotus gambit. Not many still cling to the ancient ways.”\nTile after tile, without either of you looking, the board fills up in the shape of a lotus flower.', 'And then?', () =>
+        say('paisho-lotus', '“Welcome, brother. The White Lotus opens wide to those who know her secrets.”\nHe slides a folded page across the board.', 'Take the page',
+          () => findPage('page-lotus', () => Desert.enter()), name), name);
+    });
   },
   leave() { this.sober(); },
   drink() {
     if (this.tripping) return;
     this.tripping = true;
+    $('desert-opts').innerHTML = '';
     document.body.classList.add('trip');
     Music.warp(90, 1.5, 1.2);   // the tune goes the same way as the screen
     updateHud();
@@ -2545,6 +2726,7 @@ const Desert = {
 };
 SCENES['s-desert'] = Desert;
 $('cactus').onclick = () => Desert.drink();
+$('paisho').onclick = () => Desert.paisho();
 
 // ══════════════════════════════════════════════
 // CAVE OF TWO LOVERS — put out the torch
@@ -2885,28 +3067,51 @@ $('maze').addEventListener('pointerdown', () => Maze.pulse());   // tapping the 
 // ══════════════════════════════════════════════
 
 const Tea = {
-  SECONDS: 15,
+  SECONDS: 15,   // until the tea is ready
+  LONG: 45,      // and, once you have its card, until the steam does something
   enter() {
     this.stop();
+    clearTimeout(this.dragonT);
+    $('steam-dragons').classList.remove('show');
+    $('s-tea').classList.remove('steam');
     $('tea-bar').style.width = '0%';
     $('tea-btn').style.display = '';
     $('tea-text').textContent = 'Uncle Iroh: "Good tea asks for only one thing: patience. Start the tea, and then do… absolutely nothing."';
   },
-  leave() { this.stop(); },
+  leave() { this.stop(); clearTimeout(this.dragonT); $('s-tea').classList.remove('steam'); },
   start() {
     this.brewing = true; this.t = 0; this.grace = performance.now() + 900; this.moved = 0;
     $('tea-btn').style.display = 'none';
     $('teapot').classList.add('brewing');
     $('tea-text').textContent = 'The tea is steeping…';
+    this.said = 0;
     this.iv = setInterval(() => {
       this.t += .1;
       $('tea-bar').style.width = Math.min(100, this.t / this.SECONDS * 100) + '%';
-      if (this.t >= this.SECONDS) {
+      if (this.t >= this.SECONDS && !has('tea')) {
         this.stop();
         $('tea-text').textContent = 'Uncle Iroh: "Perfect. You have mastered the hardest art of all."';
         unlock('tea', () => Tea.enter());
-      }
+      } else if (has('tea')) this.steep();
     }, 100);
+  },
+  // Once you have mastered tea, the tea is ready just as quickly, but nobody pours
+  // it. Wait on, and the steam remembers what Iroh never tells: he was the last
+  // outsider to face Ran and Shaw, and he lied about killing them to keep them safe.
+  steep() {
+    const say = (at, text) => { if (this.t >= at && this.said < at) { this.said = at; $('tea-text').textContent = text; } };
+    say(this.SECONDS, 'Uncle Iroh: "Perfect."\nHe does not pour it. He is watching the steam.');
+    say(28, 'The steam rises, and rises, and starts to curl in a very particular way.');
+    if (this.t < this.LONG) return;
+    this.stop();
+    $('steam-dragons').classList.add('show');
+    $('s-tea').classList.add('steam');
+    [294, 370, 440, 587].forEach((f, i) => setTimeout(() => beep(f, .9, 'triangle'), i * 300));
+    $('tea-text').textContent = 'The steam curls into two dragons, one red and one blue, circling each other over the pot.\nIroh watches them, and says nothing at all.';
+    this.dragonT = setTimeout(() => {
+      if (cur !== 's-tea') return;
+      findPage('page-dragons', () => Tea.enter());
+    }, 5000);
   },
   stop() { this.brewing = false; clearInterval(this.iv); $('teapot').classList.remove('brewing'); },
   disturb(e) {
@@ -2914,6 +3119,12 @@ const Tea = {
     if (e.type === 'pointermove') {   // ignore the jitter of a mouse lying still
       this.moved += Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0);
       if (this.moved < 8) return;
+    }
+    if (this.t >= this.SECONDS) {   // the tea was ready: moving now just means it gets poured
+      this.stop();
+      $('tea-btn').style.display = '';
+      $('tea-text').textContent = 'Iroh pours you a cup. Whatever the steam was about to do, it drifts away.';
+      return;
     }
     this.moved = 0; this.t = 0; this.grace = performance.now() + 500;
     $('tea-bar').style.width = '0%';
@@ -3060,7 +3271,7 @@ const Water = {
       document.body.classList.replace('moon-red', 'moon-dark');
       $('moon').classList.add('gone');
       Music.warp(35, .4, .8);
-      $('water-text').textContent = 'The moon fades out, and the world goes grey. La circles alone around Tui, who does not move.';
+      $('water-text').textContent = 'The moon fades out, and the world goes gray. La circles alone around Tui, who does not move.';
       this.busy = false;
     }, 1400);
   },
@@ -3094,7 +3305,7 @@ const Water = {
       $('moon').classList.remove('gone');
       document.body.classList.remove('moon-dark');
       Music.warp(); this.warped = false;
-      $('water-text').textContent = 'The moon comes back, and brings the colour with it. Tui and La circle each other again.';
+      $('water-text').textContent = 'The moon comes back, and brings the color with it. Tui and La circle each other again.';
       this.later(() => { S.dark = false; unlock('yue', () => Water.enter()); }, 2800);   // saved together with the card
     }, 'Princess Yue, to someone who is not here'), 4200);
   },
@@ -3494,6 +3705,10 @@ const Beach = {
   enter() {
     document.body.classList.add('smooth');
     this.reset();
+    ['hawk', 'raven', 'beach-page'].forEach(id => $(id).classList.remove('fly', 'show'));
+    this.hawking = this.caught = false;
+    this.hawkT = setTimeout(() => this.hawk(), 7000);
+    this.hawkIv = setInterval(() => this.hawk(), 16000);
     $('beach-text').textContent = 'Lo: “The beach has a special way...”\nLi: “...of smoothing even the most ragged edges.”';
     say('azula', '“Hey, beach bums, we\'re playing next.”\n“See that girl with the silly pigtails? When she runs toward the ball, there\'s just the slightest hesitation of her left foot. I\'m willing to bet a childhood injury has weakened her. Keep serving the ball to her left, and we\'ll destroy her and the rest of her team.”', 'Dismissed.', () => {
       if (cur === 's-beach') this.ready();
@@ -3501,7 +3716,41 @@ const Beach = {
   },
   leave() {
     this.timers.forEach(clearTimeout); this.timers = [];
+    clearTimeout(this.hawkT); clearTimeout(this.hawkEnd); clearInterval(this.hawkIv);
     document.body.classList.remove('smooth', 'shake');
+  },
+  // As in "The Beach", where a raven eagle intercepts a messenger hawk and takes
+  // what it carries. Here what it carries is a page of field notes, and it drops.
+  hawk() {
+    if (S.pages.includes('page-eagle') || this.hawking || this.caught) return;
+    const h = $('hawk');
+    this.hawking = true;
+    h.style.transition = 'none'; h.style.left = '106%'; h.style.top = ''; h.classList.add('fly');
+    void h.offsetWidth;
+    h.style.transition = 'left 7s linear'; h.style.left = '-10%';
+    this.hawkEnd = setTimeout(() => { h.classList.remove('fly'); this.hawking = false; }, 7100);
+  },
+  catchHawk() {
+    if (!this.hawking || this.caught) return;
+    this.caught = true;
+    clearTimeout(this.hawkEnd);
+    const h = $('hawk'), r = $('raven'), pg = $('beach-page'), st = $('beach-stage').getBoundingClientRect();
+    const x = h.getBoundingClientRect().left - st.left;
+    h.style.transition = 'none'; h.style.left = x + 'px';
+    r.style.transition = 'none'; r.style.left = '-12%'; r.style.top = '-14%'; r.classList.add('fly');
+    void r.offsetWidth;
+    r.style.transition = 'left .6s ease-in, top .6s ease-in'; r.style.left = x - 10 + 'px'; r.style.top = '8%';
+    beep(990, .12, 'square');
+    $('beach-text').textContent = 'A messenger hawk, low over the court. Out of nowhere a raven eagle hits it, ties it up, and takes its message.';
+    setTimeout(() => {   // off they go together, and the message slips loose
+      beep(660, .2, 'triangle');
+      [h, r].forEach(e => { e.style.transition = 'left 1.2s ease-in, top 1.2s ease-in'; e.style.left = '112%'; e.style.top = '-20%'; });
+      pg.style.transition = 'none'; pg.style.left = x + 'px'; pg.style.top = '9%'; pg.classList.add('show');
+      void pg.offsetWidth;
+      pg.style.transition = ''; pg.style.top = '58%';
+      $('beach-text').textContent = 'The message slips from its talons and flutters down onto the sand. It is not a letter. It is a page torn out of a book.';
+    }, 700);
+    setTimeout(() => [h, r].forEach(e => e.classList.remove('fly')), 2000);
   },
   reset() {
     const st = $('beach-stage');
@@ -3593,6 +3842,12 @@ const Beach = {
   },
 };
 SCENES['s-beach'] = Beach;
+$('hawk').addEventListener('click', e => { e.stopPropagation(); Beach.catchHawk(); });
+$('beach-page').addEventListener('click', e => {
+  e.stopPropagation();
+  $('beach-page').classList.remove('show');
+  findPage('page-eagle');
+});
 $('beach-stage').addEventListener('click', e => {
   if (Beach.busy) return;
   const r = e.currentTarget.getBoundingClientRect();
@@ -4174,7 +4429,7 @@ const Ozai = {
     say('ozai', '"Zuko?"\nThe doors open, and in walks Prince Zuko, swords drawn, the way he came to his father on the Day of Black Sun.', 'Uh oh', () =>
       say('zuko', '“I am going to speak my mind, and you are going to listen.”', '(listen)', () =>
         say('zuko', '“I\'m going to join the Avatar and I\'m going to help him defeat you.”\nAnd he walks out.', 'Go, Zuko!', () =>
-          say('zuko', 'Joining the Avatar turns out to be harder than telling off the Fire Lord. On the way, Zuko practises what he is going to say. To a badgerfrog.\n“Hello ... Zuko here.”', 'Ribbit',
+          say('zuko', 'Joining the Avatar turns out to be harder than telling off the Fire Lord. On the way, Zuko practices what he is going to say. To a badgerfrog.\n“Hello ... Zuko here.”', 'Ribbit',
             () => unlock('zuko', () => this.enter()), 'Prince Zuko, rehearsing'),
         zuko),
       zuko),
@@ -4290,6 +4545,7 @@ makePads($('map-pads'), [
 ]);
 Object.keys(ART).forEach(k => probeArt(k));
 ALL_CARDS.forEach(c => probeArt('card-' + c.id));
+PAGES.forEach(p => probeArt('card-' + p.id));
 Object.keys(STAGES).forEach(s => probeArt('stage-' + s));
 probeArt('stage-cave-dark');
 SCENE_NAMES.forEach(s => probeArt('bg-' + s));
@@ -4300,6 +4556,7 @@ $('btn-start').textContent = S.found.length ? 'Continue' : 'Start the quiz';
 $('btn-start').onclick = () => go(S.stage === 'map' ? 's-map' : 's-quiz');
 updateHud();
 paintMoonlight();
+if (S.pages.length === PAGES.length && !has('notes')) { S.found.push('notes'); save(); }   // closed during Wan Shi Tong's visit
 Music.play(tuneFor(cur));
 
 if (localStorage.getItem(LS_KEY + '_reborn')) {   // this life began with "Erase everything"

@@ -2714,6 +2714,30 @@ def serpent():
     return outline(im, P['k'])
 
 
+def unagi():
+    """The Unagi of Kyoshi Island: an eel the size of a ship, with whiskers to hang on to."""
+    body, dark, belly = col('#4f6e5a'), col('#2f4a3a'), col('#c9d6a8')
+    im = new(56, 76)
+    d = ImageDraw.Draw(im)
+    path = spline([(20, 75), (28, 60), (18, 44), (24, 30), (27, 22)], 30)
+    n = len(path)
+    for i, (x, y) in enumerate(path):
+        t = i / (n - 1)
+        r = 7.5 - 2 * t
+        if i % 9 == 4:                                     # a ragged fin along its back
+            d.polygon([(x - r + 1, y - 3), (x - r - 4, y), (x - r + 1, y + 3)], fill=dark)
+        disc(im, x, y, r, body)
+        disc(im, x + r * .5, y, r * .4, belly)
+    d.ellipse((17, 10, 37, 26), fill=body)                 # a broad, flat head
+    d.polygon([(34, 14), (46, 17), (46, 22), (34, 24)], fill=body)
+    d.line((35, 21, 46, 21), fill=dark)                    # mouth
+    d.rectangle((28, 14, 30, 16), fill=P['Y'])             # eye
+    dots(im, [(30, 15)], P['D'])
+    for (x0, y0), pts in (((44, 18), [(48, 14), (52, 12), (55, 15)]), ((44, 22), [(49, 26), (52, 31), (55, 30)])):
+        d.line([(x0, y0)] + pts, fill=col('#a8b890'))      # its whiskers
+    return outline(im, P['k'])
+
+
 WALKER = [
     '..TT..',
     '..TT..',
@@ -2764,6 +2788,7 @@ def card_serpent():
 
 
 ART['serpent'] = serpent()
+ART['unagi'] = unagi()
 ART['walker'] = grid(WALKER)
 ART['stage-serpent'] = stage_serpent()
 ART['card-serpent'] = card_serpent()
@@ -2953,6 +2978,218 @@ def card_banyan():
 
 
 ART['card-banyan'] = card_banyan()
+
+# ── Wan Shi Tong's book of creatures: four loose pages ─────────
+
+PAPER, PAPER_DARK = col('#f1e4c4'), col('#c9b088')
+INK, INK_MID = col('#3a2a1c'), col('#7a5a3a')
+
+PAGE = [                                                    # a loose page, one corner folded
+    'WWWWWWWWg.',
+    'WwwwwwwWgg',
+    'WwDDDDwwwW',
+    'WwwwwwwwwW',
+    'WwDDDDDDwW',
+    'WwwwwwwwwW',
+    'WwDDDDDwwW',
+    'WwwwwwwwwW',
+    'WwDDDDDDwW',
+    'WwwwwwwwwW',
+    'WWWWWWWWWW',
+]
+
+
+def ink(img, light=True):
+    """A sprite redrawn as an ink sketch: dark lines, mid shading, and paper for the light parts."""
+    out = img.copy()
+    px = out.load()
+    for y in range(out.size[1]):
+        for x in range(out.size[0]):
+            r, g, b, a = px[x, y]
+            if not a:
+                continue
+            lum = (r * .3 + g * .59 + b * .11) / 255
+            px[x, y] = INK if lum < .38 else INK_MID if lum < .68 else (PAPER if light else CLEAR)
+    return out
+
+
+def paper(w=CW, h=CH):
+    """A page of field notes: paper, a darker edge, and a few lines of handwriting."""
+    im = new(w, h, PAPER)
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 0, w - 1, h - 1), outline=PAPER_DARK)
+    rnd = random.Random(w * 7 + h)
+    for y in range(h - 9, h - 2, 3):                       # notes along the bottom
+        x = 3
+        while x < w - 6:
+            ln = rnd.randrange(2, 7)
+            d.line((x, y, min(w - 4, x + ln), y), fill=INK_MID)
+            x += ln + 2
+    return im, d
+
+
+def paisho_table():
+    """An old man in the shade of an awning, at a Pai Sho table, waiting for a game."""
+    im = new(46, 40)
+    d = ImageDraw.Draw(im)
+    for x in (3, 42):                                       # the awning and its poles
+        d.rectangle((x, 6, x, 34), fill=P['N'])
+    for i in range(8):
+        d.rectangle((1 + i * 6, 2, 6 + i * 6, 7), fill=P['r'] if i % 2 else P['w'])
+    d.ellipse((15, 8, 30, 22), fill=P['T'])                 # the old man
+    d.ellipse((16, 6, 29, 10), fill=P['g'])                 # what is left of his hair
+    d.polygon([(17, 18), (28, 18), (26, 26), (19, 26)], fill=P['g'])   # and a long beard
+    dots(im, [(19, 14), (20, 14), (25, 14), (26, 14)], P['D'])
+    dots(im, [(18, 12), (19, 12), (26, 12), (27, 12)], P['g'])
+    dots(im, [(22, 16), (23, 16)], P['s'])
+    d.polygon([(11, 22), (34, 22), (37, 34), (8, 34)], fill=P['n'])   # robe
+    d.rectangle((6, 28, 40, 31), fill=P['N'])               # the table
+    d.rectangle((10, 32, 12, 38), fill=P['N'])
+    d.rectangle((34, 32, 36, 38), fill=P['N'])
+    d.ellipse((13, 25, 33, 30), fill=P['t'])                # and the board on it
+    d.line((23, 25, 23, 30), fill=P['n'])
+    d.line((13, 27, 33, 27), fill=P['n'])
+    dots(im, [(17, 28), (28, 26), (21, 26), (26, 29)], P['w'])
+    return outline(im, P['k'])
+
+
+def paisho_lotus():
+    """The board from above, the tiles laid out as a lotus flower."""
+    im = new(32, 32)
+    d = ImageDraw.Draw(im)
+    d.ellipse((0, 0, 31, 31), fill=P['t'])
+    d.ellipse((2, 2, 29, 29), outline=P['n'])
+    for i in range(0, 32, 4):                               # the grid
+        d.line((i, 0, i, 31), fill=P['T'])
+        d.line((0, i, 31, i), fill=P['T'])
+    d.ellipse((0, 0, 31, 31), outline=P['N'])
+    for k in range(8):                                      # eight petals of tiles around the white lotus in the middle
+        a = k * math.pi / 4
+        for r in (6, 10):
+            disc(im, 15.5 + r * math.cos(a), 15.5 + r * math.sin(a), 1.6, P['m'] if r == 10 else P['w'])
+    disc(im, 15.5, 15.5, 2.6, P['w'])
+    disc(im, 15.5, 15.5, 1.2, P['y'])
+    out = im.copy()                                         # keep it round
+    px, src = out.load(), im.load()
+    for y in range(32):
+        for x in range(32):
+            if (x - 15.5) ** 2 + (y - 15.5) ** 2 > 16.2 ** 2:
+                px[x, y] = CLEAR
+    return outline(out, P['k'])
+
+
+HAWK = [                                                    # a messenger hawk, with the message strapped to its back
+    '..DD.........',
+    '.DDDD....DD..',
+    'DDDDDDDDDDDD.',
+    '.DDDrDDDDDDDY',
+    '..DDDDwwDD...',
+    '....DD.......',
+]
+
+RAVEN_EAGLE = [                                             # brown, with a white crest and red streaks on its head
+    '......wwrw......',
+    '.....wwwrrwY....',
+    'NN..nwwwwwwYY...',
+    'NNNnnnwwwr......',
+    '.NNnnnnnn.......',
+    '..NNnnnnnnn.....',
+    '...NNNnnnnnn....',
+    '....NN..nnnnn...',
+    '.......Y..YN....',
+]
+
+
+def isle():
+    im = new(24, 14)
+    d = ImageDraw.Draw(im)
+    d.ellipse((0, 7, 23, 13), fill=P['t'])
+    d.ellipse((3, 5, 20, 11), fill=P['e'])
+    for x, h in ((7, 1), (14, 0)):                          # two trees
+        d.rectangle((x, h + 3, x + 1, 8), fill=P['N'])
+        d.ellipse((x - 3, h, x + 4, h + 4), fill=P['E'])
+    return outline(im, P['B'])
+
+
+def lion_turtle():
+    """The same island, with an enormous head lifted out of the sea in front of it."""
+    im = new(36, 22)
+    put(im, isle(), 0, 7)
+    d = ImageDraw.Draw(im)
+    mane, face = col('#6e5a40'), col('#c4aa78')
+    d.ellipse((21, 3, 35, 17), fill=mane)                   # a shaggy mane
+    for a in range(0, 360, 40):
+        x, y = 28 + 7.5 * math.cos(math.radians(a)), 10 + 7.5 * math.sin(math.radians(a))
+        d.polygon([(x, y), (28 + 9.5 * math.cos(math.radians(a + 20)), 10 + 9.5 * math.sin(math.radians(a + 20))), (28 + 6 * math.cos(math.radians(a + 30)), 10 + 6 * math.sin(math.radians(a + 30)))], fill=mane)
+    d.ellipse((24, 6, 33, 15), fill=face)                   # the face
+    d.polygon([(26, 13), (31, 13), (28, 19)], fill=mane)    # its beard
+    dots(im, [(26, 9), (31, 9)], P['D'])
+    d.rectangle((28, 10, 29, 12), fill=col('#8a7355'))      # a broad nose
+    d.line((24, 1, 26, 5), fill=P['W'])                     # and horns
+    d.line((33, 1, 31, 5), fill=P['W'])
+    return outline(im, P['B'])
+
+
+def card_notes():
+    im = new(CW, CH, col('#5b3920'))
+    d = ImageDraw.Draw(im)
+    d.rectangle((2, 4, 57, 47), fill=col('#3b2a1c'))        # the cover, open
+    for x0 in (4, 31):                                      # two pages of sketches
+        d.rectangle((x0, 6, x0 + 24, 45), fill=PAPER)
+        d.line((x0, 6, x0, 45), fill=PAPER_DARK)
+    d.line((30, 5, 30, 46), fill=col('#2a1d12'))
+    put(im, ART['card-page-eagle'].resize((12, 10), Image.NEAREST), 14, 10)
+    put(im, ART['card-page-lotus'].resize((12, 10), Image.NEAREST), 6, 28)
+    put(im, ART['card-page-unagi'].resize((12, 10), Image.NEAREST), 34, 10)
+    put(im, ART['card-page-dragons'].resize((12, 10), Image.NEAREST), 42, 28)
+    return im
+
+
+def page_lotus():
+    im, d = paper()
+    d.ellipse((17, 5, 43, 31), outline=INK)                 # the tile
+    d.ellipse((19, 7, 41, 29), outline=INK_MID)
+    for k in range(8):                                      # its lotus
+        a = k * math.pi / 4
+        d.line((30, 18, 30 + 9 * math.cos(a), 18 + 9 * math.sin(a)), fill=INK)
+        disc(im, 30 + 7 * math.cos(a), 18 + 7 * math.sin(a), 1.8, INK_MID)
+    disc(im, 30, 18, 2.5, PAPER)
+    d.ellipse((27, 15, 33, 21), outline=INK)
+    return im
+
+
+def page_dragons():
+    im, d = paper()
+    put(im, ink(ART['ran']).resize((30, 27), Image.NEAREST), -2, 3)
+    put(im, ink(ART['shaw']).resize((30, 27), Image.NEAREST), 32, 3)
+    return im
+
+
+def page_eagle():
+    im, d = paper()
+    put(im, ink(ART['raven-eagle']).resize((40, 22), Image.NEAREST), 10, 8)
+    return im
+
+
+def page_unagi():
+    im, d = paper()
+    put(im, ink(ART['unagi']).resize((26, 36), Image.NEAREST), 17, 0)
+    d.line((4, 33, 56, 33), fill=INK_MID)                   # the waterline
+    for x in (8, 46, 52):
+        d.line((x, 35, x + 3, 35), fill=INK_MID)
+    return im
+
+
+ART['page'] = grid(PAGE)
+ART['paisho-table'] = paisho_table()
+ART['paisho-lotus'] = paisho_lotus()
+ART['hawk'] = grid(HAWK)
+ART['raven-eagle'] = grid(RAVEN_EAGLE)
+ART['isle'] = isle()
+ART['lion-turtle'] = lion_turtle()
+for name, fn in (('lotus', page_lotus), ('dragons', page_dragons), ('eagle', page_eagle), ('unagi', page_unagi)):
+    ART['card-page-' + name] = fn()
+ART['card-notes'] = card_notes()
 
 ART['tui'] = koi_alone(True)
 ART['koi-la'] = koi_alone(False)
