@@ -1708,6 +1708,10 @@ const Music = {
     } else { g.gain.setValueAtTime(vol, t + len * .7); g.gain.exponentialRampToValueAtTime(.001, t + len); }
     o.connect(g).connect(this.bus);
     o.start(t); o.stop(t + len + .02);
+    // Let go of the note once it has sounded. Firefox never frees a note the wobble
+    // is still linked to, and keeps working through every one of them: left on for
+    // an hour or two, the music starts to crackle and the fan starts to whirr.
+    o.onended = () => { this.wobble.disconnect(o.detune); o.disconnect(); g.disconnect(); };
   },
   drum(kind, t, vol) {
     const g = actx.createGain();
@@ -1722,6 +1726,7 @@ const Music = {
       g.gain.exponentialRampToValueAtTime(.001, t + len);
       o.connect(g);
       o.start(t); o.stop(t + len + .02);
+      o.onended = () => g.disconnect();   // gone from the music once played, like a note (see tone())
       return;
     }
     const n = actx.createBufferSource(), f = actx.createBiquadFilter(), len = kind === 'h' ? .04 : .13;   // hat and snare: a burst of noise
@@ -1731,6 +1736,7 @@ const Music = {
     g.gain.exponentialRampToValueAtTime(.001, t + len);
     n.connect(f).connect(g);
     n.start(t, Math.random() * .8); n.stop(t + len + .02);
+    n.onended = () => g.disconnect();
   },
   // The first click or key press: build what the music runs through, and begin.
   wake() {
