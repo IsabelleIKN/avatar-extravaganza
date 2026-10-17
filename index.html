@@ -3757,7 +3757,7 @@ const Beach = {
     this.hawking = this.caught = false;
     this.hawkT = setTimeout(() => this.hawk(), 7000);
     this.hawkIv = setInterval(() => this.hawk(), 16000);
-    narrate($('beach-text'), 'Lo: “The beach has a special way...”\nLi: “...of smoothing even the most ragged edges.”', () => say('azula', '“Hey, beach bums, we\'re playing next.”\n“See that girl with the silly pigtails? When she runs toward the ball, there\'s just the slightest hesitation of her left foot. I\'m willing to bet a childhood injury has weakened her. Keep serving the ball to her left, and we\'ll destroy her and the rest of her team.”', 'Dismissed.', () => {
+    narrate($('beach-text'), 'Lo: “The beach has a special way...”\nLi: “...of smoothing even the most ragged edges.”', () => say('azula', '“Hey, beach bums, we\'re playing next.”\n"That girl with the pigtails! She\'s their weak link. Hit the ball to her left, I saw her trip there before."', 'Dismissed.', () => {
       if (cur === 's-beach') this.ready();
     }));
   },
@@ -3804,16 +3804,25 @@ const Beach = {
     this.timers.forEach(clearTimeout); this.timers = [];
     st.querySelectorAll('.kp, .netfire').forEach(e => e.remove());
     this.us = this.them = 0; this.busy = true;
-    // the girl with the pigtails stands somewhere else every match, and again after every point
-    this.team = shuffle(['kuai-1', 'kuai-2', 'kuai-3']).map((key, i) => {
+    this.team = ['kuai-1', 'kuai-2', 'kuai-3'].map(key => {
       const el = document.createElement('div');
-      el.className = 'kp'; el.innerHTML = art(key); el.style.left = this.SPOTS[i] + '%';
+      el.className = 'kp'; el.innerHTML = art(key);
       st.append(el);
-      return { el, x: this.SPOTS[i], weak: key === 'kuai-1' };
+      return { el, x: key === 'kuai-1' ? this.herAt : null, weak: key === 'kuai-1' };
     });
+    this.lineUp();
     $('kuai-ball').classList.remove('boom');
     this.fly(50, 88, 0);
     this.score();
+  },
+  // Everyone to a spot, and the girl with the pigtails always to a different one
+  // from where she just stood: after every point, and at the start of every match.
+  lineUp() {
+    const her = this.team.find(p => p.weak);
+    her.x = this.herAt = pick(this.SPOTS.filter(x => x !== her.x));
+    const rest = shuffle(this.SPOTS.filter(x => x !== her.x));
+    this.team.filter(p => !p.weak).forEach((p, i) => { p.x = rest[i]; });
+    this.team.forEach(p => { p.el.classList.remove('late'); p.el.style.left = p.x + '%'; });
   },
   ready() {
     this.busy = false;
@@ -3862,9 +3871,8 @@ const Beach = {
       }), 900);
       return;
     }
-    this.later(() => {   // everyone back into position, though not necessarily the same one
-      const spots = shuffle(this.SPOTS.slice());
-      this.team.forEach((p, i) => { p.x = spots[i]; p.el.classList.remove('late'); p.el.style.left = p.x + '%'; });
+    this.later(() => {   // everyone back into position, though not the same one
+      this.lineUp();
       this.fly(50, 88, 400);
       this.busy = false;
     }, 1100);
