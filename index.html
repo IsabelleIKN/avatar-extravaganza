@@ -1896,7 +1896,10 @@ function waitNext(after, next, ms = 400) {
   b.className = 'btn btn-primary btn-next'; b.textContent = 'Continue';
   b.style.visibility = 'hidden';   // its room is kept, so nothing jumps when it appears
   after.after(b);
-  nextT = setTimeout(() => { b.style.visibility = ''; }, ms);
+  nextT = setTimeout(() => {
+    b.style.visibility = '';
+    b.scrollIntoView({ block: 'nearest' });   // a long text can push it below the window
+  }, ms);
   b.onclick = () => { dropNext(); next(); };
 }
 function dropNext() {
@@ -2429,7 +2432,7 @@ const Flight = {
     // later one he lands, falls asleep and dreams (see the Eastern Air Temple).
     if (clean && !first && !has('friend')) { go('s-dream'); return; }
     unlock('yipyip', () => clean && first
-      ? say('appa', 'Not a single singed hair. Appa will remember that.', 'To the map', () => go('s-map'), 'Appa')
+      ? say('appa', 'Not a single singed hair. Appa will remember that.', 'Continue', () => go('s-map'), 'Appa')
       : go('s-map'));
   },
   showLives() { $('flight-lives').innerHTML = art('heart').repeat(Math.max(0, this.lives)); },
@@ -2875,10 +2878,9 @@ const Cave = {
   touchMole() {
     if (!this.chamber) return;
     this.chamber = false;
-    $('cave-stage').classList.add('unfold');
+    $('cave-stage').classList.add('unfold');   // the cave folds out into the labyrinth: that says it all
     [110, 147, 196, 262].forEach((f, i) => setTimeout(() => beep(f, .6, 'triangle'), i * 250));
-    narrate($('cave-text'), 'You hold out your hand. The mountain stops being flat. For the first time you feel it the way a badgermole does: not as a picture in front of you, but all around you.',
-      () => go('s-maze'), 1400);
+    setTimeout(() => { if (cur === 's-cave') go('s-maze'); }, 1400);
   },
 };
 SCENES['s-cave'] = Cave;
@@ -4222,13 +4224,14 @@ SCENES['s-dream'] = Dream;
 // ══════════════════════════════════════════════
 // THE SERPENT'S PASS — the other way into Ba Sing Se
 // ══════════════════════════════════════════════
-// Reached by stopping the cabbage cart once more, after its card is won. A walk
-// along the pass until the serpent comes up; then, as Aang did, keep it busy:
-// it follows you, and going round and round it whips up the whirlpool that, in
-// the show, slams it into the mountain.
+// Reached by stopping the cabbage cart once more, after its card is won. A few
+// steps onto the pass and the serpent comes up; then, as Aang did, keep it busy
+// while the others cross: it follows you, and going round and round it whips up
+// the whirlpool that, in the show, slams it into the mountain.
 
 const Serpent = {
-  TURNS: 3,   // times round the serpent that make a whirlpool
+  TURNS: 2,      // times round the serpent that make a whirlpool
+  CALM: .04,     // how fast the water calms down again, per second (slow, so big slow circles get there too)
   WALK: [4, 9, 14],   // where the travellers start on the path, in %
   tok: 0, timers: [],
   later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
@@ -4244,8 +4247,8 @@ const Serpent = {
     });
     sp.classList.remove('thrown');
     this.x = this.tx = 50; this.rise = 110; this.tilt = 0; this.spin = 0; this.lastA = null;
-    this.walking = this.chasing = this.up = false; this.felt = false;
-    $('whirl').style.opacity = 0;
+    this.walking = this.chasing = this.up = this.hurry = false; this.felt = this.fast = false; this.quarter = 0;
+    $('whirl').style.opacity = 0; $('whirl').style.transform = '';
     this.place();
     this.run = true; this.last = performance.now();
     const tok = ++this.tok;
@@ -4267,21 +4270,19 @@ const Serpent = {
     if (!sp.classList.contains('thrown')) sp.style.transform = `translate(-50%, ${this.rise}%) rotate(${this.tilt}deg)`;
     $('whirl').style.left = this.x + '%';
   },
+  // A few steps onto the pass, and it comes up right beside the path.
   walk() {
     $('serpent-opts').innerHTML = '';
     this.walking = true;
-    narrate($('serpent-text'), 'Single file, along the edge of the water. It is very quiet.', () =>
-      narrate($('serpent-text'), 'Something long and dark slides along under the water, right beside the path.', () => this.surface(), 1500), 1500);
+    this.later(() => this.surface(), 700);
   },
   surface() {
     this.up = true;
     document.body.classList.add('shake');
     beep(55, 1.2, 'sawtooth'); beep(82, .9, 'square');
     this.later(() => document.body.classList.remove('shake'), 900);
-    narrate($('serpent-text'), 'Sokka: “I think I just figured out why they call it the Serpent\'s Pass!”', () => {
-      $('serpent-text').textContent = 'Aang: “I\'ll distract it. Katara, get everyone across!”\nIt is watching you now. Wherever you go, it goes.';
-      this.chasing = true;
-    }, 1500);
+    $('serpent-text').textContent = 'Sokka: “I think I just figured out why they call it the Serpent\'s Pass!”\nAang: “I\'ll distract it. Katara, get everyone across!”\nIt follows you. Go round and round it, and the water starts to turn.';
+    this.later(() => { this.chasing = true; }, 1200);   // once it is all the way up
   },
   // Round and round it: the angle of the pointer around the serpent, added up.
   move(px, py) {
@@ -4303,16 +4304,21 @@ const Serpent = {
     if (this.up && this.rise > 0) this.rise = Math.max(0, this.rise - dt * 90);   // coming up out of the water
     if (this.chasing) {
       this.x += (this.tx - this.x) * Math.min(1, dt * 1.1);   // it follows, a little behind
-      this.tilt = clamp((this.tx - this.x) * 1.2, -18, 18);
-      this.spin *= 1 - dt * .12;   // the water calms down again unless you keep going
+      this.spin *= 1 - dt * this.CALM;   // the water calms down again unless you keep going
       const p = Math.min(1, Math.abs(this.spin) / (this.TURNS * Math.PI * 2));
+      this.tilt = clamp((this.tx - this.x) * 1.2, -18, 18) + Math.sin(now / 140) * 14 * p;   // and the more the water turns, the more it sways
       $('whirl').style.opacity = p;
+      $('whirl').style.transform = `translate(-50%,-50%) scale(${.5 + .5 * p}) scaleY(.3)`;
+      const q = Math.floor(p * 8);   // a rising whoosh every quarter turn
+      if (q > this.quarter) beep(180 + q * 60, .12, 'triangle');
+      this.quarter = q;
       if (p > .3 && !this.felt) { this.felt = true; $('serpent-text').textContent = 'The water around it is starting to turn with you.'; }
+      if (p > .7 && !this.fast) { this.fast = true; $('serpent-text').textContent = 'Faster! The serpent is being pulled round with the water.'; }
       if (p >= 1) this.whirlpool();
     }
-    if (this.walking) {   // the travellers keep going, faster while it is busy with you
+    if (this.walking) {   // the travellers keep going: quickly while it is busy with you, and on to the far end once it is gone
       this.walkers.forEach((w, i) => {
-        w.x = Math.min(w.x + dt * (this.chasing ? 3.2 : 1.6), 76 - (this.walkers.length - 1 - i) * 5);   // and wait at the far end
+        w.x = Math.min(w.x + dt * (this.hurry ? 14 : this.chasing ? 5 : 2.5), 76 - (this.walkers.length - 1 - i) * 5);
         w.el.style.left = w.x + '%';
       });
     }
@@ -4320,20 +4326,20 @@ const Serpent = {
   },
   // As in the show: caught in the whirlpool and slammed into the mountain, then gone below.
   whirlpool() {
-    this.chasing = false;
+    this.chasing = false; this.hurry = true;
     const sp = $('serpent');
     sp.classList.add('thrown');
     sp.style.transform = 'translate(160%, -8%) rotate(70deg)';
     beep(70, 1, 'sawtooth');
-    $('serpent-text').textContent = 'The whirlpool spins it round and round, and slams it into the mountainside.';
     this.later(() => { document.body.classList.add('shake'); beep(45, .8, 'square'); }, 1000);
-    this.later(() => document.body.classList.remove('shake'), 1800);
-    waitNext($('serpent-text'), () => {
+    this.later(() => {
+      document.body.classList.remove('shake');
       sp.style.transform = 'translate(160%, 130%) rotate(95deg)';
       $('whirl').style.opacity = 0;
       this.walkers.forEach(w => { w.el.classList.add('cheer'); });
-      narrate($('serpent-text'), 'It falls back below the water. On the far side of the pass, everyone cheers.', () => unlock('serpent', () => go('s-map')), 1200);
     }, 1800);
+    narrate($('serpent-text'), 'The whirlpool spins it round and round and slams it into the mountainside. It falls back below the water, and on the far side of the pass, everyone cheers.',
+      () => unlock('serpent', () => go('s-map')), 2600);
   },
 };
 SCENES['s-serpent'] = Serpent;
