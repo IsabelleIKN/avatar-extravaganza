@@ -1865,21 +1865,7 @@ def owl():
     return outline(im, col('#5a5f8c'))   # a pale edge, so he shows up against a dark screen
 
 
-def card_owl():
-    im, d = scene(('#3b2a1c', '#5b3920', '#3b2a1c'))
-    rnd = random.Random(23)
-    for y in (9, 21, 33, 45):                               # shelf after shelf of scrolls
-        d.line((0, y, CW, y), fill=P['N'])
-        for x in range(1, CW, 4):
-            c = P[rnd.choice('trwayeb')]
-            d.rectangle((x, y - rnd.randrange(4, 8), x + 2, y - 1), fill=c)
-    disc(im, 30, 26, 19, col('#241710'))
-    put(im, ART['owl'], 13, 8)
-    return im
-
-
 ART['owl'] = owl()
-ART['card-owl'] = card_owl()
 
 
 # ── the lovers' tomb, and the dragon masters at full size ───────
@@ -2025,9 +2011,9 @@ ART['ran-epic'] = flip(epic_dragon(col('#c9402c'), col('#8c1f24'), col('#f0a070'
 
 # ── three more secrets: a bad play, a forced vacation, a fishing trip ──
 
-def azula():
+def azula(robe=None, collar=None):
     D, a = P['D'], P['a']
-    im, d = bust(P['T'], P['R'], a, hair=D, hair_box=(7, 3, 24, 18))
+    im, d = bust(P['T'], robe or P['R'], collar or a, hair=D, hair_box=(7, 3, 24, 18))
     d.rectangle((14, 1, 17, 4), fill=D)                    # topknot with the flame headpiece
     d.polygon([(13, 4), (14, 1), (15, 3), (16, 0), (17, 3), (18, 1), (18, 4)], fill=a)
     d.rectangle((8, 10, 9, 22), fill=D)                    # the two loose bangs
@@ -2256,6 +2242,53 @@ for name, fn in (('azula', azula), ('katara', katara), ('loli', loli), ('actress
                  ('ball', ball), ('canoe', canoe)):
     ART[name] = fn()
 ART['actor-zuko'] = flip(ART['zuko'])                       # the scar is on the wrong side
+
+
+def azula_kyoshi():
+    """Azula as a Kyoshi Warrior, the way she came into Ba Sing Se: white face paint,
+    red round the eyes, the gold headdress, and her own gold eyes, which no paint hides."""
+    D, a, r = P['D'], P['a'], P['r']
+    im, d = bust(P['w'], P['E'], a, hair=D, hair_box=(7, 3, 24, 18))
+    d.polygon([(8, 8), (10, 2), (13, 5), (15, 0), (16, 0), (18, 5), (21, 2), (23, 8)], fill=a)   # the headdress, a fan of gold
+    d.line((8, 8, 23, 8), fill=P['A'])
+    d.polygon([(9, 15), (10, 11), (14, 11), (14, 15)], fill=r)            # the war paint round the eyes
+    d.polygon([(17, 15), (17, 11), (21, 11), (22, 15)], fill=r)
+    dots(im, [(11, 13), (12, 13), (19, 13), (20, 13)], D)                # brows drawn on top
+    dots(im, [(11, 14), (20, 14)], D)
+    dots(im, [(12, 14), (19, 14)], a)                                    # gold eyes
+    d.line((14, 20, 17, 20), fill=r)
+    return outline(im, P['k'])
+
+
+def card_usurper():
+    """The Earth King's throne room, taken: Azula on the throne in Earth Kingdom
+    green, with blue fire at hand."""
+    im, d = scene(('#0c1f14', '#1d4a2c', '#0c1f14'))
+    gold, back = P['a'], col('#24452f')
+    d.rectangle((15, 5, 45, 44), fill=back)                # the throne's high back, edged in gold
+    d.rectangle((15, 5, 45, 44), outline=gold)
+    d.polygon([(22, 5), (30, 0), (38, 5)], fill=gold)      # and a crest on top
+    d.ellipse((27, 6, 33, 12), outline=gold)              # the Earth Kingdom's emblem
+    d.rectangle((29, 8, 31, 10), fill=gold)
+    for i, y in enumerate((43, 46)):                       # the steps up to it
+        d.rectangle((10 - i * 5, y, CW - 10 + i * 5, y + 2), fill=col('#3b5a3f') if i else col('#4a6e4c'))
+        d.line((10 - i * 5, y, CW - 10 + i * 5, y), fill=gold)
+    put(im, ART['azula-green'], 14, 13)
+    blue = ART['el-fire'].copy()                           # her fire, blue
+    px = blue.load()
+    for y in range(blue.size[1]):
+        for x in range(blue.size[0]):
+            r, g, b, al = px[x, y]
+            if al: px[x, y] = (b, g, r, al)
+    flame = blue.crop((2, 0, 14, 16))
+    put(im, flame, 2, 24)
+    put(im, flame, 46, 24)
+    return im
+
+
+ART['azula-green'] = azula(P['E'], P['l'])
+ART['kyoshi-azula'] = azula_kyoshi()
+ART['card-usurper'] = card_usurper()
 
 
 def stage_play():

@@ -1013,7 +1013,7 @@ const SECRETS = [
   { id: 'melon', el: 'secret', emoji: '🍉', name: 'The Melon Lord',       text: '“I am not Toph. I am Melon Lord!”', prize: 'Toph, the First Metalbender (Neon Ink)' },
   { id: 'koh',   el: 'secret', emoji: '🎭', name: 'Koh the Face Stealer', text: '“Show no fear. Show no emotion at all.”', prize: 'Koh, the Face Stealer' },
   { id: 'lovers', el: 'secret', emoji: '💞', name: 'Oma and Shu',         text: '“The two lovers learned earthbending from the badgermoles; they became the first earthbenders.”', prize: 'Heartbeat of Spring' },
-  { id: 'owl',   el: 'secret', emoji: '🦉', name: 'He Who Knows Ten Thousand Things', text: '“I am Wan Shi Tong, He Who Knows Ten Thousand Things.”', prize: 'Wan Shi Tong, Librarian' },
+  { id: 'usurper', el: 'secret', emoji: '🪭', name: 'The Earth Kingdom Has Fallen', text: '“Whoever controls the Dai Li controls Ba Sing Se.”', prize: 'Azula, Cunning Usurper (borderless)' },
   { id: 'players', el: 'secret', emoji: '🎟️', name: 'The Ember Island Players', text: '“That... wasn\'t a good play.” “But the effects were decent.”', prize: 'Thespian\'s Stage' },
   { id: 'beach', el: 'secret', emoji: '🏖️', name: 'The Beach',            text: '“The beach has a special way of smoothing even the most ragged edges.”', prize: 'Azula, Flame of Ember Island' },
   { id: 'fish',  el: 'secret', emoji: '🐟', name: 'Magic Water',          text: '“Why is it that every time you play with magic water, I get soaked?”', prize: 'Waterbender Ascension (art card)' },
@@ -1025,8 +1025,8 @@ const SECRETS = [
   { id: 'zuko',  el: 'secret', emoji: '🐸', name: 'Hello, Zuko Here',     text: '“Why am I so bad at being good?”', prize: 'Zuko, Redeemed' },
   { id: 'dance', el: 'secret', emoji: '💃', name: 'Secret Dance Party',   text: '“That\'s the sound of happy feet.”', prize: 'Join the Dance' },
   { id: 'banyan', el: 'secret', emoji: '🌿', name: 'Everything Is Connected', text: '“We all have the same roots and we are all branches of the same tree.”', prize: 'The Banyan Tree' },
-  // all four pages of field notes (see PAGES); its cards are handed out page by page
-  { id: 'notes', el: 'secret', emoji: '📖', name: 'Field Notes',          text: '“Ooh, these illustrations are quite stylish.”', prizeText: 'All four pages are back in Wan Shi Tong\'s book.<br>Their cards are already yours.' },
+  // all four pages of field notes (see PAGES): each page wins its own card, and the whole book Wan Shi Tong's
+  { id: 'notes', el: 'secret', emoji: '📖', name: 'Field Notes',          text: '“Ooh, these illustrations are quite stylish.”', prize: 'Wan Shi Tong, Librarian' },
   // keep this one last: Uncle Iroh hints at the secrets in this order, and it erases all the others
   { id: 'cycle', el: 'secret', emoji: '♻️', name: 'The Avatar Cycle',     text: 'Everything was erased. One memory came along anyway.', prize: 'Brought Back' },
 ];
@@ -1116,9 +1116,9 @@ const HINTS = {
     'With the torch out, one tunnel in the cave glows. Trust it. More than once.',
     'In the dark cave, walk into the glowing tunnel four times in a row. Touch the badgermole, then find the tomb in the labyrinth.',
   ],
-  owl: [
+  usurper: [
     'Knowing one answer is luck. Knowing many, one after another, gets you noticed.',
-    'Ba Sing Se University keeps count of how many you get right in a row. Someone else is counting too.',
+    'Ba Sing Se University keeps count of how many you get right in a row. So does a Kyoshi Warrior at the back of the hall.',
     'Answer ten questions in a row correctly at Ba Sing Se University.',
   ],
   players: [
@@ -1230,7 +1230,7 @@ const ART = {
   // secrets
   melon: '🍉', noface: '😶', 'koh-1': '🎭', 'koh-2': '🎭', 'koh-3': '🎭', 'koh-4': '🎭', badgermole: '🦡', roku: '🧙', owl: '🦉', 'shaw-epic': '🐉', 'ran-epic': '🐉',
   // the Ember Island Players, the beach and the fishing trip
-  azula: '😏', katara: '🌊', loli: '👵👵', 'actress-aang': '💃', 'actor-toph': '💪', 'actor-zuko': '😤',
+  azula: '😏', 'kyoshi-azula': '🪭', katara: '🌊', loli: '👵👵', 'actress-aang': '💃', 'actor-toph': '💪', 'actor-zuko': '😤',
   ball: '🏐', 'kuai-1': '👧', 'kuai-2': '🧒', 'kuai-3': '👦', canoe: '🛶', fish: '🐟', spear: '🔱',
   // the Spirit Oasis: Tui and La apart, and the two who decide what happens to the moon
   tui: '🐟', 'koi-la': '🐟', zhao: '😼', yue: '🌙',
@@ -1302,6 +1302,7 @@ if (location.search.includes('reset')) {   // a complete wipe, for the quizmaste
 const S = Object.assign({ found: [], stage: 'quiz', step: 0, hints: {}, comet: false, mapIntro: false, pages: [] },
   JSON.parse(localStorage.getItem(LS_KEY) || '{}'));
 S.pages = S.pages.filter(id => PAGES.some(p => p.id === id));   // only pages the book still has
+S.found = S.found.map(id => id === 'owl' ? 'usurper' : id);       // the university's secret was Wan Shi Tong's once
 let erasing = false;
 const save = () => { if (!erasing) localStorage.setItem(LS_KEY, JSON.stringify(S)); };
 const has = id => S.found.includes(id);
@@ -1863,7 +1864,7 @@ const CAST = {
   zuko: 'Prince Zuko', sokka: 'Sokka', daili: 'Dai Li agent', longfeng: 'Long Feng',
   iroh: 'Uncle Iroh', comet: "Sozin's Comet", world: 'The Four Nations',
   melon: 'The Melon Lord', noface: 'You, more or less', roku: 'Avatar Roku', owl: 'Wan Shi Tong',
-  azula: 'Princess Azula', katara: 'Katara', loli: 'Lo and Li', 'actor-zuko': 'Actor Zuko',
+  azula: 'Princess Azula', 'kyoshi-azula': 'A Kyoshi Warrior', katara: 'Katara', loli: 'Lo and Li', 'actor-zuko': 'Actor Zuko',
   zhao: 'Admiral Zhao', yue: 'Princess Yue', teacher: 'Music teacher',
 };
 let sayCb = null;
@@ -1951,7 +1952,7 @@ function unlock(id, cb = null) {
   $('unlock-title').textContent = SECRETS.includes(c) ? 'Secret card unlocked!' : 'Card unlocked!';
   $('hud-count').classList.remove('bump'); void $('hud-count').offsetWidth; $('hud-count').classList.add('bump');
   $('unlock-card').innerHTML = cardHTML(c);
-  $('unlock-prize').innerHTML = c.prizeText || (c.prize ? `You win: <b>${c.prize}</b><br>` : '') + `Collect your card from ${CONFIG.quizmaster}!`;
+  $('unlock-prize').innerHTML = (c.prize ? `You win: <b>${c.prize}</b><br>` : '') + `Collect your card from ${CONFIG.quizmaster}!`;
   unlockCb = cb;
   $('unlock').classList.add('show');
   confetti(id === 'energy' ? 320 : 140);
@@ -1970,7 +1971,7 @@ $('unlock-ok').onclick = () => {
 };
 
 // A page of field notes: handed over like a card, and sketched into the book.
-// The last brings Wan Shi Tong to collect his book, which leaves you its card.
+// The last brings Wan Shi Tong to collect his book, and he leaves you his card.
 function findPage(id, cb = null) {
   if (S.pages.includes(id)) { if (cb) cb(); return; }
   const p = PAGES.find(x => x.id === id);
@@ -2294,7 +2295,7 @@ function appaSmash() {
 }
 
 const Uni = {
-  STREAK: 10,   // right answers in a row that bring out Wan Shi Tong
+  STREAK: 10,   // right answers in a row that bring the Kyoshi Warrior down to your desk
   start() {
     this.n = 0; this.streak = 0;
     this.pool = shuffle(QUESTIONS.slice());
@@ -2305,7 +2306,7 @@ const Uni = {
     this.n++;
     const label = `Ba Sing Se University · streak ${this.streak}`;
     // three cards can be won here; once they are all in, say so
-    $('q-note').textContent = has('rough') && has('nowar') && has('owl')
+    $('q-note').textContent = has('rough') && has('nowar') && has('usurper')
       ? 'You have won every card this university has to offer. From here on it is knowledge for its own sake.' : '';
     if (!has('nowar') && this.n % 3 === 2) { askBSS(label, () => this.ask()); return; }
     const q = this.pool[this.n % this.pool.length];
@@ -2321,17 +2322,20 @@ const Uni = {
       }
     });
   },
-  // A long enough streak catches the attention of the spirit of knowledge.
+  // A long enough streak catches the eye of a Kyoshi Warrior at the back of the hall,
+  // who is not one: Azula, in the disguise she wore into Ba Sing Se to take it.
   right() {
     this.streak++;
     const next = () => this.ask();
-    if (has('owl')) { setTimeout(next, 900); return; }
+    if (has('usurper')) { setTimeout(next, 900); return; }
     if (this.streak >= this.STREAK) {
-      setTimeout(() => say('owl', `${this.STREAK} in a row. You know far too much for a human.\n“I am Wan Shi Tong, He Who Knows Ten Thousand Things.” You may keep one.`, 'Take it and back away slowly', () => unlock('owl', next)), 700);
+      setTimeout(() => say('kyoshi-azula', 'Ten in a row. The Kyoshi Warrior comes down to your desk and bows.\n“We are the Earth King\'s humble servants.”', 'Those gold eyes…', () =>
+        say('azula', '“Whoever controls the Dai Li controls Ba Sing Se.”\nDai Li agents step out from behind every pillar and bow. Not to the Earth King. To her.',
+          'Kuei: “The Earth Kingdom ... has fallen.”', () => unlock('usurper', next))), 700);
       return;
     }
-    const owl = { 5: 'Five in a row. Somewhere far away, a very large owl turns its head.', 8: 'Eight in a row. The owl has started taking notes.' }[this.streak];
-    if (owl) narrate($('q-feedback'), owl, next); else setTimeout(next, 900);
+    const watching = { 5: 'Five in a row. At the back of the hall, a Kyoshi Warrior looks up.', 8: 'Eight in a row. The Kyoshi Warrior is still watching you. Her eyes are gold.' }[this.streak];
+    if (watching) narrate($('q-feedback'), watching, next); else setTimeout(next, 900);
   },
 };
 
