@@ -9,7 +9,11 @@
 
     /* Jersey 10 (SIL Open Font License), bundled so the game works offline */
     @font-face { font-family: 'Jersey 10'; src: url('fonts/Jersey10-Regular.ttf') format('truetype'); }
-    html { font-size: 21px; }   /* the pixel font is narrow, so everything is set a size up */
+    /* Every size in the game is set in rem, so this one number scales all of it
+       with the window: 21px for a window of about 910 x 760, from 18px in a
+       small one up to 34px in a big one. (The pixel font is narrow, so it is set
+       large to begin with, and the text there is to read a size up again.) */
+    html { font-size: clamp(18px, min(2.3vw, 2.76vh), 34px); }
     body {
       font-family: 'Jersey 10', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       font-synthesis: none;
@@ -21,7 +25,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 64px 16px 24px;
+      padding: 3.048rem .762rem .762rem;
       overflow-x: hidden;
     }
     body::before {
@@ -34,10 +38,10 @@
       background: linear-gradient(160deg, rgba(90,10,0,.78) 0%, rgba(160,40,0,.55) 45%, rgba(60,0,0,.85) 100%);
     }
 
-    .screen { display: none; width: 100%; max-width: 560px; animation: fadeIn .25s ease; position: relative; z-index: 1; }
-    .screen.active { display: flex; flex-direction: column; align-items: center; gap: 22px; }
-    .screen.wide { max-width: 880px; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .screen { display: none; width: 100%; max-width: 32rem; animation: fadeIn .25s ease; position: relative; z-index: 1; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; gap: .9rem; }
+    .screen.wide { max-width: 41.905rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(.381rem); } to { opacity: 1; transform: translateY(0); } }
 
     /* custom artwork dropped into art/ replaces the emoji placeholders */
     .art-img { height: 1.15em; width: auto; display: block; pointer-events: none; -webkit-user-drag: none; }
@@ -47,7 +51,7 @@
        offset shadows draw the outline, two inset ones the bevel.
        --px is the size of one "pixel". */
     .btn, .hud-btn, .option, .card, .dpad, .pad-el, .progress-badge, .toast, .stage, .bar, .tug, .pin span, input[type=text] {
-      --px: 4px; --ink: #1a1420; --hi: rgba(255,255,255,.2); --lo: rgba(0,0,0,.32);
+      --px: .19rem; --ink: #1a1420; --hi: rgba(255,255,255,.2); --lo: rgba(0,0,0,.32);
       border: 0; border-radius: 0;
       box-shadow:
         0 calc(var(--px) * -1) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink),
@@ -57,7 +61,7 @@
     }
     .btn:hover, .option:hover, .hud-btn:hover { filter: brightness(1.12); }
     .btn:active, .hud-btn:active, .option:active, .dpad:active, .pad-el:active {
-      --hi: rgba(0,0,0,.3); --lo: rgba(255,255,255,.14); transform: translateY(2px);
+      --hi: rgba(0,0,0,.3); --lo: rgba(255,255,255,.14); transform: translateY(.095rem);
     }
     .rot-r, .rot-l, .rot-d { display: inline-block; }
     .rot-r { transform: rotate(90deg); }
@@ -66,91 +70,92 @@
 
     /* ── HUD ── */
     #hud {
-      position: fixed; top: 16px; left: 16px; right: 16px; z-index: 50;
+      position: fixed; top: .762rem; left: .762rem; right: .762rem; z-index: 50;
       display: flex; justify-content: space-between; pointer-events: none;
     }
-    #hud > div { display: flex; gap: 16px; }
+    #hud > div { display: flex; gap: .762rem; }
     .hud-btn {
       pointer-events: auto; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 8px;
+      display: inline-flex; align-items: center; gap: .381rem;
       background: #1e293b; color: #f1f5f9;
-      padding: 7px 14px; font-size: 1.05rem; font-weight: 700; font-family: inherit;
+      padding: .333rem .667rem; font-size: 1.15rem; font-weight: 700; font-family: inherit;
     }
-    .hud-btn .art-img { height: 22px; }
+    .hud-btn .art-img { height: 1.048rem; }
     .hud-btn.off { color: #64748b; text-decoration: line-through; }
-    #hud-num { display: inline-flex; align-items: center; gap: 5px; }
+    #hud-num { display: inline-flex; align-items: center; gap: .238rem; }
     .hud-btn.bump { animation: bump .5s steps(5); }
     @keyframes bump { 40% { transform: scale(1.3); } }
 
     /* ── START ── */
     .start-hero { text-align: center; display: flex; flex-direction: column; align-items: center; }
     .start-logo {
-      font-size: 64px; line-height: 1;
+      font-size: 3.048rem; line-height: 1;
       animation: pulse 3s ease-in-out infinite;
     }
     @keyframes pulse {
-      0%,100% { filter: drop-shadow(0 0 14px rgba(249,115,22,.6)); }
-      50%      { filter: drop-shadow(0 0 28px rgba(249,115,22,.95)); }
+      0%,100% { filter: drop-shadow(0 0 .667rem rgba(249,115,22,.6)); }
+      50%      { filter: drop-shadow(0 0 1.333rem rgba(249,115,22,.95)); }
     }
     .start-title {
       font-size: 2.8rem; font-weight: 900; color: #f97316;
       line-height: 1; text-align: center;
-      text-shadow: 4px 4px 0 #7c2d12;
-      margin: 10px 0 4px;
+      text-shadow: .19rem .19rem 0 #7c2d12;
+      margin: .476rem 0 .19rem;
     }
-    .start-sub { font-size: 1rem; color: #cbd5e1; letter-spacing: .04em; }
+    .start-sub { font-size: 1.15rem; color: #cbd5e1; letter-spacing: .04em; }
     .intro-line { font-size: .8rem; color: #64748b; letter-spacing: .3em; text-transform: uppercase; text-align: center; }
 
-    .card { background: #1e293b; padding: 28px; width: 100%; }
+    .card { background: #1e293b; padding: 1.333rem; width: 100%; }
     .card.soft { background: #172033; text-align: center; line-height: 1.3; color: #cbd5e1; }
-    .progress-badge { --px: 3px; background: #1e293b; padding: 6px 16px; font-size: .9rem; color: #94a3b8; }
+    .progress-badge { --px: .143rem; background: #1e293b; padding: .286rem .762rem; font-size: 1rem; color: #94a3b8; }
 
     /* ── BUTTONS ── */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      display: inline-flex; align-items: center; justify-content: center; gap: .476rem;
       cursor: pointer; font-family: inherit;
-      font-size: 1.15rem; font-weight: 700; padding: 14px 24px; width: 100%;
+      font-size: 1.25rem; font-weight: 700; padding: .667rem 1.143rem; width: 100%;
     }
-    .btn .art-img { height: 18px; }
-    .btn-primary { background: #f97316; color: #fff; text-shadow: 2px 2px 0 #9a3412; }
-    .btn-ghost { background: #26324a; color: #e2e8f0; padding: 10px 16px; font-size: 1rem; width: auto; }
-    .btn-row { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+    .btn .art-img { height: .857rem; }
+    .btn-primary { background: #f97316; color: #fff; text-shadow: .095rem .095rem 0 #9a3412; }
+    .btn-next { width: auto; min-width: 9rem; margin-top: .3rem; }
+    .btn-ghost { background: #26324a; color: #e2e8f0; padding: .476rem .762rem; font-size: 1.1rem; width: auto; }
+    .btn-row { display: flex; gap: .857rem; flex-wrap: wrap; justify-content: center; }
 
     /* ── QUIZ ── */
     #quiz-card { transition: transform .2s; }
     #quiz-card.smashed { animation: smashed 1.7s cubic-bezier(.5,0,1,.6) forwards; }
     @keyframes smashed {
-      15% { transform: rotate(-4deg) translateY(-12px); }
+      15% { transform: rotate(-4deg) translateY(-.571rem); }
       100% { transform: rotate(48deg) translate(60vw, 110vh); opacity: .2; }
     }
-    .question-label { font-size: .78rem; color: #f97316; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
-    .question-text { font-size: 1.2rem; font-weight: 600; line-height: 1.25; margin-bottom: 4px; }
-    .options { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+    .question-label { font-size: .95rem; color: #f97316; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .476rem; }
+    .question-text { font-size: 1.45rem; font-weight: 600; line-height: 1.3; margin-bottom: .19rem; }
+    .options { display: flex; flex-direction: column; gap: .667rem; margin-top: .762rem; }
     .options.locked { pointer-events: none; }
     .option {
-      padding: 12px 16px; text-align: left; cursor: pointer;
+      padding: .571rem .762rem; text-align: left; cursor: pointer;
       background: #16203a; color: #f1f5f9;
-      font-size: 1.05rem; line-height: 1.2; font-family: inherit;
+      font-size: 1.25rem; line-height: 1.25; font-family: inherit;
     }
-    .option .letter { font-weight: 700; color: #94a3b8; margin-right: 8px; }
+    .option .letter { font-weight: 700; color: #94a3b8; margin-right: .381rem; }
     .option.correct { background: #166534; color: #dcfce7; }
     .option.wrong   { background: #991b1b; color: #fee2e2; }
     .option.burn    { animation: burn .9s ease forwards; }
-    @keyframes burn { 30% { background: #f97316; color: #fff; } 100% { opacity: 0; transform: scale(.9) translateY(10px); filter: blur(4px); } }
-    #q-feedback { min-height: 1.4em; margin-top: 14px; font-size: .9rem; color: #fbbf24; text-align: center; }
-    #q-note { font-size: .85rem; color: #64748b; text-align: center; }
+    @keyframes burn { 30% { background: #f97316; color: #fff; } 100% { opacity: 0; transform: scale(.9) translateY(.476rem); filter: blur(.19rem); } }
+    #q-feedback { min-height: 1.4em; margin-top: .667rem; font-size: 1.2rem; line-height: 1.3; color: #fbbf24; text-align: center; }
+    #q-note { font-size: 1rem; color: #94a3b8; text-align: center; }
     input[type=text] {
       --hi: rgba(0,0,0,.4); --lo: rgba(255,255,255,.08);
-      background: #0f172a; color: #f1f5f9; padding: 12px 14px; font-size: 1.05rem; font-family: inherit; width: 100%;
+      background: #0f172a; color: #f1f5f9; padding: .571rem .667rem; font-size: 1.05rem; font-family: inherit; width: 100%;
     }
     input[type=text]:focus { outline: none; --ink: #f97316; }
     .shakeit { animation: shakeit .35s; }
-    @keyframes shakeit { 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-5px); } }
+    @keyframes shakeit { 25% { transform: translateX(-.381rem); } 50% { transform: translateX(.381rem); } 75% { transform: translateX(-.238rem); } }
 
     body.shake { animation: quake .12s linear infinite; }
-    @keyframes quake { 25% { transform: translate(5px,-4px); } 50% { transform: translate(-5px,3px); } 75% { transform: translate(3px,5px); } }
+    @keyframes quake { 25% { transform: translate(.238rem,-.19rem); } 50% { transform: translate(-.238rem,.143rem); } 75% { transform: translate(.143rem,.238rem); } }
     body.glitch { animation: glitch .15s steps(2) infinite; }
-    @keyframes glitch { 0% { filter: invert(1) hue-rotate(90deg); transform: translateX(6px); } 100% { filter: none; transform: translateX(-6px); } }
+    @keyframes glitch { 0% { filter: invert(1) hue-rotate(90deg); transform: translateX(.286rem); } 100% { filter: none; transform: translateX(-.286rem); } }
 
     /* --flip mirrors the bison emoji (it faces left); custom art should face right */
     .appa-fly {
@@ -164,41 +169,47 @@
     }
 
     /* ── STAGES (mini-scenes) ── */
-    .scene-title { font-size: 1.8rem; font-weight: 700; color: #f97316; text-align: center; text-shadow: 3px 3px 0 #431407; }
-    .scene-text { text-align: center; color: #e2e8f0; line-height: 1.25; min-height: 2.6em; max-width: 620px; font-size: 1.05rem; text-shadow: 2px 2px 0 rgba(0,0,0,.85); white-space: pre-line; }
+    .scene-title { font-size: 2rem; font-weight: 700; color: #f97316; text-align: center; text-shadow: .143rem .143rem 0 #431407; }
+    .scene-text { text-align: center; color: #e2e8f0; line-height: 1.3; min-height: 2.6em; max-width: 34rem; font-size: 1.3rem; letter-spacing: .02em; word-spacing: .1em; text-shadow: .095rem .095rem 0 rgba(0,0,0,.85); white-space: pre-line; }
     .stage {
-      position: relative; width: 100%; height: min(58vh, 480px); min-height: 340px;
+      position: relative; width: 100%; height: min(58vh, 22.857rem); min-height: 16.19rem;
       --hi: transparent; --lo: transparent; overflow: hidden;
       user-select: none; -webkit-user-select: none; touch-action: none;
     }
+    /* The scenes whose backdrop is stretched to fit (see stageBg) keep their
+       proportions: in a window too short for their full height, they get
+       narrower as well, instead of the pixels getting wider. */
+    #map, #cave-stage, #beach-stage, #fish-stage { max-width: calc(58vh * 1.833); }
+    #laogai-stage { max-width: calc(46vh * 2.316); }
+    #serpent-stage { max-width: calc(50vh * 2.095); }
     .loot {
-      position: absolute; font-size: 54px; line-height: 1; cursor: pointer;
-      filter: drop-shadow(0 0 14px #fde68a); animation: lootbob 1.6s ease-in-out infinite;
+      position: absolute; font-size: 2.571rem; line-height: 1; cursor: pointer;
+      filter: drop-shadow(0 0 .667rem #fde68a); animation: lootbob 1.6s ease-in-out infinite;
     }
-    @keyframes lootbob { 50% { transform: translateY(-8px) rotate(5deg); } }
+    @keyframes lootbob { 50% { transform: translateY(-.381rem) rotate(5deg); } }
 
     /* flight */
     #flight-stage { background: linear-gradient(#38bdf8, #bae6fd 70%, #fef3c7); cursor: none; }
     #flight-stage.hit { animation: hitflash .25s; }
     @keyframes hitflash { 50% { background: #f97316; } }
-    .cloud { position: absolute; font-size: 70px; opacity: .85; animation: drift linear infinite; pointer-events: none; }
-    .cloud.has-art { font-size: 30px !important; opacity: .95; }
+    .cloud { position: absolute; font-size: 3.333rem; opacity: .85; animation: drift linear infinite; pointer-events: none; }
+    .cloud.has-art { font-size: 1.429rem !important; opacity: .95; }
     @keyframes drift { from { left: 105%; } to { left: -20%; } }
     #appa, .fo { position: absolute; left: 0; top: 0; line-height: 1; pointer-events: none; will-change: transform; }
-    #appa { font-size: 84px; }
-    #appa.has-art { font-size: 100px; }
-    .fo { font-size: 40px; }
-    .fo.goal { font-size: 64px; filter: drop-shadow(0 0 16px #fde047); }
-    #flight-lives, #play-lives { position: absolute; left: 12px; top: 10px; z-index: 2; display: flex; gap: 6px; font-size: 24px; }
+    #appa { font-size: 4rem; }
+    #appa.has-art { font-size: 4.762rem; }
+    .fo { font-size: 1.905rem; }
+    .fo.goal { font-size: 3.048rem; filter: drop-shadow(0 0 .762rem #fde047); }
+    #flight-lives, #play-lives { position: absolute; left: .571rem; top: .476rem; z-index: 2; display: flex; gap: .286rem; font-size: 1.143rem; }
 
     /* swamp (where a crashed flight ends up) */
     #swamp-stage { background: #24452f; }
-    #swamp-appa { position: absolute; left: 56%; bottom: 7%; transform: rotate(-8deg); font-size: 120px; line-height: 1; }
+    #swamp-appa { position: absolute; left: 56%; bottom: 7%; transform: rotate(-8deg); font-size: 5.714rem; line-height: 1; }
     #swamp-loot { left: 21%; bottom: 26%; }
     /* the great banyan-grove tree (where it stands on the backdrop), and how far its roots go */
     #banyan { position: absolute; left: 21%; top: 0; width: 28%; height: 74%; }
     #banyan-glow {
-      position: absolute; width: 60px; height: 60px; border-radius: 50%; pointer-events: none; z-index: 2;
+      position: absolute; width: 2.857rem; height: 2.857rem; border-radius: 50%; pointer-events: none; z-index: 2;
       transform: translate(-50%,-50%) scale(0); transition: transform 2.4s ease-in, opacity 1s;
       background: radial-gradient(circle, rgba(187,247,208,.95), rgba(74,222,128,.5) 45%, transparent 70%);
     }
@@ -208,7 +219,7 @@
     #banyan-vision.show { opacity: 1; }
     #banyan-vision svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     #banyan-vision path {
-      fill: none; stroke: #86efac; stroke-width: .55; stroke-linecap: round; filter: drop-shadow(0 0 4px #4ade80);
+      fill: none; stroke: #86efac; stroke-width: .55; stroke-linecap: round; filter: drop-shadow(0 0 .19rem #4ade80);
       stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 2.2s ease-out;
     }
     #banyan-vision.grow path { stroke-dashoffset: 0; }
@@ -230,65 +241,65 @@
     body.comet .map { filter: sepia(.5) hue-rotate(-25deg) saturate(1.6) brightness(.85); }
     .pin {
       position: absolute; transform: translate(-50%,-50%); cursor: pointer;
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
-      background: none; border: none; font-family: inherit; font-size: 34px; line-height: 1;
+      display: flex; flex-direction: column; align-items: center; gap: .095rem;
+      background: none; border: none; font-family: inherit; font-size: 1.619rem; line-height: 1;
       transition: transform .15s;
     }
     .pin:hover { transform: translate(-50%,-50%) scale(1.15); }
     .pin i { font-style: normal; }
-    .pin i.has-art { font-size: 32px; }
+    .pin i.has-art { font-size: 1.524rem; }
     .pin span {
-      --px: 2px; --hi: transparent; --lo: transparent;
-      font-size: .8rem; font-weight: 700; color: #1e293b; white-space: nowrap;
-      background: #fffbeb; padding: 1px 7px; margin-top: 4px;
+      --px: .095rem; --hi: transparent; --lo: transparent;
+      font-size: .9rem; font-weight: 700; color: #1e293b; white-space: nowrap;
+      background: #fffbeb; padding: .048rem .333rem; margin-top: .19rem;
     }
     .pin.done span::after {
-      content: ''; display: inline-block; width: 11px; height: 10px; margin-left: 5px;
+      content: ''; display: inline-block; width: .524rem; height: .476rem; margin-left: .238rem;
       background: url('art/check.png') center / contain no-repeat;
     }
-    .pin.comet-pin { display: none; font-size: 46px; animation: pulse 1.2s ease-in-out infinite; }
+    .pin.comet-pin { display: none; font-size: 2.19rem; animation: pulse 1.2s ease-in-out infinite; }
     .pin.ember-pin, .pin.swamp-pin { display: none; }
     .pin.comet-pin.show, .pin.ember-pin.show, .pin.swamp-pin.show { display: flex; }
     /* two children out fishing by the southern ice: small, and easy to miss */
-    #map-canoe { position: absolute; left: 40%; top: 85%; z-index: 2; font-size: 20px; line-height: 1; cursor: pointer; animation: canoebob 2.6s ease-in-out infinite; }
-    @keyframes canoebob { 50% { transform: translateY(3px) rotate(-2deg); } }
+    #map-canoe { position: absolute; left: 40%; top: 85%; z-index: 2; font-size: .952rem; line-height: 1; cursor: pointer; animation: canoebob 2.6s ease-in-out infinite; }
+    @keyframes canoebob { 50% { transform: translateY(.143rem) rotate(-2deg); } }
     /* an island that never stays put */
-    #map-isle { position: absolute; z-index: 2; transform: translate(-50%,-50%); font-size: 26px; line-height: 1; cursor: pointer; }
-    #map-isle .art-img { height: 28px; }
-    #map-isle.awake .art-img { height: 44px; }
+    #map-isle { position: absolute; z-index: 2; transform: translate(-50%,-50%); font-size: 1.238rem; line-height: 1; cursor: pointer; }
+    #map-isle .art-img { height: 1.333rem; }
+    #map-isle.awake .art-img { height: 2.095rem; }
     /* Kyoshi Island, the small one off the southern coast (drawn on the backdrop), and what lives in its bay */
     #kyoshi { position: absolute; left: 91%; top: 89%; width: 7%; height: 9%; cursor: pointer; z-index: 2; }
     #map-unagi {
-      position: absolute; left: 88%; bottom: -3%; height: 40%; z-index: 4; line-height: 1; font-size: 100px; pointer-events: none;
+      position: absolute; left: 88%; bottom: -3%; height: 40%; z-index: 4; line-height: 1; font-size: 4.762rem; pointer-events: none;
       transform: translate(-50%, 110%); transition: transform .9s cubic-bezier(.2,.8,.3,1.2);
     }
     #map-unagi .art-img { height: 100%; }
     #map-unagi.up { transform: translate(-50%, 0); }
     #cart {
       position: absolute; bottom: 3%; left: -14%; cursor: pointer; z-index: 3;
-      font-size: 30px; line-height: .85; text-align: center; white-space: nowrap;
+      font-size: 1.429rem; line-height: .85; text-align: center; white-space: nowrap;
       animation: cartbob .4s ease-in-out infinite;
     }
-    #cart.has-art { font-size: 64px; }
+    #cart.has-art { font-size: 3.048rem; }
     #cart.gone { visibility: hidden; }
-    @keyframes cartbob { 50% { margin-bottom: 3px; } }
-    .cabp { position: absolute; font-size: 28px; pointer-events: none; z-index: 4; animation: cabfly 1.2s ease-out forwards; }
+    @keyframes cartbob { 50% { margin-bottom: .143rem; } }
+    .cabp { position: absolute; font-size: 1.333rem; pointer-events: none; z-index: 4; animation: cabfly 1.2s ease-out forwards; }
     @keyframes cabfly { to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; } }
     .shout {
       position: absolute; left: 50%; top: 45%; transform: translate(-50%,-50%); z-index: 5;
       font-size: clamp(2rem, 8vw, 4.2rem); font-weight: 900; color: #fff; white-space: nowrap;
-      text-shadow: 5px 5px 0 #14532d; pointer-events: none;
+      text-shadow: .238rem .238rem 0 #14532d; pointer-events: none;
       animation: shoutin .3s cubic-bezier(.175,.885,.32,1.5);
     }
     @keyframes shoutin { from { transform: translate(-50%,-50%) scale(.2) rotate(-8deg); } }
 
-    .pads { display: flex; gap: 20px; justify-content: center; }
+    .pads { display: flex; gap: .952rem; justify-content: center; }
     .pad-el {
-      width: 56px; height: 56px; cursor: pointer; font-size: 26px;
+      width: 2.667rem; height: 2.667rem; cursor: pointer; font-size: 1.238rem;
       display: flex; align-items: center; justify-content: center;
       background: #64748b; filter: grayscale(.85) brightness(.8);
     }
-    .pad-el .art-img { height: 32px; }
+    .pad-el .art-img { height: 1.524rem; }
     .pad-el:hover { --ink: #94a3b8; }
     .pad-el.lit { filter: none; background: #0c4a6e; --ink: #7dd3fc; }
 
@@ -301,12 +312,12 @@
 
     /* desert */
     #desert-stage { background: linear-gradient(#fcd34d, #fdba74 55%, #d4a257 55%, #b98a45); }
-    #desert-stage .sun { position: absolute; top: 6%; right: 8%; font-size: 80px; }
+    #desert-stage .sun { position: absolute; top: 6%; right: 8%; font-size: 3.81rem; }
     #desert-stage.has-art .sun { display: none; }
-    #cactus { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); font-size: 130px; line-height: 1; cursor: pointer; transition: transform .15s; }
+    #cactus { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); font-size: 6.19rem; line-height: 1; cursor: pointer; transition: transform .15s; }
     #cactus:hover { transform: translateX(-50%) scale(1.06) rotate(-3deg); }
     /* an old man at a Pai Sho table, in the shade, at the edge of the scene */
-    #paisho { position: absolute; left: 15%; bottom: 9%; height: 36%; transform: translateX(-50%); font-size: 80px; line-height: 1; cursor: pointer; }
+    #paisho { position: absolute; left: 15%; bottom: 9%; height: 36%; transform: translateX(-50%); font-size: 3.81rem; line-height: 1; cursor: pointer; }
     #paisho .art-img { height: 100%; }
     body.trip #paisho { display: none; }
     .floater { position: absolute; line-height: 1; cursor: pointer; animation: floaty ease-in-out infinite alternate; }
@@ -325,80 +336,80 @@
     /* in the dark one tunnel glows; following the glow is the secret route */
     .tunnel-glow {
       position: absolute; top: 31%; width: 14.5%; height: 44%; transform: translateX(-50%);
-      display: flex; align-items: flex-end; justify-content: center; gap: 2px; font-size: 30px;
+      display: flex; align-items: flex-end; justify-content: center; gap: .095rem; font-size: 1.429rem;
       background: rgba(74,222,128,.22); border-radius: 50% 50% 0 0 / 36% 36% 0 0;
-      opacity: 0; transition: opacity .8s; pointer-events: none; filter: drop-shadow(0 0 10px #4ade80);
+      opacity: 0; transition: opacity .8s; pointer-events: none; filter: drop-shadow(0 0 .476rem #4ade80);
     }
     .tunnel-glow.on { opacity: 1; animation: glowpulse 1.6s ease-in-out infinite; }
-    @keyframes glowpulse { 50% { filter: drop-shadow(0 0 22px #86efac); } }
+    @keyframes glowpulse { 50% { filter: drop-shadow(0 0 1.048rem #86efac); } }
     #cave-stage.deep .crystal, #cave-stage.deep #cave-loot { opacity: 0 !important; pointer-events: none !important; }
     #mole {
-      position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); font-size: 170px; line-height: 1;
-      cursor: pointer; display: none; filter: drop-shadow(0 0 18px #4ade80);
+      position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); font-size: 8.095rem; line-height: 1;
+      cursor: pointer; display: none; filter: drop-shadow(0 0 .857rem #4ade80);
     }
     #cave-stage.chamber #mole { display: block; animation: breathe 3s ease-in-out infinite; }
     @keyframes breathe { 50% { transform: translateX(-50%) scale(1.04); } }
     #cave-stage.unfold { animation: unfold 1.3s ease-in forwards; }
-    @keyframes unfold { to { transform: perspective(600px) rotateX(58deg) scale(1.7); filter: brightness(3) saturate(0); } }
+    @keyframes unfold { to { transform: perspective(28.571rem) rotateX(58deg) scale(1.7); filter: brightness(3) saturate(0); } }
 
     /* labyrinth (first person) */
-    #maze-stage { background: #000; }
+    #maze-stage { background: #000; height: min(48vh, 22.857rem); max-width: calc(48vh * 1.833); }   /* a size down, in proportion: its instructions take four lines */
     #maze { display: block; width: 100%; height: 100%; }
-    #torch { position: absolute; top: 7%; left: 50%; transform: translateX(-50%); font-size: 60px; cursor: pointer; animation: flicker .35s infinite alternate; z-index: 3; }
-    @keyframes flicker { from { filter: drop-shadow(0 0 18px #f97316); } to { filter: drop-shadow(0 0 34px #fbbf24); } }
+    #torch { position: absolute; top: 7%; left: 50%; transform: translateX(-50%); font-size: 2.857rem; cursor: pointer; animation: flicker .35s infinite alternate; z-index: 3; }
+    @keyframes flicker { from { filter: drop-shadow(0 0 .857rem #f97316); } to { filter: drop-shadow(0 0 1.619rem #fbbf24); } }
     #cave-stage.dark #torch { animation: none; filter: grayscale(1) brightness(.35); }
-    .crystal { position: absolute; font-size: 26px; opacity: 0; transition: opacity 1.2s; filter: hue-rotate(110deg) drop-shadow(0 0 12px #4ade80); pointer-events: none; }
-    .crystal.has-art { filter: drop-shadow(0 0 12px #4ade80); }
+    .crystal { position: absolute; font-size: 1.238rem; opacity: 0; transition: opacity 1.2s; filter: hue-rotate(110deg) drop-shadow(0 0 .571rem #4ade80); pointer-events: none; }
+    .crystal.has-art { filter: drop-shadow(0 0 .571rem #4ade80); }
     #cave-stage.dark .crystal { opacity: 1; }
-    #cave-loot { right: 9%; bottom: 12%; opacity: 0; pointer-events: none; transition: opacity 1.5s 1.2s; filter: drop-shadow(0 0 18px #4ade80); }
+    #cave-loot { right: 9%; bottom: 12%; opacity: 0; pointer-events: none; transition: opacity 1.5s 1.2s; filter: drop-shadow(0 0 .857rem #4ade80); }
     #cave-stage.dark #cave-loot { opacity: 1; pointer-events: auto; }
 
     /* tea */
-    .teapot { font-size: 110px; line-height: 1; }
+    .teapot { font-size: 5.238rem; line-height: 1; }
     .teapot.brewing { animation: steam 1.6s ease-in-out infinite; }
     /* waited long enough, the steam turns into two dragons circling each other */
     .pot-wrap { position: relative; }
-    #steam-dragons { position: absolute; left: 50%; bottom: 62%; width: 300px; height: 170px; transform: translateX(-50%); pointer-events: none; opacity: 0; transition: opacity 3s; }
+    #steam-dragons { position: absolute; left: 50%; bottom: 62%; width: 14.286rem; height: 8.095rem; transform: translateX(-50%); pointer-events: none; opacity: 0; transition: opacity 3s; }
     #steam-dragons.show { opacity: .85; }
-    #steam-dragons span { position: absolute; top: 25%; font-size: 64px; line-height: 1; filter: brightness(1.6) saturate(.6) blur(.4px) drop-shadow(0 0 10px rgba(255,255,255,.85)); }
-    #steam-dragons .art-img { height: 84px; }
+    #steam-dragons span { position: absolute; top: 25%; font-size: 3.048rem; line-height: 1; filter: brightness(1.6) saturate(.6) blur(.019rem) drop-shadow(0 0 .476rem rgba(255,255,255,.85)); }
+    #steam-dragons .art-img { height: 4rem; }
     #s-tea .scene-title { transition: opacity 2s; }
     #s-tea.steam .scene-title { opacity: 0; }   /* the dragons need the room */
     #steam-dragons span:first-child { left: 0; animation: steaml 5s ease-in-out infinite; }
     #steam-dragons span:last-child { right: 0; animation: steamr 5s ease-in-out infinite; }
-    @keyframes steaml { 25% { transform: translate(60px,-30px); } 50% { transform: translate(120px,0); } 75% { transform: translate(60px,30px); } }
-    @keyframes steamr { 25% { transform: translate(-60px,30px); } 50% { transform: translate(-120px,0); } 75% { transform: translate(-60px,-30px); } }
-    @keyframes steam { 50% { transform: translateY(-5px) rotate(-2deg); filter: drop-shadow(0 -8px 14px rgba(255,255,255,.5)); } }
-    .bar { --px: 3px; --hi: rgba(0,0,0,.4); --lo: transparent; width: 100%; height: 18px; background: #0f172a; overflow: hidden; }
-    .bar > div { height: 100%; width: 0; background: #84cc16; box-shadow: inset 0 -5px 0 0 #4d7c0f; }
+    @keyframes steaml { 25% { transform: translate(2.857rem,-1.429rem); } 50% { transform: translate(5.714rem,0); } 75% { transform: translate(2.857rem,1.429rem); } }
+    @keyframes steamr { 25% { transform: translate(-2.857rem,1.429rem); } 50% { transform: translate(-5.714rem,0); } 75% { transform: translate(-2.857rem,-1.429rem); } }
+    @keyframes steam { 50% { transform: translateY(-.238rem) rotate(-2deg); filter: drop-shadow(0 -.381rem .667rem rgba(255,255,255,.5)); } }
+    .bar { --px: .143rem; --hi: rgba(0,0,0,.4); --lo: transparent; width: 100%; height: .857rem; background: #0f172a; overflow: hidden; }
+    .bar > div { height: 100%; width: 0; background: #84cc16; box-shadow: inset 0 -.238rem 0 0 #4d7c0f; }
 
     /* water */
     #water-stage { background: linear-gradient(#0b1437, #1e3a8a 80%); }
-    #water-stage .star { position: absolute; color: #fff; font-size: 10px; opacity: .7; }
-    #moon { position: absolute; font-size: 78px; line-height: 1; transform: translate(-50%,-50%); cursor: grab; z-index: 1; filter: drop-shadow(0 0 22px #e0f2fe); transition: opacity 2.5s; }
+    #water-stage .star { position: absolute; color: #fff; font-size: .476rem; opacity: .7; }
+    #moon { position: absolute; font-size: 3.714rem; line-height: 1; transform: translate(-50%,-50%); cursor: grab; z-index: 1; filter: drop-shadow(0 0 1.048rem #e0f2fe); transition: opacity 2.5s; }
     #moon:active { cursor: grabbing; }
     #moon.gone { opacity: 0; pointer-events: none; }
     #sea {
       position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; pointer-events: none; overflow: hidden;
       background: linear-gradient(#38bdf8, #0c4a6e 70%, #082f49);
-      border-top: 3px solid rgba(255,255,255,.55); transition: height .15s linear, filter 1.5s;
+      border-top: .143rem solid rgba(255,255,255,.55); transition: height .15s linear, filter 1.5s;
     }
     #sea.lit { filter: brightness(1.9) saturate(.5); }
     /* Tui, the white koi: lifted out of the pond in a ball of water, or floating in it, still */
     #oasis-bubble {
       position: absolute; width: 13%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%);
       display: none; align-items: center; justify-content: center; pointer-events: none; z-index: 4;
-      background: rgba(143,211,238,.4); box-shadow: inset 0 0 0 4px #d6f1fa, inset -12px -12px 0 0 rgba(35,90,156,.3);
-      font-size: 40px; line-height: 1;
+      background: rgba(143,211,238,.4); box-shadow: inset 0 0 0 .19rem #d6f1fa, inset -.571rem -.571rem 0 0 rgba(35,90,156,.3);
+      font-size: 1.905rem; line-height: 1;
     }
     #oasis-bubble.show { display: flex; }
-    #oasis-bubble .art-img { height: 52px; }
-    #tui { position: absolute; left: 44%; top: 6px; display: none; font-size: 40px; line-height: 1; pointer-events: auto; cursor: pointer; transform: rotate(180deg); }
-    #tui .art-img { height: 52px; }
+    #oasis-bubble .art-img { height: 2.476rem; }
+    #tui { position: absolute; left: 44%; top: .286rem; display: none; font-size: 1.905rem; line-height: 1; pointer-events: auto; cursor: pointer; transform: rotate(180deg); }
+    #tui .art-img { height: 2.476rem; }
     #tui.glow { animation: tuiglow 1.8s ease-in forwards; }
-    @keyframes tuiglow { to { filter: brightness(1.7) drop-shadow(0 0 18px #fff); } }
-    .tui-fire { position: absolute; z-index: 5; transform: translate(-50%,-75%); font-size: 50px; line-height: 1; pointer-events: none; animation: flicker .35s infinite alternate; }
-    .tui-fire .art-img { height: 64px; }
+    @keyframes tuiglow { to { filter: brightness(1.7) drop-shadow(0 0 .857rem #fff); } }
+    .tui-fire { position: absolute; z-index: 5; transform: translate(-50%,-75%); font-size: 2.381rem; line-height: 1; pointer-events: none; animation: flicker .35s infinite alternate; }
+    .tui-fire .art-img { height: 3.048rem; }
     /* With Tui out of the pond the moon goes red, and then everything else does; once
        the moon has gone out, so has every colour. One layer over the whole window
        lends everything beneath it its own colour: red, and then none at all. */
@@ -408,42 +419,42 @@
     }
     body.moon-red #moonlight { opacity: 1; }
     body.moon-dark #moonlight { opacity: 1; background: #808080; }
-    #sea .koi { position: absolute; left: 22%; top: 30px; font-size: 40px; animation: spin 6s linear infinite; }
-    #sea .koi.has-art { font-size: 90px; }
+    #sea .koi { position: absolute; left: 22%; top: 1.429rem; font-size: 1.905rem; animation: spin 6s linear infinite; }
+    #sea .koi.has-art { font-size: 4.286rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
     #seabed { position: absolute; left: 0; right: 0; bottom: 0; height: 4%; background: #d6c08a; z-index: 2; }
     #water-loot { left: 64%; bottom: 3%; z-index: 2; animation: none; filter: none; }
-    #water-loot.exposed { animation: lootbob 1.6s ease-in-out infinite; filter: drop-shadow(0 0 14px #fde68a); }
+    #water-loot.exposed { animation: lootbob 1.6s ease-in-out infinite; filter: drop-shadow(0 0 .667rem #fde68a); }
 
     /* dragon dance */
-    .dragons { font-size: 64px; display: flex; gap: 40px; }
+    .dragons { font-size: 3.048rem; display: flex; gap: 1.905rem; }
     .dragons span:first-child:not(.has-art) { filter: hue-rotate(-40deg) saturate(2); }
     .dragons span:last-child:not(.has-art) { filter: hue-rotate(160deg) saturate(1.6); transform: scaleX(-1); }
-    .dragons .has-art { font-size: 110px; }
-    .dance { display: grid; grid-template-columns: 110px 110px; gap: 16px; }
+    .dragons .has-art { font-size: 5.238rem; }
+    .dance { display: grid; grid-template-columns: 5.238rem 5.238rem; gap: .762rem; }
     /* The masters at full size, rising on either side for the last round. They are
        pinned to the window rather than placed on the page, and do not exist until
        then, so there is nothing to scroll down to beforehand. */
     .epic {
       display: none;   /* not there at all until the last dance */
-      position: fixed; bottom: -20px; z-index: 0; pointer-events: none; font-size: min(480px, 62vh); line-height: 1;
+      position: fixed; bottom: -.952rem; z-index: 0; pointer-events: none; font-size: min(22.857rem, 62vh); line-height: 1;
     }
-    .epic-shaw { right: 50%; margin-right: 110px; }
-    .epic-ran { left: 50%; margin-left: 110px; }
+    .epic-shaw { right: 50%; margin-right: 5.238rem; }
+    .epic-ran { left: 50%; margin-left: 5.238rem; }
     body.epic-on .epic { display: block; animation: rise 2.8s steps(28) backwards; }
     @keyframes rise { from { transform: translateY(130%); } }
     body.epic-on .epic.roar { animation: roar .45s steps(4) 3; }
-    @keyframes roar { 50% { transform: translateY(-16px) scale(1.05); } }
+    @keyframes roar { 50% { transform: translateY(-.762rem) scale(1.05); } }
     body.epic-on .epic.beat { filter: brightness(1.6); }
     body.epic-on .dragons { visibility: hidden; }
     .quake { animation: quake .12s linear infinite; }
     #rainbow { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 850; pointer-events: none; display: none; }
-    .dance { margin: 4px 0; }
+    .dance { margin: .19rem 0; }
     .dpad {
-      height: 110px; cursor: pointer; font-size: 40px; color: #fff; opacity: .5;
+      height: 5.238rem; cursor: pointer; font-size: 1.905rem; color: #fff; opacity: .5;
       display: flex; align-items: center; justify-content: center;
     }
-    .dpad .art-img { height: 44px; }
+    .dpad .art-img { height: 2.095rem; }
     .dpad.on { opacity: 1; --ink: #fff; transform: scale(1.06); }
     .dpad:nth-child(1) { background: #dc2626; color: #fca5a5; }
     .dpad:nth-child(2) { background: #2563eb; color: #93c5fd; }
@@ -454,14 +465,14 @@
     body.spirit::before { background: linear-gradient(160deg, rgba(4,24,30,.88), rgba(30,10,50,.8)); }
     body.spirit-shift { animation: spiritshift 1.7s steps(10) forwards; }
     @keyframes spiritshift { to { filter: invert(1) hue-rotate(160deg) saturate(.6); } }
-    #koh-stage { background: #0b1512; height: min(42vh, 340px); min-height: 250px; }   /* shorter, so the answers stay on screen */
+    #koh-stage { background: #0b1512; height: min(42vh, 16.19rem); min-height: 11.905rem; }   /* shorter, so the answers stay on screen */
     #koh {
-      position: absolute; left: 50%; top: 52%; transform: translate(-50%,-50%); font-size: 150px; line-height: 1;
+      position: absolute; left: 50%; top: 52%; transform: translate(-50%,-50%); font-size: 7.143rem; line-height: 1;
       transition: transform .25s steps(4); animation: kohsway 4s ease-in-out infinite;
     }
     #koh.lunge { transform: translate(-50%,-42%) scale(1.7); animation: none; }
-    @keyframes kohsway { 50% { margin-left: 14px; margin-top: -6px; } }
-    #koh-opts, #play-opts, #desert-opts { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 560px; margin-top: 0; }
+    @keyframes kohsway { 50% { margin-left: .667rem; margin-top: -.286rem; } }
+    #koh-opts, #play-opts, #desert-opts { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 34rem; margin-top: 0; }
     #koh-opts .option, #play-opts .option, #desert-opts .option { text-align: center; }
     #koh-opts .option:only-child, #play-opts .option:only-child { grid-column: 1 / -1; }
     #koh-opts.chase .option { transition: transform .12s; }
@@ -472,58 +483,58 @@
     :is(#play-actor, .kp, #kuai-ball, .netfire, #canoe, .swim, #spear) .art-img { height: 100%; }
 
     /* ember island theater */
-    #play-stage { background: #150c12; height: min(42vh, 340px); min-height: 250px; }
-    #play-actor { left: 50%; bottom: 23%; height: 58%; transform: translateX(-50%); font-size: 130px; }
-    #play-lives { top: auto; bottom: 8px; }
-    #play-opts { max-width: 640px; }
+    #play-stage { background: #150c12; height: min(42vh, 16.19rem); min-height: 11.905rem; }
+    #play-actor { left: 50%; bottom: 23%; height: 58%; transform: translateX(-50%); font-size: 6.19rem; }
+    #play-lives { top: auto; bottom: .381rem; }
+    #play-opts { max-width: 30.476rem; }
 
     /* ember island beach: kuai ball */
     #beach-stage { background: linear-gradient(#8fd3ee 36%, #e8c986 36%); cursor: crosshair; }
-    .kp { bottom: 43%; height: 21%; transform: translateX(-50%); transition: left .42s ease-out; font-size: 80px; animation: kpbob .5s steps(2) infinite alternate; }
+    .kp { bottom: 43%; height: 21%; transform: translateX(-50%); transition: left .42s ease-out; font-size: 3.81rem; animation: kpbob .5s steps(2) infinite alternate; }
     .kp:nth-of-type(odd) { animation-delay: -.25s; }
-    @keyframes kpbob { to { margin-bottom: 4px; } }
+    @keyframes kpbob { to { margin-bottom: .19rem; } }
     .kp.late { transition-delay: .32s; }   /* "the slightest hesitation of her left foot" */
-    #kuai-ball { left: 50%; top: 88%; height: 12%; transform: translate(-50%,-50%); z-index: 3; font-size: 46px; transition: transform .5s; }
+    #kuai-ball { left: 50%; top: 88%; height: 12%; transform: translate(-50%,-50%); z-index: 3; font-size: 2.19rem; transition: transform .5s; }
     #kuai-ball.boom { transform: translate(-50%,-50%) scale(2.4); }
-    .netfire { top: 46%; height: 24%; transform: translateX(-50%); z-index: 2; font-size: 90px; animation: flicker .35s infinite alternate; }
-    #beach-score { position: absolute; left: 14px; top: 12px; z-index: 4; color: #f1f5f9; }
+    .netfire { top: 46%; height: 24%; transform: translateX(-50%); z-index: 2; font-size: 4.286rem; animation: flicker .35s infinite alternate; }
+    #beach-score { position: absolute; left: .667rem; top: .571rem; z-index: 4; color: #f1f5f9; }
     /* now and then a messenger hawk crosses the sky, and a raven eagle is waiting for it */
-    #hawk, #raven { position: absolute; top: 9%; height: 7.5%; line-height: 1; font-size: 30px; z-index: 5; display: none; }
+    #hawk, #raven { position: absolute; top: 9%; height: 7.5%; line-height: 1; font-size: 1.429rem; z-index: 5; display: none; }
     :is(#hawk, #raven) .art-img { height: 100%; }
     #hawk { cursor: pointer; transform: scaleX(-1); }   /* flying right to left */
     #raven { height: 9.5%; }
     #hawk.fly, #raven.fly { display: block; }
-    #beach-page { display: none; z-index: 5; font-size: 34px; transition: top 1.6s ease-in; }
+    #beach-page { display: none; z-index: 5; font-size: 1.619rem; transition: top 1.6s ease-in; }
     #beach-page.show { display: block; }
     /* "The beach has a special way of smoothing even the most ragged edges":
        while you are on Ember Island's beach, every pixel frame is rounded off. */
-    body.smooth :is(.btn, .hud-btn, .option, .card, .stage, .toast, .progress-badge) { border-radius: 18px; }
+    body.smooth :is(.btn, .hud-btn, .option, .card, .stage, .toast, .progress-badge) { border-radius: .857rem; }
 
     /* south pole: fishing */
     #fish-stage { background: linear-gradient(#c9e6f2 31.25%, #235a9c 31.25%); cursor: crosshair; }
-    #canoe { left: 22%; top: 7%; height: 31.5%; z-index: 2; font-size: 120px; animation: canoebob 2.6s ease-in-out infinite; }
-    .swim { left: 0; top: 0; height: 11.5%; font-size: 44px; will-change: transform; }
+    #canoe { left: 22%; top: 7%; height: 31.5%; z-index: 2; font-size: 5.714rem; animation: canoebob 2.6s ease-in-out infinite; }
+    .swim { left: 0; top: 0; height: 11.5%; font-size: 2.095rem; will-change: transform; }
     #bubble {
       position: absolute; width: 17%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%,-50%);
       display: none; pointer-events: none; z-index: 3; background: rgba(143,211,238,.4);
-      box-shadow: inset 0 0 0 4px #d6f1fa, inset -12px -12px 0 0 rgba(35,90,156,.3);
+      box-shadow: inset 0 0 0 .19rem #d6f1fa, inset -.571rem -.571rem 0 0 rgba(35,90,156,.3);
     }
-    #spear { height: 25%; display: none; z-index: 3; font-size: 100px; transform: translate(-50%,-100%) rotate(180deg); }
+    #spear { height: 25%; display: none; z-index: 3; font-size: 4.762rem; transform: translate(-50%,-100%) rotate(180deg); }
     #spear.throw { display: block; animation: spearin .2s ease-out; }
     @keyframes spearin { from { transform: translate(-50%,-190%) rotate(180deg); } }
 
     /* lake laogai: a lantern circling a Dai Li agent, and a row of Joo Dees */
-    #laogai-stage { background: #141c18; height: min(46vh, 380px); min-height: 270px; }   /* shorter, so the answers stay on screen */
+    #laogai-stage { background: #141c18; height: min(46vh, 18.095rem); min-height: 12.857rem; }   /* shorter, so the answers stay on screen */
     #laogai-agent, #laogai-lantern, .jd { position: absolute; line-height: 1; pointer-events: none; }
     :is(#laogai-agent, #laogai-lantern, .jd) .art-img { height: 100%; }
-    #laogai-agent { left: 50%; bottom: 40%; height: 30%; transform: translateX(-50%); z-index: 2; font-size: 90px; }
-    #laogai-lantern { height: 9%; transform: translate(-50%,-50%); font-size: 30px; filter: drop-shadow(0 0 10px #fbbf24); }
+    #laogai-agent { left: 50%; bottom: 40%; height: 30%; transform: translateX(-50%); z-index: 2; font-size: 4.286rem; }
+    #laogai-lantern { height: 9%; transform: translate(-50%,-50%); font-size: 1.429rem; filter: drop-shadow(0 0 .476rem #fbbf24); }
     #laogai-stage.flash { animation: laoflash .45s ease-out; }
     @keyframes laoflash { from { filter: brightness(4) saturate(0); } }
-    .jd { bottom: 2%; height: 27%; transform: translateX(-50%); z-index: 4; font-size: 70px; }
+    .jd { bottom: 2%; height: 27%; transform: translateX(-50%); z-index: 4; font-size: 3.333rem; }
     #laogai-row.say .jd { animation: jdsay .25s steps(2) 6 alternate; }
-    @keyframes jdsay { to { margin-bottom: 5px; } }
-    #laogai-opts { width: 100%; max-width: 640px; margin-top: 0; }
+    @keyframes jdsay { to { margin-bottom: .238rem; } }
+    #laogai-opts { width: 100%; max-width: 30.476rem; margin-top: 0; }
     #laogai-opts .option { text-align: center; }
 
     /* the eastern air temple: Appa's dream, in the colours of a memory (all but the apple) */
@@ -531,22 +542,22 @@
     #dream-mother, #dream-aang, #dream-apple, .calf { position: absolute; line-height: 1; pointer-events: none; }
     :is(#dream-mother, #dream-aang, #dream-apple, .calf) .art-img { height: 100%; }
     #dream-mother, #dream-aang, .calf { filter: sepia(1) saturate(.7); }
-    #dream-mother { left: 30%; top: 27%; height: 24%; transform: translate(-50%,-50%); z-index: 2; font-size: 90px; animation: kpbob 1.4s ease-in-out infinite alternate; }
-    .calf { height: 10%; transform: translate(-50%,-50%); font-size: 34px; }
+    #dream-mother { left: 30%; top: 27%; height: 24%; transform: translate(-50%,-50%); z-index: 2; font-size: 4.286rem; animation: kpbob 1.4s ease-in-out infinite alternate; }
+    .calf { height: 10%; transform: translate(-50%,-50%); font-size: 1.619rem; }
     #dream-stage.choose .calf { pointer-events: auto; cursor: pointer; }
     #dream-stage.choose .calf:hover { filter: sepia(1) saturate(.7) brightness(1.2); }
     .calf.chosen { height: 19%; transition: left 1.8s ease-in-out, top 1.8s ease-in-out, height 1.8s; }
-    #dream-aang { left: 78%; bottom: 14%; height: 34%; transform: translateX(-50%); transform-origin: 50% 100%; transition: transform .25s; z-index: 3; font-size: 80px; }
+    #dream-aang { left: 78%; bottom: 14%; height: 34%; transform: translateX(-50%); transform-origin: 50% 100%; transition: transform .25s; z-index: 3; font-size: 3.81rem; }
     #dream-aang.down { transform: translateX(-50%) rotate(-80deg); }
-    #dream-apple { left: 84%; bottom: 31%; height: 6%; transform: translateX(-50%); z-index: 4; font-size: 22px; }
+    #dream-apple { left: 84%; bottom: 31%; height: 6%; transform: translateX(-50%); z-index: 4; font-size: 1.048rem; }
 
     /* the serpent's pass: it follows you, and going round it whips up a whirlpool */
-    #serpent-stage { background: #3f76a8; cursor: crosshair; height: min(50vh, 420px); }
+    #serpent-stage { background: #3f76a8; cursor: crosshair; height: min(50vh, 20rem); }
     #serpent, .walker { position: absolute; line-height: 1; pointer-events: none; }
     :is(#serpent, .walker) .art-img { height: 100%; }
-    #serpent { left: 50%; bottom: -4%; height: 76%; z-index: 3; transform: translate(-50%, 110%); transform-origin: 50% 100%; font-size: 200px; }
+    #serpent { left: 50%; bottom: -4%; height: 76%; z-index: 3; transform: translate(-50%, 110%); transform-origin: 50% 100%; font-size: 9.524rem; }
     #serpent.thrown { transition: transform 1.1s cubic-bezier(.5,0,1,.6); }
-    .walker { bottom: 42%; height: 10%; transform: translateX(-50%); z-index: 2; font-size: 30px; }
+    .walker { bottom: 42%; height: 10%; transform: translateX(-50%); z-index: 2; font-size: 1.429rem; }
     .walker.cheer { animation: kpbob .3s steps(2) infinite alternate; }
     #whirl { position: absolute; left: 50%; top: 88%; width: 40%; aspect-ratio: 1; transform: translate(-50%,-50%) scaleY(.3); z-index: 4; pointer-events: none; opacity: 0; }
     #whirl::before {
@@ -558,7 +569,7 @@
 
     /* the secret dance party: everyone bobs once a beat (--beat is set from the music) */
     #dance-stage { background: #2e2016; --beat: .48s; }
-    #dance-aang, #dance-katara, .dk { position: absolute; bottom: 8%; height: 26%; transform: translateX(-50%); line-height: 1; font-size: 60px; pointer-events: none; }
+    #dance-aang, #dance-katara, .dk { position: absolute; bottom: 8%; height: 26%; transform: translateX(-50%); line-height: 1; font-size: 2.857rem; pointer-events: none; }
     :is(#dance-aang, #dance-katara, .dk) .art-img { height: 100%; }
     #dance-aang { left: 50%; z-index: 3; transition: left 1.4s ease-in-out; }
     #dance-aang.move { animation: dmove .3s steps(2); }
@@ -566,7 +577,7 @@
     #dance-katara { left: 92%; z-index: 2; transition: left 1.4s ease-in-out; }
     .dk.on, #dance-katara.on, #dance-stage.party #dance-aang { animation: dbop var(--beat) steps(2) infinite alternate; }
     @keyframes dbop { from { transform: translateX(-50%) rotate(-7deg); } to { transform: translateX(-50%) translateY(-6%) rotate(7deg); } }
-    #dance-stage.ask #dance-katara { pointer-events: auto; cursor: pointer; filter: drop-shadow(0 0 12px #fde68a); }
+    #dance-stage.ask #dance-katara { pointer-events: auto; cursor: pointer; filter: drop-shadow(0 0 .571rem #fde68a); }
 
     /* ozai */
     body.blackout::after {
@@ -574,18 +585,19 @@
       background: #000; animation: blackout 1.5s steps(8) forwards;
     }
     @keyframes blackout { from { opacity: 0; } }
-    .ozai { font-size: 110px; line-height: 1; filter: drop-shadow(0 0 30px #ef4444); animation: ozai 2s ease-in-out infinite; }
-    .ozai.has-art { font-size: 190px; }
-    @keyframes ozai { 50% { transform: scale(1.07) translateY(-6px); } }
-    .tug { --ink: #fff; --hi: transparent; --lo: transparent; width: 100%; height: 34px; overflow: hidden; background: #dc2626; }
-    .tug > div { height: 100%; width: 30%; background: #38bdf8; box-shadow: inset 0 -8px 0 0 #0284c7, 4px 0 0 0 #fff; transition: width .08s linear; }
+    .ozai { font-size: 5.238rem; line-height: 1; filter: drop-shadow(0 0 1.429rem #ef4444); animation: ozai 2s ease-in-out infinite; }
+    .ozai.has-art { font-size: 9.048rem; }
+    #ozai-opts { display: grid; grid-template-columns: 1fr 1fr; }   /* side by side, so the question fits the screen */
+    @keyframes ozai { 50% { transform: scale(1.07) translateY(-.286rem); } }
+    .tug { --ink: #fff; --hi: transparent; --lo: transparent; width: 100%; height: 1.619rem; overflow: hidden; background: #dc2626; }
+    .tug > div { height: 100%; width: 30%; background: #38bdf8; box-shadow: inset 0 -.381rem 0 0 #0284c7, .19rem 0 0 0 #fff; transition: width .08s linear; }
     #s-ozai.surge { animation: surge .5s ease 3; }
     @keyframes surge { 50% { filter: sepia(1) saturate(6) hue-rotate(-30deg); transform: scale(1.03); } }
-    .btn-bend { background: #0ea5e9; color: #fff; font-size: 1.5rem; padding: 26px; text-shadow: 2px 2px 0 #075985; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+    .btn-bend { background: #0ea5e9; color: #fff; font-size: 1.5rem; padding: 1.238rem; text-shadow: .095rem .095rem 0 #075985; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 
     /* ── CARDS ── */
     .tcg {
-      font-size: 16px; width: 13em; height: 18.4em; padding: .6em;
+      font-size: .857rem; width: 13em; height: 18.4em; padding: .6em;
       display: flex; flex-direction: column; position: relative; flex-shrink: 0;
       background: linear-gradient(160deg, var(--c1), var(--c2)); border: .2em solid var(--c3);
       box-shadow: 0 -.25em 0 0 #1a1420, 0 .25em 0 0 #1a1420, -.25em 0 0 0 #1a1420, .25em 0 0 0 #1a1420, 0 0 2.2em .5em var(--glow);
@@ -611,33 +623,33 @@
     @keyframes inkIn { from { opacity: 0; } }
     .tcg.locked { --c1:#1e293b; --c2:#0f172a; --c3:#334155; --glow:transparent; color: #475569; }
     .tcg.locked .tcg-art { filter: grayscale(1) brightness(.4); }
-    .tcg.small { font-size: 9.5px; }
-    .tcg-grid { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; }
+    .tcg.small { font-size: .55rem; }
+    .tcg-grid { display: flex; flex-wrap: wrap; gap: .857rem; justify-content: center; }
 
     /* ── OVERLAYS ── */
     .overlay {
       position: fixed; inset: 0; z-index: 700; display: none;
-      align-items: center; justify-content: center; padding: 20px;
-      background: rgba(4,3,12,.86); backdrop-filter: blur(4px); overflow-y: auto;
+      align-items: center; justify-content: center; padding: .952rem;
+      background: rgba(4,3,12,.86); backdrop-filter: blur(.19rem); overflow-y: auto;
     }
     .overlay.show { display: flex; }
-    .overlay-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 620px; width: 100%; margin: auto; }
-    .unlock-title { font-size: 1.7rem; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: .08em; text-shadow: 3px 3px 0 #92400e; text-align: center; }
+    .overlay-inner { display: flex; flex-direction: column; align-items: center; gap: .762rem; max-width: 34rem; width: 100%; margin: auto; }
+    .unlock-title { font-size: 1.7rem; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: .08em; text-shadow: .143rem .143rem 0 #92400e; text-align: center; }
     #unlock-card .tcg { animation: flipIn .8s cubic-bezier(.175,.885,.32,1.275); }
-    @keyframes flipIn { from { transform: perspective(700px) rotateY(180deg) scale(.3); opacity: 0; } }
-    #unlock-prize { text-align: center; color: #cbd5e1; line-height: 1.5; }
+    @keyframes flipIn { from { transform: perspective(33.333rem) rotateY(180deg) scale(.3); opacity: 0; } }
+    #unlock-prize { text-align: center; color: #cbd5e1; line-height: 1.4; font-size: 1.2rem; }
     #unlock-prize b { color: #fbbf24; }
-    .say-emoji { font-size: 84px; line-height: 1; }
-    .say-emoji .art-img { width: 204px; height: auto; }
-    .say-name { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: #f97316; }
-    .say-text { font-size: 1.15rem; line-height: 1.3; text-align: center; white-space: pre-line; }
+    .say-emoji { font-size: 4rem; line-height: 1; }
+    .say-emoji .art-img { width: 9.714rem; height: auto; }
+    .say-name { font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: #f97316; }
+    .say-text { font-size: 1.4rem; line-height: 1.3; text-align: center; white-space: pre-line; letter-spacing: .02em; word-spacing: .1em; }
     #say { z-index: 720; }
     #unlock { z-index: 740; }
 
     .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 950;
-      --ink: #f97316; background: #1e293b; color: #fff; padding: 12px 24px;
-      font-weight: 700; opacity: 0; transition: opacity .3s; pointer-events: none; text-align: center; max-width: 90vw;
+      position: fixed; bottom: 1.143rem; left: 50%; transform: translateX(-50%); z-index: 950;
+      --ink: #f97316; background: #1e293b; color: #fff; padding: .571rem 1.143rem;
+      font-size: 1.3rem; font-weight: 700; opacity: 0; transition: opacity .3s; pointer-events: none; text-align: center; max-width: 90vw;
     }
     .toast.show { opacity: 1; }
     #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
@@ -669,7 +681,7 @@
     A perfectly ordinary quiz. Absolutely nothing can go wrong.
   </div>
   <span class="progress-badge" id="start-progress"></span>
-  <button class="btn btn-primary" id="btn-start" style="font-size:1.3rem;padding:16px 32px">Start the quiz</button>
+  <button class="btn btn-primary" id="btn-start" style="font-size:1.3rem;padding:.762rem 1.524rem">Start the quiz</button>
   <div class="intro-line">Water · Earth · Fire · Air</div>
 </div>
 
@@ -689,7 +701,7 @@
   <div class="scene-title">YIP YIP!</div>
   <div class="stage" id="flight-stage">
     <div class="cloud" data-art="cloud" style="top:8%;animation-duration:14s"></div>
-    <div class="cloud" data-art="cloud" style="top:38%;animation-duration:9s;animation-delay:-4s;font-size:110px"></div>
+    <div class="cloud" data-art="cloud" style="top:38%;animation-duration:9s;animation-delay:-4s;font-size:5.238rem"></div>
     <div class="cloud" data-art="cloud" style="top:66%;animation-duration:12s;animation-delay:-8s"></div>
     <div id="flight-lives"></div>
     <div id="appa" data-art="appa"></div>
@@ -740,7 +752,7 @@
     <div id="koh" data-art="koh-1"></div>
   </div>
   <div class="scene-text" id="koh-text"></div>
-  <div class="bar" id="koh-barwrap" style="max-width:560px;display:none"><div id="koh-bar"></div></div>
+  <div class="bar" id="koh-barwrap" style="max-width:26.667rem;display:none"><div id="koh-bar"></div></div>
   <div class="options" id="koh-opts"></div>
 </div>
 
@@ -862,7 +874,7 @@
   <div class="btn-row" id="maze-btns">
     <button class="btn btn-ghost" data-key="left"><span class="rot-l" data-art="arrow"></span>Turn</button>
     <button class="btn btn-ghost" data-key="up"><span data-art="arrow"></span>Walk</button>
-    <button class="btn btn-primary" data-key="stomp" style="width:auto;padding:10px 18px;font-size:1rem">Stomp</button>
+    <button class="btn btn-primary" data-key="stomp" style="width:auto;padding:.476rem .857rem;font-size:1rem">Stomp</button>
     <button class="btn btn-ghost" data-key="down"><span class="rot-d" data-art="arrow"></span>Back</button>
     <button class="btn btn-ghost" data-key="right">Turn<span class="rot-r" data-art="arrow"></span></button>
   </div>
@@ -911,7 +923,7 @@
 <div id="s-ozai" class="screen">
   <div class="ozai" data-art="ozai"></div>
   <div class="say-name">Phoenix King Ozai</div>
-  <div id="ozai-box" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:16px"></div>
+  <div id="ozai-box" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:.762rem"></div>
 </div>
 
 <!-- THE END -->
@@ -927,7 +939,7 @@
 
 <!-- OVERLAYS -->
 <div class="overlay" id="binder">
-  <div class="overlay-inner" style="max-width:720px">
+  <div class="overlay-inner" style="max-width:52rem">
     <div class="unlock-title" style="font-size:1.3rem">Card Binder</div>
     <div class="tcg-grid" id="binder-grid"></div>
     <div class="tcg-grid" id="binder-secrets"></div>
@@ -944,7 +956,7 @@
     <div class="say-name" id="say-name"></div>
     <div class="say-text" id="say-text"></div>
     <div class="btn-row">
-      <button class="btn btn-primary" id="say-ok" style="width:auto;min-width:160px"></button>
+      <button class="btn btn-primary" id="say-ok" style="width:auto;min-width:7.619rem"></button>
       <button class="btn btn-ghost" id="say-alt" style="display:none"></button>
     </div>
   </div>
@@ -955,7 +967,7 @@
     <div class="unlock-title" id="unlock-title">Card unlocked!</div>
     <div id="unlock-card"></div>
     <div id="unlock-prize"></div>
-    <button class="btn btn-primary" id="unlock-ok" style="width:auto;min-width:160px">Continue</button>
+    <button class="btn btn-primary" id="unlock-ok" style="width:auto;min-width:7.619rem">Continue</button>
   </div>
 </div>
 
@@ -1817,6 +1829,7 @@ const SCENES = {};
 let cur = 's-start';
 
 function go(id) {
+  dropNext();
   if (SCENES[cur] && SCENES[cur].leave) SCENES[cur].leave();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
@@ -1870,6 +1883,32 @@ $('say-ok').onclick = () => {
   const cb = sayCb; sayCb = null;
   if (cb) cb();
 };
+
+// ── reading at your own pace ──
+// A story told in a scene's text line never moves on by itself. Once whatever
+// is happening on screen has had `ms` to happen, a Continue button appears under
+// the text, and only that goes on to `next`. (Lake Laogai is the exception on
+// purpose: its lines have to be gone before you repeat them.)
+let nextBtn = null, nextT = null;
+function waitNext(after, next, ms = 400) {
+  dropNext();
+  const b = nextBtn = document.createElement('button');
+  b.className = 'btn btn-primary btn-next'; b.textContent = 'Continue';
+  b.style.visibility = 'hidden';   // its room is kept, so nothing jumps when it appears
+  after.after(b);
+  nextT = setTimeout(() => { b.style.visibility = ''; }, ms);
+  b.onclick = () => { dropNext(); next(); };
+}
+function dropNext() {
+  clearTimeout(nextT);
+  if (nextBtn) nextBtn.remove();
+  nextBtn = null;
+}
+// The usual case: a line in a scene's text, then wait for Continue.
+function narrate(el, text, next, ms) {
+  el.textContent = text;
+  waitNext(el, next, ms);
+}
 
 // ── cards ──
 function cardHTML(c, small, locked) {
@@ -2122,8 +2161,7 @@ function wrongAnswer(btn, next) {
   btn.classList.add('wrong');
   SFX.wrong();
   if (has('rough')) {
-    $('q-feedback').textContent = pick(WRONG_QUIPS);
-    setTimeout(next, 1500);
+    narrate($('q-feedback'), pick(WRONG_QUIPS), next);
     return;
   }
   say('zuko', 'Wrong?! Even Uncle knew that one. Where is your honor?!', 'Sorry…', () =>
@@ -2289,9 +2327,8 @@ const Uni = {
       setTimeout(() => say('owl', `${this.STREAK} in a row. You know far too much for a human.\n“I am Wan Shi Tong, He Who Knows Ten Thousand Things.” You may keep one.`, 'Take it and back away slowly', () => unlock('owl', next)), 700);
       return;
     }
-    if (this.streak === 5) $('q-feedback').textContent = 'Five in a row. Somewhere far away, a very large owl turns its head.';
-    if (this.streak === 8) $('q-feedback').textContent = 'Eight in a row. The owl has started taking notes.';
-    setTimeout(next, this.streak === 5 || this.streak === 8 ? 2200 : 900);
+    const owl = { 5: 'Five in a row. Somewhere far away, a very large owl turns its head.', 8: 'Eight in a row. The owl has started taking notes.' }[this.streak];
+    if (owl) narrate($('q-feedback'), owl, next); else setTimeout(next, 900);
   },
 };
 
@@ -2307,8 +2344,7 @@ SCENES['s-quiz'] = {
         b.classList.add('correct'); SFX.correct();
         S.step++; save();   // saved now, so a refresh during the card reveal cannot repeat the question
         if (q.card) { setTimeout(() => unlock(q.card, () => go('s-quiz')), 600); return; }
-        $('q-feedback').textContent = q.after;
-        setTimeout(() => { if (cur === 's-quiz') go('s-quiz'); }, 1400);
+        narrate($('q-feedback'), q.after, () => go('s-quiz'));
       });
     } else if (S.step === ACT1.length) {
       askBSS(label, () => go('s-quiz'), () => { S.step++; save(); });
@@ -2392,25 +2428,21 @@ const Flight = {
     // Not a single hit. On the very first flight Appa only takes note; on any
     // later one he lands, falls asleep and dreams (see the Eastern Air Temple).
     if (clean && !first && !has('friend')) { go('s-dream'); return; }
-    unlock('yipyip', () => go('s-map'));
-    if (clean && first) setTimeout(() => toast('Not a single singed hair. Appa will remember that.', 4500), 1200);
+    unlock('yipyip', () => clean && first
+      ? say('appa', 'Not a single singed hair. Appa will remember that.', 'To the map', () => go('s-map'), 'Appa')
+      : go('s-map'));
   },
   showLives() { $('flight-lives').innerHTML = art('heart').repeat(Math.max(0, this.lives)); },
   // Three hits and Appa goes down, which is the only way to find the swamp.
   crash() {
     this.run = false;
-    $('flight-status').textContent = 'Appa is out of fur to singe. Going down!';
     const a = $('appa');
     a.style.transition = 'transform 1.1s ease-in';
     a.style.transform += ' translateY(120vh) rotate(140deg)';
     beep(300, 1.1, 'sawtooth');
     Music.play(null);
-    setTimeout(() => {
-      if (cur !== 's-flight') return;
-      S.stage = 'map'; save();
-      Swamp.crashed = true;
-      go('s-swamp');
-    }, 1200);
+    S.stage = 'map'; save();
+    narrate($('flight-status'), 'Appa is out of fur to singe. Going down!', () => { Swamp.crashed = true; go('s-swamp'); }, 1200);
   },
 };
 SCENES['s-flight'] = Flight;
@@ -2474,8 +2506,7 @@ const Banyan = {
     this.busy = true;
     $('banyan-glow').className = 'on full';
     [196, 262, 330, 392].forEach((f, i) => setTimeout(() => beep(f, 1, 'triangle'), i * 200));
-    $('swamp-text').textContent = 'Under your hand, a light runs down into the roots, and on, and on.\nAang: “Everything is connected.”';
-    this.later(() => this.vision(), 2600);
+    narrate($('swamp-text'), 'Under your hand, a light runs down into the roots, and on, and on.\nAang: “Everything is connected.”', () => this.vision(), 1200);
   },
   // the world map, with a root running from the swamp to every place you know
   vision() {
@@ -2491,8 +2522,8 @@ const Banyan = {
     if (ART_URL['stage-map']) v.style.backgroundImage = `url("${ART_URL['stage-map']}")`;
     v.classList.add('show');
     this.later(() => v.classList.add('grow'), 60);
-    $('swamp-text').textContent = 'Huu: “See this whole swamp is actually just one tree spread out over miles. Branches spread and sink, take root, and spread some more. One big, living organism. Just like the entire world.”';
-    this.later(() => unlock('banyan', () => go('s-map')), 7500);
+    narrate($('swamp-text'), 'Huu: “See this whole swamp is actually just one tree spread out over miles. Branches spread and sink, take root, and spread some more. One big, living organism. Just like the entire world.”',
+      () => unlock('banyan', () => go('s-map')), 3500);
   },
 };
 (() => {
@@ -2576,8 +2607,8 @@ const MapScene = {
       const p = document.createElement('div');
       p.className = 'cabp'; p.innerHTML = art('cabbage');
       p.style.left = x + 'px'; p.style.top = y + 'px';
-      p.style.setProperty('--dx', rnd(-320, 320) + 'px');
-      p.style.setProperty('--dy', rnd(-380, -60) + 'px');
+      p.style.setProperty('--dx', rnd(-320, 320) / 21 + 'rem');
+      p.style.setProperty('--dy', rnd(-380, -60) / 21 + 'rem');
       p.style.setProperty('--r', rnd(-720, 720) + 'deg');
       m.append(p);
       setTimeout(() => p.remove(), 1250);
@@ -2622,8 +2653,8 @@ const MapScene = {
         const p = document.createElement('div');
         p.className = 'cabp'; p.innerHTML = art('el-water');
         p.style.left = x + 'px'; p.style.top = y + 'px';
-        p.style.setProperty('--dx', rnd(-560, -60) + 'px');
-        p.style.setProperty('--dy', rnd(-240, 120) + 'px');
+        p.style.setProperty('--dx', rnd(-560, -60) / 21 + 'rem');
+        p.style.setProperty('--dy', rnd(-240, 120) / 21 + 'rem');
         p.style.setProperty('--r', rnd(-90, 90) + 'deg');
         m.append(p);
         setTimeout(() => p.remove(), 1250);
@@ -2717,14 +2748,13 @@ const Desert = {
     const mk = (html, size, friend) => {
       const f = document.createElement('div');
       f.className = 'floater'; f.innerHTML = html;
-      f.style.cssText = `left:${rnd(4, 82)}%;top:${rnd(4, 68)}%;font-size:${size}px;animation-duration:${rnd(1.2, 3)}s;z-index:${friend ? 2 : 3}`;
-      f.style.setProperty('--fx', rnd(-90, 90) + 'px');
-      f.style.setProperty('--fy', rnd(-60, 60) + 'px');
+      f.style.cssText = `left:${rnd(4, 82)}%;top:${rnd(4, 68)}%;font-size:${size / 21}rem;animation-duration:${rnd(1.2, 3)}s;z-index:${friend ? 2 : 3}`;
+      f.style.setProperty('--fx', rnd(-90, 90) / 21 + 'rem');
+      f.style.setProperty('--fy', rnd(-60, 60) / 21 + 'rem');
       f.onclick = () => {
         if (!friend) { $('desert-text').textContent = pick(decoyLines); beep(rnd(200, 900), .15, 'triangle'); return; }
-        $('desert-text').textContent = 'FRIENDLY MUSHROOM! MUSHY GIANT FRIEND!';
         this.sober();
-        unlock('cactus', () => Desert.enter());
+        narrate($('desert-text'), 'FRIENDLY MUSHROOM! MUSHY GIANT FRIEND!', () => unlock('cactus', () => Desert.enter()));
       };
       st.append(f);
     };
@@ -2738,7 +2768,7 @@ const Desert = {
     ];
     let i = 0;
     $('desert-text').textContent = lines[0];
-    this.iv = setInterval(() => { $('desert-text').textContent = lines[++i % lines.length]; }, 2800);
+    this.iv = setInterval(() => { $('desert-text').textContent = lines[++i % lines.length]; }, 4500);   // slow enough to read, while you look
     this.to = setTimeout(() => {
       this.sober();
       $('cactus').style.display = '';
@@ -2845,10 +2875,10 @@ const Cave = {
   touchMole() {
     if (!this.chamber) return;
     this.chamber = false;
-    $('cave-text').textContent = 'You hold out your hand. The mountain stops being flat. For the first time you feel it the way a badgermole does: not as a picture in front of you, but all around you.';
     $('cave-stage').classList.add('unfold');
     [110, 147, 196, 262].forEach((f, i) => setTimeout(() => beep(f, .6, 'triangle'), i * 250));
-    setTimeout(() => { if (cur === 's-cave') go('s-maze'); }, 1400);
+    narrate($('cave-text'), 'You hold out your hand. The mountain stops being flat. For the first time you feel it the way a badgermole does: not as a picture in front of you, but all around you.',
+      () => go('s-maze'), 1400);
   },
 };
 SCENES['s-cave'] = Cave;
@@ -3072,8 +3102,8 @@ const Maze = {
   },
   found() {
     this.run = false;
-    $('maze-text').textContent = 'The tomb of Oma and Shu, the two lovers. The crystals burn brighter here than anywhere else in the mountain.';
-    setTimeout(() => { if (cur === 's-maze') unlock('lovers', () => go('s-cave')); }, 1200);
+    narrate($('maze-text'), 'The tomb of Oma and Shu, the two lovers. The crystals burn brighter here than anywhere else in the mountain.',
+      () => unlock('lovers', () => go('s-cave')), 1200);
   },
 };
 SCENES['s-maze'] = Maze;
@@ -3101,14 +3131,13 @@ const Tea = {
   LONG: 45,      // and, once you have its card, until the steam does something
   enter() {
     this.stop();
-    clearTimeout(this.dragonT);
     $('steam-dragons').classList.remove('show');
     $('s-tea').classList.remove('steam');
     $('tea-bar').style.width = '0%';
     $('tea-btn').style.display = '';
     $('tea-text').textContent = 'Uncle Iroh: "Good tea asks for only one thing: patience. Start the tea, and then do… absolutely nothing."';
   },
-  leave() { this.stop(); clearTimeout(this.dragonT); $('s-tea').classList.remove('steam'); },
+  leave() { this.stop(); $('s-tea').classList.remove('steam'); },
   start() {
     this.brewing = true; this.t = 0; this.grace = performance.now() + 900; this.moved = 0;
     $('tea-btn').style.display = 'none';
@@ -3120,8 +3149,7 @@ const Tea = {
       $('tea-bar').style.width = Math.min(100, this.t / this.SECONDS * 100) + '%';
       if (this.t >= this.SECONDS && !has('tea')) {
         this.stop();
-        $('tea-text').textContent = 'Uncle Iroh: "Perfect. You have mastered the hardest art of all."';
-        unlock('tea', () => Tea.enter());
+        narrate($('tea-text'), 'Uncle Iroh: "Perfect. You have mastered the hardest art of all."', () => unlock('tea', () => Tea.enter()));
       } else if (has('tea')) this.steep();
     }, 100);
   },
@@ -3137,11 +3165,8 @@ const Tea = {
     $('steam-dragons').classList.add('show');
     $('s-tea').classList.add('steam');
     [294, 370, 440, 587].forEach((f, i) => setTimeout(() => beep(f, .9, 'triangle'), i * 300));
-    $('tea-text').textContent = 'The steam curls into two dragons, one red and one blue, circling each other over the pot.\nIroh watches them, and says nothing at all.';
-    this.dragonT = setTimeout(() => {
-      if (cur !== 's-tea') return;
-      findPage('page-dragons', () => Tea.enter());
-    }, 5000);
+    narrate($('tea-text'), 'The steam curls into two dragons, one red and one blue, circling each other over the pot.\nIroh watches them, and says nothing at all.',
+      () => findPage('page-dragons', () => Tea.enter()), 2500);
   },
   stop() { this.brewing = false; clearInterval(this.iv); $('teapot').classList.remove('brewing'); },
   disturb(e) {
@@ -3279,24 +3304,22 @@ const Water = {
     document.body.classList.add('moon-red');
     Music.warp(60, .5, .85); this.warped = true;
     beep(90, 1.2, 'sawtooth');
-    $('water-text').textContent = 'The moon goes red. Then everything else does.';
-    this.later(() => say('zhao', 'Admiral Zhao rolls up his map, steps out of the fog and takes the koi from you.\n“I am ... a legend, now! The Fire Nation will, for generations, tell stories about the great Zhao, who darkened the moon.”', 'I caught that!', () => {
+    narrate($('water-text'), 'The moon goes red. Then everything else does.', () => say('zhao', 'Admiral Zhao rolls up his map, steps out of the fog and takes the koi from you.\n“I am ... a legend, now! The Fire Nation will, for generations, tell stories about the great Zhao, who darkened the moon.”', 'I caught that!', () => {
       $('oasis-bubble').classList.remove('show');
       unlock('zhao', () => say('iroh', '“Whatever you do to that spirit I\'ll unleash on you ten-fold! Let it go, now!”', 'Zhao lets go…', () => this.strike()));
-    }), 2400);
+    }), 1600);
   },
   // He drops it back into the pond, hesitates, and strikes. The moon goes out, and every colour with it.
   strike() {
     if (cur !== 's-water') { paintMoonlight(); return; }
     $('tui').style.display = 'block';
-    $('water-text').textContent = 'Zhao lets go, and Tui drops back into the pond. He hesitates. Then he strikes at it with fire.';
     const t = $('tui').getBoundingClientRect(), s = $('water-stage').getBoundingClientRect();
     const f = document.createElement('div');
     f.className = 'tui-fire'; f.innerHTML = art('fireball');
     f.style.left = t.left - s.left + t.width / 2 + 'px'; f.style.top = t.top - s.top + t.height / 2 + 'px';
     $('water-stage').append(f);
     beep(70, .9, 'sawtooth');
-    this.later(() => {
+    narrate($('water-text'), 'Zhao lets go, and Tui drops back into the pond. He hesitates. Then he strikes at it with fire.', () => {
       f.remove();
       document.body.classList.replace('moon-red', 'moon-dark');
       $('moon').classList.add('gone');
@@ -3323,21 +3346,22 @@ const Water = {
     if (cur !== 's-water') return;
     $('tui').classList.add('glow');
     [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .7, 'triangle'), i * 260));
-    $('water-text').textContent = 'She puts her hands on the koi. It begins to glow, and she is gone.';
-    this.later(() => {
+    narrate($('water-text'), 'She puts her hands on the koi. It begins to glow, and she is gone.', () => {
       $('sea').classList.add('lit');
-      $('water-text').textContent = 'The whole pond lights up. Above it, the light takes her shape.';
-    }, 2000);
-    this.later(() => say('yue', '“Goodbye, Sokka. I\'ll always be with you.”', 'Goodbye, Yue', () => {
+      narrate($('water-text'), 'The whole pond lights up. Above it, the light takes her shape.', () => this.farewell(), 1500);
+    }, 1000);
+  },
+  farewell() {
+    say('yue', '“Goodbye, Sokka. I\'ll always be with you.”', 'Goodbye, Yue', () => {
       $('tui').style.display = 'none';
       this.koi(true);
       $('sea').classList.remove('lit');
       $('moon').classList.remove('gone');
       document.body.classList.remove('moon-dark');
       Music.warp(); this.warped = false;
-      $('water-text').textContent = 'The moon comes back, and brings the color with it. Tui and La circle each other again.';
-      this.later(() => { S.dark = false; unlock('yue', () => Water.enter()); }, 2800);   // saved together with the card
-    }, 'Princess Yue, to someone who is not here'), 4200);
+      narrate($('water-text'), 'The moon comes back, and brings the color with it. Tui and La circle each other again.',
+        () => { S.dark = false; unlock('yue', () => Water.enter()); }, 1500);   // saved together with the card
+    }, 'Princess Yue, to someone who is not here');
   },
   update() {
     const m = $('moon');
@@ -3462,22 +3486,19 @@ const Dragon = {
   },
   // Before the last round the masters themselves come out of the mountain to judge it.
   rise() {
-    const say = text => { $('dragon-text').textContent = text; };
-    say('The ground begins to shake.');
+    const text = $('dragon-text');
     Music.play(null);   // the masters bring their own music
     this.quake(true);
     [55, 58, 62, 65, 69, 73, 78, 82].forEach((f, i) => this.later(() => beep(f, .5, 'sawtooth'), i * 280));
-    this.later(() => {
+    this.later(() => this.quake(false), 2300);   // once the rumble has passed, so the words hold still
+    narrate(text, 'The ground begins to shake.', () => {
       document.body.classList.add('epic-on');
       chip(RISE_THEME, .16);
-      say('Something enormous is climbing out of the mountain on either side of you.');
-    }, 1200);
-    this.later(() => {
-      this.quake(false);
-      this.roar();
-      say('Ran and Shaw, the last of the dragons. The final dance is theirs to judge.');
-    }, 4300);
-    this.later(() => { Music.play('dragonFinal'); this.next(); }, 6800);
+      narrate(text, 'Something enormous is climbing out of the mountain on either side of you.', () => {
+        this.roar();
+        narrate(text, 'Ran and Shaw, the last of the dragons. The final dance is theirs to judge.', () => { Music.play('dragonFinal'); this.next(); }, 1500);
+      }, 3100);
+    }, 2300);
   },
   press(p) {
     if (this.busy || !this.seq.length) return;
@@ -3486,31 +3507,28 @@ const Dragon = {
       this.busy = true;
       beep(110, .5, 'sawtooth');
       if (this.last()) this.roar();
-      $('dragon-text').textContent = this.last()
+      narrate($('dragon-text'), this.last()
         ? 'The masters roar. Smoke everywhere. Once more, from the first step.'
-        : 'The dragons snort. A puff of smoke. Try again.';
-      this.later(() => this.next(), this.last() ? 2200 : 1600);
+        : 'The dragons snort. A puff of smoke. Try again.', () => this.next(), 800);
       return;
     }
     if (++this.pos < this.seq.length) return;
     this.busy = true;
     if (++this.round < this.ROUNDS.length - 1) {
-      $('dragon-text').textContent = 'The masters nod.';
-      this.later(() => this.next(), 1000);
+      narrate($('dragon-text'), 'The masters nod.', () => this.next());
     } else if (this.round === this.ROUNDS.length - 1) {
       this.rise();
     } else {   // the last dance, done: judged worthy, in fire of every colour
       this.seq = [];
       this.round = this.ROUNDS.length - 1;
-      $('dragon-text').textContent = 'The masters rear up over you, and breathe.';
       Music.play(null);
       this.roar();
-      this.later(() => {
+      narrate($('dragon-text'), 'The masters rear up over you, and breathe.', () => {
         rainbowFire(4200);
         chip(DRAGON_FANFARE, .13);
-        $('dragon-text').textContent = 'Ran and Shaw surround you with fire in colors you have never imagined.';
+        narrate($('dragon-text'), 'Ran and Shaw surround you with fire in colors you have never imagined.',
+          () => unlock('dragon', () => Dragon.enter()), 4400);   // once the fire has cleared
       }, 1300);
-      this.later(() => unlock('dragon', () => Dragon.enter()), 5700);   // once the fire has cleared
     }
   },
 };
@@ -3582,8 +3600,8 @@ const Koh = {
     this.setFace(1);
     $('koh-barwrap').style.display = 'none';
     $('koh-opts').innerHTML = '';
-    $('koh-text').textContent = 'Nothing. Not a twitch. Koh studies your face for a long, disappointed moment and sinks back into the dark.\n“We\'ll meet again.”';
-    setTimeout(() => { if (cur === 's-koh') unlock('koh', () => go('s-map')); }, 1800);
+    narrate($('koh-text'), 'Nothing. Not a twitch. Koh studies your face for a long, disappointed moment and sinks back into the dark.\n“We\'ll meet again.”',
+      () => unlock('koh', () => go('s-map')), 1200);
   },
   fail() {
     this.stop();
@@ -3681,9 +3699,9 @@ const Play = {
   verdict() {
     this.actor('');
     $('play-opts').innerHTML = '';
-    $('play-text').textContent = 'The curtain falls. The audience is still cheering as you file out.';
-    say('zuko', 'Zuko: “That... wasn\'t a good play.”\nAang: “I\'ll say.”\nKatara: “No kidding.”\nSuki: “Horrible.”\nToph: “You said it.”',
-      'Sokka: “But the effects were decent.”', () => this.effects(), 'Outside the theater');
+    narrate($('play-text'), 'The curtain falls. The audience is still cheering as you file out.', () =>
+      say('zuko', 'Zuko: “That... wasn\'t a good play.”\nAang: “I\'ll say.”\nKatara: “No kidding.”\nSuki: “Horrible.”\nToph: “You said it.”',
+        'Sokka: “But the effects were decent.”', () => this.effects(), 'Outside the theater'));
   },
   // "But the effects were decent": everything the game has, all at once.
   effects() {
@@ -3739,10 +3757,9 @@ const Beach = {
     this.hawking = this.caught = false;
     this.hawkT = setTimeout(() => this.hawk(), 7000);
     this.hawkIv = setInterval(() => this.hawk(), 16000);
-    $('beach-text').textContent = 'Lo: “The beach has a special way...”\nLi: “...of smoothing even the most ragged edges.”';
-    say('azula', '“Hey, beach bums, we\'re playing next.”\n“See that girl with the silly pigtails? When she runs toward the ball, there\'s just the slightest hesitation of her left foot. I\'m willing to bet a childhood injury has weakened her. Keep serving the ball to her left, and we\'ll destroy her and the rest of her team.”', 'Dismissed.', () => {
+    narrate($('beach-text'), 'Lo: “The beach has a special way...”\nLi: “...of smoothing even the most ragged edges.”', () => say('azula', '“Hey, beach bums, we\'re playing next.”\n“See that girl with the silly pigtails? When she runs toward the ball, there\'s just the slightest hesitation of her left foot. I\'m willing to bet a childhood injury has weakened her. Keep serving the ball to her left, and we\'ll destroy her and the rest of her team.”', 'Dismissed.', () => {
       if (cur === 's-beach') this.ready();
-    });
+    }));
   },
   leave() {
     this.timers.forEach(clearTimeout); this.timers = [];
@@ -3778,7 +3795,7 @@ const Beach = {
       pg.style.transition = 'none'; pg.style.left = x + 'px'; pg.style.top = '9%'; pg.classList.add('show');
       void pg.offsetWidth;
       pg.style.transition = ''; pg.style.top = '58%';
-      $('beach-text').textContent = 'The message slips from its talons and flutters down onto the sand. It is not a letter. It is a page torn out of a book.';
+      $('beach-text').textContent += '\nThe message slips from its talons and flutters down onto the sand. It is not a letter. It is a page torn out of a book.';
     }, 700);
     setTimeout(() => [h, r].forEach(e => e.classList.remove('fly')), 2000);
   },
@@ -3840,7 +3857,7 @@ const Beach = {
     $('beach-text').textContent = text;
     if (this.us >= this.WIN) { this.burn(); return; }
     if (this.them >= this.WIN) {
-      this.later(() => say('azula', 'Their game. Azula says nothing at all for a moment, which is worse than shouting. Then she walks back to the serving line and repeats the plan, slowly.', 'Rematch', () => {
+      waitNext($('beach-text'), () => say('azula', 'Their game. Azula says nothing at all for a moment, which is worse than shouting. Then she walks back to the serving line and repeats the plan, slowly.', 'Rematch', () => {
         if (cur === 's-beach') { this.reset(); this.ready(); }
       }), 900);
       return;
@@ -3863,12 +3880,10 @@ const Beach = {
         f.className = 'netfire'; f.innerHTML = art('el-fire'); f.style.left = x + '%';
         $('beach-stage').append(f);
       }
-      $('beach-text').textContent = 'The ball swells, bursts, and sets the net on fire.';
+      narrate($('beach-text'), 'The ball swells, bursts, and sets the net on fire.', () =>
+        say('azula', '“Yes! We defeated you for all time! You will never rise from the ashes of your shame and humiliation!”', '“Well. That was fun.”', () => unlock('beach', () => go('s-map'))), 1350);
     }, 550);
-    this.later(() => {
-      document.body.classList.remove('shake');
-      say('azula', '“Yes! We defeated you for all time! You will never rise from the ashes of your shame and humiliation!”', '“Well. That was fun.”', () => unlock('beach', () => go('s-map')));
-    }, 1900);
+    this.later(() => document.body.classList.remove('shake'), 1900);
   },
 };
 SCENES['s-beach'] = Beach;
@@ -4000,9 +4015,8 @@ const Fishing = {
   landed() {
     this.done = true; this.held = this.bending = false; this.floating = true;
     beep(784, .4, 'triangle');
-    $('fish-text').textContent = 'Katara: “Sokka, look!”\nSokka: “Sshh! Katara, you\'re going to scare it away.”';
-    this.later(() => { $('fish-text').textContent = 'Katara: “But, Sokka! I caught one!”\nSokka raises his spear to strike, and the blunt end goes straight into the bubble.'; }, 2800);
-    this.later(() => this.burst(), 5000);
+    narrate($('fish-text'), 'Katara: “Sokka, look!”\nSokka: “Sshh! Katara, you\'re going to scare it away.”', () =>
+      narrate($('fish-text'), 'Katara: “But, Sokka! I caught one!”\nSokka raises his spear to strike, and the blunt end goes straight into the bubble.', () => this.burst()), 1000);
   },
   burst() {
     this.floating = false;
@@ -4012,16 +4026,15 @@ const Fishing = {
       const p = document.createElement('div');
       p.className = 'cabp'; p.innerHTML = art('el-water');
       p.style.left = this.bx * 100 + rnd(-7, 7) + '%'; p.style.top = this.by * 100 + rnd(-7, 7) + '%';
-      p.style.setProperty('--dx', rnd(-90, 90) + 'px');
-      p.style.setProperty('--dy', rnd(60, 200) + 'px');
+      p.style.setProperty('--dx', rnd(-90, 90) / 21 + 'rem');
+      p.style.setProperty('--dy', rnd(60, 200) / 21 + 'rem');
       p.style.setProperty('--r', rnd(-90, 90) + 'deg');
       this.st.append(p);
       setTimeout(() => p.remove(), 1250);
     }
-    $('fish-text').textContent = 'All of it comes down on Sokka. The fish drops back into the sea.';
-    this.later(() => say('sokka', '“Why is it that every time you play with magic water, I get soaked?”', 'It is not magic!', () =>
+    narrate($('fish-text'), 'All of it comes down on Sokka. The fish drops back into the sea.', () => say('sokka', '“Why is it that every time you play with magic water, I get soaked?”', 'It is not magic!', () =>
       say('katara', '“It\'s not ‘magic’, it\'s waterbending! And it\'s...”', 'Yeah, yeah. Blah, blah, blah.', () =>
-        unlock('fish', () => go('s-map')))), 1400);
+        unlock('fish', () => go('s-map')))), 1250);
   },
 };
 SCENES['s-fish'] = Fishing;
@@ -4110,13 +4123,11 @@ const Laogai = {
         $('laogai-opts').innerHTML = '';
         if (label === line) {
           SFX.correct();
-          $('laogai-text').textContent = pick(['Perfectly in time with everyone else.', 'Not a word out of place. The agent does not even look up.', 'You say it with the others, and it sounds just like them.']);
-          this.later(() => this.round(i + 1), 1500);
+          narrate($('laogai-text'), pick(['Perfectly in time with everyone else.', 'Not a word out of place. The agent does not even look up.', 'You say it with the others, and it sounds just like them.']), () => this.round(i + 1));
           return;
         }
         SFX.wrong();
-        $('laogai-text').textContent = 'Every head in the row turns to look at you, all at exactly the same moment. The agent sighs. From the beginning.';
-        this.later(() => this.round(0), 2800);
+        narrate($('laogai-text'), 'Every head in the row turns to look at you, all at exactly the same moment. The agent sighs. From the beginning.', () => this.round(0));
       });
     }, 5400);
   },
@@ -4124,8 +4135,8 @@ const Laogai = {
   done() {
     this.run = false;
     this.joodee(50);
-    $('laogai-text').textContent = 'The lantern stops. The agent walks along the row, looks you over and nods. One more Joo Dee, ready for the Upper Ring.';
-    this.later(() => unlock('laogai', () => go('s-map')), 2600);
+    narrate($('laogai-text'), 'The lantern stops. The agent walks along the row, looks you over and nods. One more Joo Dee, ready for the Upper Ring.',
+      () => unlock('laogai', () => go('s-map')), 1200);
   },
 };
 SCENES['s-laogai'] = Laogai;
@@ -4159,11 +4170,10 @@ const Dream = {
     const tok = ++this.tok;
     const frame = now => { if (tok !== this.tok || !this.run) return; this.fly(now); requestAnimationFrame(frame); };
     requestAnimationFrame(frame);
-    $('dream-text').textContent = 'Appa lands on the island, curls up, and is asleep before you are off his back. He dreams of the Eastern Air Temple, a long time ago.';
-    this.later(() => {
+    narrate($('dream-text'), 'Appa lands on the island, curls up, and is asleep before you are off his back. He dreams of the Eastern Air Temple, a long time ago.', () => {
       $('dream-text').textContent = 'Five sky bison calves circle their mother. A nun with a bowl of apples hands one to a young airbender.\nSister Iio: “Choose well. A sky bison is a companion for life.”';
       st.classList.add('choose');
-    }, 3800);
+    }, 1500);
   },
   leave() { this.stop(); },
   stop() { this.run = false; this.tok++; this.timers.forEach(clearTimeout); this.timers = []; },
@@ -4186,21 +4196,17 @@ const Dream = {
     $('dream-stage').classList.remove('choose');
     c.el.classList.add('chosen'); c.el.style.zIndex = 5;
     c.el.style.left = '64%'; c.el.style.top = '64%';
-    $('dream-text').textContent = 'You hold out the apple. One calf leaves the others and comes down to you. Or it chose you; neither of you will ever be quite sure.';
-    this.later(() => {
+    const text = $('dream-text');
+    narrate(text, 'You hold out the apple. One calf leaves the others and comes down to you. Or it chose you; neither of you will ever be quite sure.', () => {
       $('dream-apple').style.display = 'none';
       beep(330, .15, 'triangle');
-      $('dream-text').textContent = 'It sniffs the apple, very seriously. Then it eats it.';
-    }, 2400);
-    this.later(() => {
-      $('dream-aang').classList.add('down');
-      beep(120, .3, 'square');
-      $('dream-text').textContent = 'Then it knocks you flat on your back and licks your whole face.\nAang: “I guess this means we\'ll always be together.”';
-    }, 4600);
-    this.later(() => unlock('friend', () => {
-      go('s-map');
-      toast('Appa wakes up, licks you, and looks very pleased with himself.', 4000);
-    }), 8200);
+      narrate(text, 'It sniffs the apple, very seriously. Then it eats it.', () => {
+        $('dream-aang').classList.add('down');
+        beep(120, .3, 'square');
+        narrate(text, 'Then it knocks you flat on your back and licks your whole face.\nAang: “I guess this means we\'ll always be together.”',
+          () => unlock('friend', () => say('appa', 'Appa wakes up, licks you, and looks very pleased with himself.', 'Back to the map', () => go('s-map'), 'Appa')), 800);
+      });
+    }, 1500);
   },
 };
 SCENES['s-dream'] = Dream;
@@ -4256,20 +4262,18 @@ const Serpent = {
   walk() {
     $('serpent-opts').innerHTML = '';
     this.walking = true;
-    $('serpent-text').textContent = 'Single file, along the edge of the water. It is very quiet.';
-    this.later(() => { $('serpent-text').textContent = 'Something long and dark slides along under the water, right beside the path.'; }, 3500);
-    this.later(() => this.surface(), 6500);
+    narrate($('serpent-text'), 'Single file, along the edge of the water. It is very quiet.', () =>
+      narrate($('serpent-text'), 'Something long and dark slides along under the water, right beside the path.', () => this.surface(), 1500), 1500);
   },
   surface() {
     this.up = true;
     document.body.classList.add('shake');
     beep(55, 1.2, 'sawtooth'); beep(82, .9, 'square');
-    $('serpent-text').textContent = 'Sokka: “I think I just figured out why they call it the Serpent\'s Pass!”';
     this.later(() => document.body.classList.remove('shake'), 900);
-    this.later(() => {
+    narrate($('serpent-text'), 'Sokka: “I think I just figured out why they call it the Serpent\'s Pass!”', () => {
       $('serpent-text').textContent = 'Aang: “I\'ll distract it. Katara, get everyone across!”\nIt is watching you now. Wherever you go, it goes.';
       this.chasing = true;
-    }, 2800);
+    }, 1500);
   },
   // Round and round it: the angle of the pointer around the serpent, added up.
   move(px, py) {
@@ -4315,14 +4319,13 @@ const Serpent = {
     beep(70, 1, 'sawtooth');
     $('serpent-text').textContent = 'The whirlpool spins it round and round, and slams it into the mountainside.';
     this.later(() => { document.body.classList.add('shake'); beep(45, .8, 'square'); }, 1000);
-    this.later(() => {
-      document.body.classList.remove('shake');
+    this.later(() => document.body.classList.remove('shake'), 1800);
+    waitNext($('serpent-text'), () => {
       sp.style.transform = 'translate(160%, 130%) rotate(95deg)';
       $('whirl').style.opacity = 0;
-      $('serpent-text').textContent = 'It falls back below the water. On the far side of the pass, everyone cheers.';
       this.walkers.forEach(w => { w.el.classList.add('cheer'); });
+      narrate($('serpent-text'), 'It falls back below the water. On the far side of the pass, everyone cheers.', () => unlock('serpent', () => go('s-map')), 1200);
     }, 1800);
-    this.later(() => unlock('serpent', () => go('s-map')), 4600);
   },
 };
 SCENES['s-serpent'] = Serpent;
@@ -4411,9 +4414,8 @@ const Dance = {
       $('dance-aang').style.left = '44%';
       $('dance-katara').style.left = '56%';
       $('dance-katara').classList.add('on');
-      $('dance-text').textContent = 'Everybody stops to watch the two of you dance.';
-      this.later(() => { $('dance-text').textContent = 'Toph: “Who knew Twinkle Toes could dance?”'; }, 3400);
-      this.later(() => unlock('dance', () => go('s-map')), 6600);
+      narrate($('dance-text'), 'Everybody stops to watch the two of you dance.', () =>
+        narrate($('dance-text'), 'Toph: “Who knew Twinkle Toes could dance?”', () => unlock('dance', () => go('s-map'))), 2000);
     });
   },
 };
@@ -4436,7 +4438,7 @@ const Ozai = {
     const box = $('ozai-box');
     box.innerHTML = `
       <div class="scene-text" id="ozai-text">"So you are the card collector. You like quizzes so much? Then answer my question — or burn."</div>
-      <div class="card" style="padding:20px">
+      <div class="card" style="padding:.952rem">
         <div class="question-label">The final question</div>
         <div class="question-text">Who is the rightful ruler of the entire world?</div>
         <div class="options" id="ozai-opts"></div>
@@ -4472,8 +4474,7 @@ const Ozai = {
     this.phase = 'burning';
     SFX.wrong(); beep(80, .9, 'sawtooth');
     document.querySelectorAll('#ozai-opts .option').forEach((b, i) => setTimeout(() => b.classList.add('burn'), i * 120));
-    $('ozai-text').textContent = '"WRONG! The correct answer was: ME. And I am done with multiple choice."';
-    setTimeout(() => { if (this.phase === 'burning') this.elements(); }, 2200);
+    narrate($('ozai-text'), '"WRONG! The correct answer was: ME. And I am done with multiple choice."', () => this.elements(), 1000);
   },
   elements() {
     this.phase = 'elements';
@@ -4532,7 +4533,7 @@ const Ozai = {
     Music.play(null);
     avatarState(() => {
       $('ozai-box').innerHTML = '<div class="scene-text">“What? What did you do to me?”<br>You took away his firebending. And his last card.</div>';
-      unlock('energy', () => go('s-end'));
+      waitNext($('ozai-box').firstChild, () => unlock('energy', () => go('s-end')), 800);
     });
   },
 };
