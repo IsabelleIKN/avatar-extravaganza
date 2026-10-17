@@ -1782,11 +1782,14 @@ const Music = {
     this.wobble.gain.setTargetAtTime(cents, actx.currentTime, .1);
   },
   // How long a beat lasts, in seconds, and how far into the current one the
-  // music is, from 0 (right on it) to 1; null while nothing plays.
+  // music is, from 0 (right on it) to 1; null while nothing plays. That is the
+  // music as you hear it, which reaches your ears a little after it is played:
+  // through Bluetooth headphones or speakers, a quarter of a second after.
   beat() { return 60 / this.track.bpm / this.rate; },
   phase() {
     if (!this.track || !actx) return null;
-    const per = this.track.div || 2, pos = this.step - (this.at - actx.currentTime) / (this.beat() / per);
+    const heard = actx.currentTime - (actx.outputLatency || 0) - (actx.baseLatency || 0);
+    const per = this.track.div || 2, pos = this.step - (this.at - heard) / (this.beat() / per);
     return ((pos / per) % 1 + 1) % 1;
   },
   toggle() {
@@ -4335,12 +4338,14 @@ SCENES['s-serpent'] = Serpent;
 const Feet = {
   NEED: 8, n: 0, last: 0,
   // Counts taps that land on the beat (within a fifth of one, either way) and
-  // follow the one before within about a beat; says whether this one did.
+  // follow the one before within about two beats, so that tapping only the loud
+  // ones counts too (on the map, most people tap the kick and the snare and skip
+  // the hi-hats in between); says whether this one was on the beat.
   tap() {
     const ph = Music.phase();
     if (ph === null) return false;
     const on = ph < .2 || ph > .8, now = performance.now();
-    this.n = !on ? 0 : now - this.last < Music.beat() * 1600 ? this.n + 1 : 1;
+    this.n = !on ? 0 : now - this.last < Music.beat() * 2600 ? this.n + 1 : 1;
     this.last = now;
     return on;
   },
