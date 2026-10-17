@@ -3130,18 +3130,32 @@ def lion_turtle():
     return outline(im, P['B'])
 
 
-def card_notes():
+def notes_book():
     im = new(CW, CH, col('#5b3920'))
     d = ImageDraw.Draw(im)
     d.rectangle((2, 4, 57, 47), fill=col('#3b2a1c'))        # the cover, open
-    for x0 in (4, 31):                                      # two pages of sketches
+    for x0 in (4, 31):                                      # two blank pages
         d.rectangle((x0, 6, x0 + 24, 45), fill=PAPER)
         d.line((x0, 6, x0, 45), fill=PAPER_DARK)
     d.line((30, 5, 30, 46), fill=col('#2a1d12'))
-    put(im, ART['card-page-eagle'].resize((12, 10), Image.NEAREST), 14, 10)
-    put(im, ART['card-page-lotus'].resize((12, 10), Image.NEAREST), 6, 28)
-    put(im, ART['card-page-unagi'].resize((12, 10), Image.NEAREST), 34, 10)
-    put(im, ART['card-page-dragons'].resize((12, 10), Image.NEAREST), 42, 28)
+    return im
+
+
+# Where each page's sketch goes in the open book: two on each side. Each sketch
+# is also drawn on a layer of its own, the size of the card, so the game can lay
+# the ones found so far over the empty book.
+NOTES_SPOTS = {'eagle': (14, 10), 'lotus': (6, 28), 'unagi': (34, 10), 'dragons': (42, 28)}
+
+def notes_sketch(name):
+    im = new(CW, CH)
+    put(im, ART['card-page-' + name].resize((12, 10), Image.NEAREST), *NOTES_SPOTS[name])
+    return im
+
+
+def card_notes():
+    im = ART['notes-book'].copy()
+    for name in NOTES_SPOTS:
+        put(im, ART['notes-page-' + name], 0, 0)
     return im
 
 
@@ -3189,6 +3203,9 @@ ART['isle'] = isle()
 ART['lion-turtle'] = lion_turtle()
 for name, fn in (('lotus', page_lotus), ('dragons', page_dragons), ('eagle', page_eagle), ('unagi', page_unagi)):
     ART['card-page-' + name] = fn()
+ART['notes-book'] = notes_book()
+for name in NOTES_SPOTS:
+    ART['notes-page-' + name] = notes_sketch(name)
 ART['card-notes'] = card_notes()
 
 ART['tui'] = koi_alone(True)

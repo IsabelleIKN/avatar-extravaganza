@@ -604,6 +604,11 @@
     .tcg.secret { --c1:#0f766e; --c2:#042f2e; --c3:#fde68a; --glow:rgba(45,212,191,.55); }
     .tcg.notes  { --c1:#f1e4c4; --c2:#c9b088; --c3:#7a5a3a; --glow:rgba(241,228,196,.4); color: #3a2a1c; }
     .tcg.notes .tcg-text { color: rgba(58,42,28,.85); }
+    /* the field notes fill in page by page: the empty book, with the sketches found so far laid over it */
+    .tcg-art.book { position: relative; }
+    .tcg-art.book img { position: absolute; inset: 0; }
+    .tcg-art.book img.fresh { animation: inkIn 1s steps(4) .8s both; }
+    @keyframes inkIn { from { opacity: 0; } }
     .tcg.locked { --c1:#1e293b; --c2:#0f172a; --c3:#334155; --glow:transparent; color: #475569; }
     .tcg.locked .tcg-art { filter: grayscale(1) brightness(.4); }
     .tcg.small { font-size: 9.5px; }
@@ -926,7 +931,6 @@
     <div class="unlock-title" style="font-size:1.3rem">Card Binder</div>
     <div class="tcg-grid" id="binder-grid"></div>
     <div class="tcg-grid" id="binder-secrets"></div>
-    <div class="tcg-grid" id="binder-notes"></div>
     <div class="btn-row">
       <button class="btn btn-primary" id="binder-close" style="width:auto">Close</button>
       <button class="btn btn-ghost" id="binder-reset">Erase everything</button>
@@ -1019,10 +1023,10 @@ const SECRETS = [
 // library and scattered over the world. Each page is found on its own and wins
 // its own real card; with all four, the book is the secret card 'notes'.
 const PAGES = [
-  { id: 'page-lotus',   page: 1, el: 'notes', emoji: '🪷', name: 'White Lotus Tile',        text: 'Played in the center, it turns two strangers into brothers.', prize: 'White Lotus Tile (field notes)' },
-  { id: 'page-dragons', page: 2, el: 'notes', emoji: '🐉', name: 'Ran and Shaw',            text: 'The last of the dragons. Officially, there are none left.', prize: 'Ran and Shaw (field notes)' },
-  { id: 'page-eagle',   page: 3, el: 'notes', emoji: '🦅', name: 'Raven Eagle',             text: 'Trained to catch messenger hawks, and the messages they carry.', prize: 'Raven Eagle (field notes)' },
-  { id: 'page-unagi',   page: 4, el: 'notes', emoji: '🐍', name: 'The Unagi',               text: 'Lives in the bay of Kyoshi Island. Not for riding, whatever anyone tells you.', prize: 'The Unagi of Kyoshi Island (field notes)' },
+  { id: 'page-lotus',   name: 'White Lotus Tile',        text: 'Played in the center, it turns two strangers into brothers.', prize: 'White Lotus Tile (field notes)' },
+  { id: 'page-dragons', name: 'Ran and Shaw',            text: 'The last of the dragons. Officially, there are none left.', prize: 'Ran and Shaw (field notes)' },
+  { id: 'page-eagle',   name: 'Raven Eagle',             text: 'Trained to catch messenger hawks, and the messages they carry.', prize: 'Raven Eagle (field notes)' },
+  { id: 'page-unagi',   name: 'The Unagi',               text: 'Lives in the bay of Kyoshi Island. Not for riding, whatever anyone tells you.', prize: 'The Unagi of Kyoshi Island (field notes)' },
 ];
 
 // Uncle Iroh's advice: three hints per card, from vague to literal.
@@ -1863,10 +1867,28 @@ function cardHTML(c, small, locked) {
   const n = CARDS.indexOf(c) + 1;
   const pic = ART_URL['card-' + c.id] ? `<img src="${ART_URL['card-' + c.id]}" alt="">` : c.emoji;
   return `<div class="tcg ${locked ? 'locked' : c.el}${small ? ' small' : ''}">
-    <div class="tcg-num">${n ? `${n} / ${CARDS.length}` : c.page ? `Page ${c.page} / ${PAGES.length}` : 'Secret'}</div>
+    <div class="tcg-num">${n ? `${n} / ${CARDS.length}` : 'Secret'}</div>
     <div class="tcg-art">${locked ? '?' : pic}</div>
     <div class="tcg-name">${locked ? '???' : c.name}</div>
     <div class="tcg-text">${locked ? '' : c.text}</div>
+  </div>`;
+}
+
+// Wan Shi Tong's book, one card that fills in as its pages turn up: a sketch in
+// the open book for every page found. `fresh` is the page that was just found,
+// whose sketch inks in. Once he has collected the book it is a secret card like
+// the others.
+function notesHTML(small, fresh = null) {
+  const c = SECRETS.find(x => x.id === 'notes'), got = PAGES.filter(p => S.pages.includes(p.id));
+  if (has('notes') || !got.length) return cardHTML(c, small, !has('notes'));
+  const left = PAGES.length - got.length, p = PAGES.find(x => x.id === fresh);
+  const pic = ART_URL['notes-book'] ? ['notes-book', ...got.map(g => 'notes-' + g.id)]
+    .map(k => ART_URL[k] ? `<img src="${ART_URL[k]}" alt=""${k === 'notes-' + fresh ? ' class="fresh"' : ''}>` : '').join('') : c.emoji;
+  return `<div class="tcg notes${small ? ' small' : ''}">
+    <div class="tcg-num">Pages ${got.length} / ${PAGES.length}</div>
+    <div class="tcg-art book">${pic}</div>
+    <div class="tcg-name">${c.name}</div>
+    <div class="tcg-text">${p ? p.text : `${left} more page${left > 1 ? 's' : ''} still out there.`}</div>
   </div>`;
 }
 
@@ -1896,15 +1918,15 @@ $('unlock-ok').onclick = () => {
   if (cb) cb();
 };
 
-// A page of field notes: shown like a card and handed over like one. The last
-// brings Wan Shi Tong to collect his book, which leaves you its card.
+// A page of field notes: handed over like a card, and sketched into the book.
+// The last brings Wan Shi Tong to collect his book, which leaves you its card.
 function findPage(id, cb = null) {
   if (S.pages.includes(id)) { if (cb) cb(); return; }
   const p = PAGES.find(x => x.id === id);
   S.pages.push(id); save();
   const n = S.pages.length;
   $('unlock-title').textContent = n === 1 ? 'A loose page!' : `Field notes · page ${n} of ${PAGES.length}`;
-  $('unlock-card').innerHTML = cardHTML(p);
+  $('unlock-card').innerHTML = notesHTML(false, id);
   $('unlock-prize').innerHTML = `You win: <b>${p.prize}</b><br>`
     + (n === 1 ? 'It was torn out of a book from Wan Shi Tong\'s library. There must be more pages out there.<br>' : '')
     + `Collect your card from ${CONFIG.quizmaster}!`;
@@ -1918,8 +1940,7 @@ function findPage(id, cb = null) {
 function openBinder() {
   $('binder-grid').innerHTML = CARDS.map(c => cardHTML(c, true, !has(c.id))).join('');
   const showSecrets = secretsFound() || mainFound() === CARDS.length || S.pages.length;
-  $('binder-secrets').innerHTML = showSecrets ? SECRETS.map(c => cardHTML(c, true, !has(c.id))).join('') : '';
-  $('binder-notes').innerHTML = S.pages.length ? PAGES.map(p => cardHTML(p, true, !S.pages.includes(p.id))).join('') : '';
+  $('binder-secrets').innerHTML = showSecrets ? SECRETS.map(c => c.id === 'notes' ? notesHTML(true) : cardHTML(c, true, !has(c.id))).join('') : '';
   $('binder').classList.add('show');
 }
 $('hud-count').onclick = openBinder;
@@ -4545,7 +4566,7 @@ makePads($('map-pads'), [
 ]);
 Object.keys(ART).forEach(k => probeArt(k));
 ALL_CARDS.forEach(c => probeArt('card-' + c.id));
-PAGES.forEach(p => probeArt('card-' + p.id));
+['notes-book', ...PAGES.map(p => 'notes-' + p.id)].forEach(k => probeArt(k));
 Object.keys(STAGES).forEach(s => probeArt('stage-' + s));
 probeArt('stage-cave-dark');
 SCENE_NAMES.forEach(s => probeArt('bg-' + s));
