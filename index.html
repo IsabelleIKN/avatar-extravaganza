@@ -182,6 +182,7 @@
     #map, #cave-stage, #beach-stage, #fish-stage { max-width: calc(58vh * 1.833); }
     #laogai-stage { max-width: calc(46vh * 2.316); }
     #serpent-stage { max-width: calc(50vh * 2.095); }
+    #dojo-stage, #boiling-stage { height: min(48vh, 20rem); max-width: calc(48vh * 1.833); }   /* low enough for three lines of story and the buttons under them */
     .loot {
       position: absolute; font-size: 2.571rem; line-height: 1; cursor: pointer;
       filter: drop-shadow(0 0 .667rem #fde68a); animation: lootbob 1.6s ease-in-out infinite;
@@ -258,8 +259,8 @@
       background: url('art/check.png') center / contain no-repeat;
     }
     .pin.comet-pin { display: none; font-size: 2.19rem; animation: pulse 1.2s ease-in-out infinite; }
-    .pin.ember-pin, .pin.swamp-pin { display: none; }
-    .pin.comet-pin.show, .pin.ember-pin.show, .pin.swamp-pin.show { display: flex; }
+    .pin.ember-pin, .pin.swamp-pin, .pin.boiling-pin { display: none; }
+    .pin.comet-pin.show, .pin.ember-pin.show, .pin.swamp-pin.show, .pin.boiling-pin.show { display: flex; }
     /* two children out fishing by the southern ice: small, and easy to miss */
     #map-canoe { position: absolute; left: 40%; top: 85%; z-index: 2; font-size: .952rem; line-height: 1; cursor: pointer; animation: canoebob 2.6s ease-in-out infinite; }
     @keyframes canoebob { 50% { transform: translateY(.143rem) rotate(-2deg); } }
@@ -551,6 +552,48 @@
     #dream-aang.down { transform: translateX(-50%) rotate(-80deg); }
     #dream-apple { left: 84%; bottom: 31%; height: 6%; transform: translateX(-50%); z-index: 4; font-size: 1.048rem; }
 
+    /* Kyoshi Island: the warriors' dojo, where Suki flips you, paints you and teaches you */
+    #dojo-stage { background: #7a4c2a; }
+    #dojo-opts { flex-direction: row; flex-wrap: wrap; justify-content: center; }   /* side by side, so two answers fit under three lines */
+    #dojo-sokka, #dojo-suki { position: absolute; bottom: 6%; height: 34%; transform: translateX(-50%); line-height: 1; font-size: 4.762rem; pointer-events: none; z-index: 2; }
+    #dojo-suki { height: 37.5%; }
+    :is(#dojo-sokka, #dojo-suki) .art-img { height: 100%; }
+    #dojo-suki.open { filter: brightness(1.3) drop-shadow(0 0 .5rem #fde047) drop-shadow(0 0 .5rem #fde047); scale: 1.08; transform-origin: 50% 100%; }   /* her opening: hard to miss */
+    #dojo-blind { position: absolute; inset: 0; z-index: 5; background: #0b0710; opacity: 0; pointer-events: none; transition: opacity 1s; }
+    #dojo-stage.blind #dojo-blind { opacity: 1; transition: none; }
+    #dojo-face { position: absolute; inset: 0; z-index: 4; display: none; align-items: center; justify-content: center; background: rgba(24, 12, 4, .6); }
+    #dojo-face.show { display: flex; }
+    #dojo-mirror { position: relative; height: 94%; aspect-ratio: 1; }
+    #dojo-mirror > * { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+    #dojo-paint { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%96%8C%EF%B8%8F%3C/text%3E%3C/svg%3E") 3 29, crosshair; }
+    /* the Boiling Rock: the gondola up the line, and the fight on its roof */
+    #boiling-stage { background: #8fa8a8; }
+    #gondola, #tylee-run, #azula-line { position: absolute; line-height: 1; pointer-events: none; font-size: 3.333rem; }
+    :is(#gondola, #tylee-run, #azula-line, #duel-suki, #duel-tylee) .art-img { height: 100%; }
+    #gondola { height: 27%; transform: translateX(-50%); transform-origin: 50% 0; z-index: 2; }
+    #gondola.swing { animation: swing 1.3s ease-out 2; }
+    @keyframes swing { 25% { transform: translateX(-50%) rotate(6deg); } 75% { transform: translateX(-50%) rotate(-4deg); } }
+    #tylee-run, #azula-line { display: none; z-index: 3; }
+    #boiling-stage.chase :is(#tylee-run, #azula-line) { display: block; }
+    #tylee-run { height: 16.7%; transform: translate(-50%, -100%); }
+    #tylee-run.back { transform: translate(-50%, -100%) scaleX(-1); }
+    #azula-line { height: 20.8%; transform: translateX(-50%); }
+    .steam { position: absolute; bottom: 4%; width: 14%; height: 30%; border-radius: 50%; pointer-events: none; z-index: 1;
+      background: radial-gradient(rgba(255,255,255,.6), rgba(255,255,255,0) 68%); animation: steam 6s linear infinite; opacity: 0; }
+    @keyframes steam { from { transform: translateY(30%) scale(.6); opacity: 0; } 30% { opacity: .9; } to { transform: translateY(-110%) scale(1.5); opacity: 0; } }
+    #duel { position: absolute; inset: 0; z-index: 6; display: none; background: linear-gradient(#8fb8dc, #d8e6ee); }
+    #duel.show { display: block; }
+    #duel-bg, #duel-bg .art-img { position: absolute; inset: 0; width: 100%; height: 100%; }
+    #duel-suki, #duel-tylee { position: absolute; bottom: 12%; height: 62%; transform: translateX(-50%); line-height: 1; font-size: 9.524rem; pointer-events: none; }
+    #duel-suki { left: 30%; }
+    #duel-tylee { left: 70%; }
+    .chi { position: absolute; width: 2.6rem; height: 2.6rem; margin: -1.3rem 0 0 -1.3rem; border-radius: 50%; cursor: pointer; pointer-events: auto;
+      background: radial-gradient(#fef9c3 25%, rgba(250,204,21,.7) 45%, rgba(250,204,21,0) 70%); }
+    .chi::after { content: ''; position: absolute; inset: 0; border: .19rem solid #facc15; border-radius: 50%; animation: chi var(--t) linear forwards; }
+    @keyframes chi { from { transform: scale(3); opacity: .35; } to { transform: scale(1); opacity: 1; } }
+    .chi.gone { pointer-events: none; }
+    .chi.blocked { animation: chipop .3s forwards; }
+    @keyframes chipop { to { transform: scale(1.8); opacity: 0; } }
     /* the serpent's pass: it follows you, and going round it whips up a whirlpool */
     #serpent-stage { background: #3f76a8; cursor: crosshair; height: min(50vh, 20rem); }
     #serpent, .walker { position: absolute; line-height: 1; pointer-events: none; }
@@ -723,6 +766,7 @@
     <button class="pin comet-pin" style="left:13%;top:15%" data-go="s-ozai" data-cards="energy"><i data-art="comet"></i><span>Sozin's Comet</span></button>
     <button class="pin ember-pin" style="left:21%;top:30%" data-go="s-beach" data-cards="beach"><i data-art="pin-ember"></i><span>Ember Island</span></button>
     <button class="pin swamp-pin" style="left:49%;top:62%" data-go="s-swamp" data-cards="swamp banyan"><i data-art="pin-swamp"></i><span>Foggy Swamp</span></button>
+    <button class="pin boiling-pin" style="left:31.3%;top:58%" data-go="s-boiling" data-cards="fervor"><i data-art="pin-boiling"></i><span>The Boiling Rock</span></button>
     <div id="map-canoe" data-art="canoe"></div>
     <div id="map-isle" data-art="isle"></div>
     <div id="kyoshi"></div>
@@ -823,6 +867,39 @@
   </div>
   <div class="scene-text" id="serpent-text"></div>
   <div class="options" id="serpent-opts"></div>
+</div>
+
+<!-- KYOSHI ISLAND (secret: go back to the island once the Unagi has given up its page; the warriors are waiting in the trees) -->
+<div id="s-dojo" class="screen wide">
+  <div class="scene-title">Kyoshi Island</div>
+  <div class="stage" id="dojo-stage">
+    <div id="dojo-sokka" data-art="sokka-full"></div>
+    <div id="dojo-suki" data-art="suki-full"></div>
+    <div id="dojo-face"><div id="dojo-mirror"><img id="dojo-face-base" alt="" draggable="false"><canvas id="dojo-paint" width="272" height="272"></canvas></div></div>
+    <div id="dojo-blind"></div>
+  </div>
+  <div class="scene-text" id="dojo-text"></div>
+  <div class="options" id="dojo-opts"></div>
+</div>
+
+<!-- THE BOILING ROCK (secret: with Suki's card and Azula's, Kyoshi Island is empty, and the trail leads here) -->
+<div id="s-boiling" class="screen wide">
+  <div class="scene-title">The Boiling Rock</div>
+  <div class="stage" id="boiling-stage">
+    <div class="steam" style="left:30%"></div>
+    <div class="steam" style="left:52%;animation-delay:-2s"></div>
+    <div class="steam" style="left:72%;animation-delay:-4s"></div>
+    <div id="gondola" data-art="gondola"></div>
+    <div id="azula-line" data-art="azula-line"></div>
+    <div id="tylee-run" data-art="tylee-run"></div>
+    <div id="duel">
+      <div id="duel-bg" data-art="duel-bg"></div>
+      <div id="duel-suki" data-art="suki-prison"></div>
+      <div id="duel-tylee" data-art="tylee"></div>
+    </div>
+  </div>
+  <div class="scene-text" id="boiling-text"></div>
+  <div class="options" id="boiling-opts"></div>
 </div>
 
 <!-- THE SECRET DANCE PARTY (secret: tap the space bar in time with the music, anywhere) -->
@@ -1027,6 +1104,9 @@ const SECRETS = [
   { id: 'banyan', el: 'secret', emoji: '🌿', name: 'Everything Is Connected', text: '“We all have the same roots and we are all branches of the same tree.”', prize: 'The Banyan Tree' },
   // all four pages of field notes (see PAGES): each page wins its own card, and the whole book Wan Shi Tong's
   { id: 'notes', el: 'secret', emoji: '📖', name: 'Field Notes',          text: '“Ooh, these illustrations are quite stylish.”', prize: 'Wan Shi Tong, Librarian' },
+  // Kyoshi Island once more, after the Unagi's page; then, with Azula's card too, where Suki ended up
+  { id: 'suki', el: 'secret', emoji: '🥋', name: 'The Warriors of Kyoshi', text: '“I fell on purpose to make you feel better!”', prize: 'Suki of the Kyoshi Warriors' },
+  { id: 'fervor', el: 'secret', emoji: '🚡', name: 'The Boiling Rock',     text: '“This is a rematch I\'ve been waiting for.”', prize: 'Fervor' },
   // keep this one last: Uncle Iroh hints at the secrets in this order, and it erases all the others
   { id: 'cycle', el: 'secret', emoji: '♻️', name: 'The Avatar Cycle',     text: 'Everything was erased. One memory came along anyway.', prize: 'Brought Back' },
 ];
@@ -1197,6 +1277,16 @@ const HINTS = {
     'Once you have crash-landed in the Foggy Swamp, it is on the map. Go back, and do not just look at the great tree. Put your hand on it, and be patient.',
     'Click the Foggy Swamp on the world map (it appears after your first crash), then press and hold on the great tree.',
   ],
+  suki: [
+    'The Unagi is not the only one on Kyoshi Island who does not care for visitors.',
+    'Once the Unagi has given you its page, go back to Kyoshi Island. The warriors there will beat you, as often as you like. Sokka lost to them too, and then he asked them to teach him.',
+    'Click Kyoshi Island again, after you have found the Unagi\'s page. Ask Suki to teach you, paint Sokka\'s face, and in the lesson click only when Suki lights up.',
+  ],
+  fervor: [
+    'Azula once wore a Kyoshi Warrior\'s uniform. Somebody had to lose it first.',
+    'With Suki\'s card and Azula\'s Kyoshi Warrior disguise both in your binder, Kyoshi Island has more to tell. It points to a prison.',
+    'With the Suki card and "The Earth Kingdom Has Fallen", click Kyoshi Island. At the Boiling Rock, on the gondola roof, click each glowing spot on Suki before Ty Lee\'s hand gets there.',
+  ],
   cycle: [
     'When everything has been found, only one thing is left to do: let it all go.',
     'The Avatar is never truly gone. Whatever is erased comes back. Have you tried erasing?',
@@ -1246,13 +1336,18 @@ const ART = {
   page: '📄', 'paisho-table': '🀄', 'paisho-lotus': '🪷', hawk: '🐦', 'raven-eagle': '🦅', isle: '🏝️', 'lion-turtle': '🐢', unagi: '🐍',
   // the secret dance party
   teacher: '🧑‍🏫', 'aang-dancer': '🕺', 'katara-dancer': '💃', 'dancer-1': '🕺', 'dancer-2': '💃', 'dancer-3': '🕺', 'dancer-4': '💃',
+  // Kyoshi Island: Suki, Sokka in and out of uniform, his face and its two coats of paint
+  suki: '🥋', 'suki-full': '🥋', 'sokka-full': '🧍', 'sokka-dressed': '🧍', 'sokka-dress': '🪃', 'sokka-kyoshi': '🪃',
+  'paint-white': '', 'paint-red': '', 'war-fan': '🪭',
+  // the Boiling Rock
+  gondola: '🚡', 'tylee-run': '🤸', tylee: '🤸', 'suki-prison': '🧍', 'azula-line': '😏', 'duel-bg': '',
   // the four element stones
   'el-water': '💧', 'el-earth': '⛰️', 'el-fire': '🔥', 'el-air': '🌪️',
   // map pins
-  'pin-water': '❄️', 'pin-university': '🏯', 'pin-tea': '🍵', 'pin-desert': '🌵', 'pin-cave': '⛰️', 'pin-sun': '🐉', 'pin-ember': '🏖️', 'pin-swamp': '🌳',
+  'pin-water': '❄️', 'pin-university': '🏯', 'pin-tea': '🍵', 'pin-desert': '🌵', 'pin-cave': '⛰️', 'pin-sun': '🐉', 'pin-ember': '🏖️', 'pin-swamp': '🌳', 'pin-boiling': '🌋',
 };
-const STAGES = { map: 'map', flight: 'flight-stage', desert: 'desert-stage', cave: 'cave-stage', water: 'water-stage', swamp: 'swamp-stage', koh: 'koh-stage', play: 'play-stage', beach: 'beach-stage', fish: 'fish-stage', laogai: 'laogai-stage', dream: 'dream-stage', serpent: 'serpent-stage', dance: 'dance-stage' };
-const SCENE_NAMES = ['start', 'quiz', 'flight', 'map', 'desert', 'cave', 'tea', 'water', 'dragon', 'ozai', 'end', 'swamp', 'koh', 'play', 'beach', 'fish', 'laogai', 'dream', 'serpent', 'dance'];
+const STAGES = { map: 'map', flight: 'flight-stage', desert: 'desert-stage', cave: 'cave-stage', water: 'water-stage', swamp: 'swamp-stage', koh: 'koh-stage', play: 'play-stage', beach: 'beach-stage', fish: 'fish-stage', laogai: 'laogai-stage', dream: 'dream-stage', serpent: 'serpent-stage', dance: 'dance-stage', dojo: 'dojo-stage', boiling: 'boiling-stage' };
+const SCENE_NAMES = ['start', 'quiz', 'flight', 'map', 'desert', 'cave', 'tea', 'water', 'dragon', 'ozai', 'end', 'swamp', 'koh', 'play', 'beach', 'fish', 'laogai', 'dream', 'serpent', 'dance', 'dojo', 'boiling'];
 const ART_URL = {};   // name → url, for every image that actually exists
 
 const art = key => ART_URL[key] ? `<img class="art-img" src="${ART_URL[key]}" alt="" draggable="false">` : ART[key];
@@ -1262,7 +1357,7 @@ const art = key => ART_URL[key] ? `<img class="art-img" src="${ART_URL[key]}" al
 // because what sits on top of them (the pins, the glowing tunnel, the net, the
 // waterline, the lantern's track, the path) has to line up with what is drawn;
 // the other backdrops are cropped to fit instead.
-const stageBg = (name, url) => `url("${url}") center / ${['map', 'cave', 'beach', 'fish', 'laogai', 'serpent'].includes(name) ? '100% 100%' : 'cover'} no-repeat`;
+const stageBg = (name, url) => `url("${url}") center / ${['map', 'cave', 'beach', 'fish', 'laogai', 'serpent', 'dojo', 'boiling'].includes(name) ? '100% 100%' : 'cover'} no-repeat`;
 
 function probeArt(key) {
   const img = new Image();
@@ -1628,6 +1723,22 @@ TRACKS.dream = { bpm: 66, voices: [
   { wave: 'sine', echo: true, notes: TRACKS.start.voices[0].notes },
   { wave: 'triangle', vol: .6, notes: TRACKS.start.voices[1].notes },
 ] };
+// Kyoshi Island's dojo: plucked and patient, like a fan routine done in unison
+TRACKS.dojo = { bpm: 84, voices: [
+  { wave: 'triangle', pluck: .45, notes: `
+    e5 . g5 a5 b5 . a5 g5 | e5 . . d5 e5 . . . | g5 . a5 b5 d6 . b5 a5 | b5 . . a5 g5 . . .
+    e5 . g5 e5 d5 . b4 d5 | e5 . . g5 a5 . . . | b5 . a5 g5 e5 . d5 b4 | e5 - - - - . . .` },
+  { wave: 'sine', notes: 'e3 - b3 - e3 - b3 - | c3 - g3 - c3 - g3 - | g2 - d3 - g2 - d3 - | d3 - a3 - b2 - - -' },
+  { drums: 'k . . . h . . . | k . . . h . h .' },
+] };
+// the Boiling Rock: getting out, fast, over a lake nobody swims in
+TRACKS.boiling = { bpm: 132, voices: [
+  { wave: 'pulse', notes: `
+    a4 - c5 a4 e5 - d5 c5 | b4 - - - g#4 - - . | a4 - c5 e5 a5 - g5 e5 | f5 - e5 d5 e5 - - .
+    a5 - g5 e5 f5 - e5 d5 | c5 - - - b4 - - . | a4 - b4 c5 d5 - c5 b4 | a4 - - - - - . .` },
+  { wave: 'triangle', notes: 'a2 a2 e3 a2 a2 e3 a2 e3 | e2 e2 b2 e2 e2 b2 e2 b2 | a2 a2 e3 a2 a2 e3 a2 e3 | d2 d2 a2 d2 e2 e2 b2 e2' },
+  { drums: 'k . s k k . s . | k . s k k s s s' },
+] };
 TRACKS.ozaiBend = { ...TRACKS.ozai, voices: [...TRACKS.ozai.voices,   // the last struggle
   { wave: 'square', pluck: true, vol: .4, notes: `
     a5 d6 f6 d6 a5 d6 f6 d6   | a5 d6 f6 d6 a5 d6 f6 d6 | bb5 d6 f6 d6 bb5 d6 f6 d6 | g5 c6 e6 c6 g5 c6 e6 c6
@@ -1866,6 +1977,7 @@ const CAST = {
   melon: 'The Melon Lord', noface: 'You, more or less', roku: 'Avatar Roku', owl: 'Wan Shi Tong',
   azula: 'Princess Azula', 'kyoshi-azula': 'A Kyoshi Warrior', katara: 'Katara', loli: 'Lo and Li', 'actor-zuko': 'Actor Zuko',
   zhao: 'Admiral Zhao', yue: 'Princess Yue', teacher: 'Music teacher',
+  suki: 'Suki', 'sokka-kyoshi': 'Sokka', 'war-fan': 'Kyoshi Island',
 };
 let sayCb = null;
 function say(who, text, btn = 'Okay', cb = null, name = CAST[who], cancel = '') {
@@ -2519,7 +2631,7 @@ const Banyan = {
   vision() {
     const [sx, sy] = this.SWAMP, v = $('banyan-vision');
     const ends = [...document.querySelectorAll('#map .pin')]
-      .filter(p => !(p.classList.contains('comet-pin') && !S.comet) && !(p.classList.contains('ember-pin') && !S.ember))
+      .filter(p => !(p.classList.contains('comet-pin') && !S.comet) && !(p.classList.contains('ember-pin') && !S.ember) && !(p.classList.contains('boiling-pin') && !S.boiling))
       .map(p => [parseFloat(p.style.left), parseFloat(p.style.top)]);
     ends.push([40, 85]);   // and the canoe at the South Pole
     v.querySelector('svg').innerHTML = ends.map(([x, y], i) => {
@@ -2589,6 +2701,7 @@ const MapScene = {
     document.querySelector('#map .comet-pin').classList.toggle('show', S.comet);   // stays for rematches
     document.querySelector('#map .ember-pin').classList.toggle('show', !!S.ember);   // once you have been sent there
     document.querySelector('#map .swamp-pin').classList.toggle('show', has('swamp'));   // once you have crashed there
+    document.querySelector('#map .boiling-pin').classList.toggle('show', !!S.boiling);   // once Kyoshi Island has told you where Suki is
     this.t1 = setTimeout(() => { this.runCart(); this.t2 = setInterval(() => this.runCart(), 22000); }, 5000);
     this.placeIsle();
     if (!S.mapIntro) {
@@ -2649,6 +2762,7 @@ const MapScene = {
   // "The Warriors of Kyoshi", it comes up fast and sprays everything.
   kyoshi() {
     if (this.unagiUp) return;
+    if (has('suki') && has('usurper') && !S.boiling) { this.emptyDojo(); return; }
     this.unagiUp = true;
     const u = $('map-unagi'), m = $('map');
     u.classList.add('up');
@@ -2669,11 +2783,27 @@ const MapScene = {
       beep(1400, .5, 'sawtooth');
       this.unagiT = setTimeout(() => {
         const sink = () => { u.classList.remove('up'); this.unagiUp = false; };
+        // once it has given up its page, the next visitors are the warriors' business ("The Warriors of Kyoshi")
+        if (S.pages.includes('page-unagi') && !has('suki')) {
+          say('unagi', 'The Unagi glares at you, sprays you once more for good measure, and sinks back into the bay.\nYou are still dripping on the beach when something moves in the trees.',
+            'Sokka: “Time to hit the road.”', () => { sink(); go('s-dojo'); }, 'Kyoshi Island');
+          return;
+        }
         if (S.pages.includes('page-unagi')) { say('unagi', 'The Unagi glares at you, sprays you once more for good measure, and sinks back into the bay.', 'Fair enough', sink, 'Kyoshi Island'); return; }
         say('unagi', 'The bay around Kyoshi Island erupts. Something enormous, with very long whiskers, comes up out of the water and sprays the whole map.\nAang: “Katara ... don\'t ride Unagi. Not fun.”\nWhen the spray settles, there is a soggy page floating in the bay.',
           'Fish it out', () => { sink(); findPage('page-unagi'); }, 'Kyoshi Island');
       }, 1300);
     }, 900);
+  },
+  // With Suki's card and Azula's (in the uniform she took from a Kyoshi Warrior),
+  // the island has nobody left on it. Suki is in the Fire Nation's prison.
+  emptyDojo() {
+    say('war-fan', 'The dojo on Kyoshi Island is empty. One fan lies on the floor.\nAfter you left, the warriors went to the mainland to help people. They never came back.', 'And Suki?', () => {
+      S.boiling = true; save();
+      document.querySelector('#map .boiling-pin').classList.add('show');
+      say('war-fan', 'The last Kyoshi Warrior anyone saw had gold eyes.\nFar away in the Fire Nation, steam is rising out of a volcano. Inside it is a prison, on an island in a boiling lake.',
+        'To the Boiling Rock', () => go('s-boiling'), 'Kyoshi Island', 'Not yet');
+    }, 'Kyoshi Island');
   },
   // Wrecked once, the merchant tries the ferry to Ba Sing Se, which is where it
   // happens to him in "The Serpent's Pass". Without a passport you fare no better.
@@ -4347,6 +4477,362 @@ const Serpent = {
   },
 };
 SCENES['s-serpent'] = Serpent;
+
+// ══════════════════════════════════════════════
+// KYOSHI ISLAND — the warriors' dojo
+// ══════════════════════════════════════════════
+// Reached by going back to Kyoshi Island once the Unagi has given up its page:
+// as in "The Warriors of Kyoshi", the warriors are waiting in the trees. Then it
+// goes the way it went for Sokka. Suki flips him however often he attacks, and
+// the way on is to ask her to teach him. First her traditions (the uniform, and
+// the make-up, painted on a coat at a time), then the lesson: her force against
+// her, which means waiting until she is all the way in before you move.
+
+const Dojo = {
+  HOME: { sokka: 30, suki: 72 },   // where they stand, in % across
+  REACH: 18,     // how close (in %) their middles get before they touch
+  RUN: 1800,     // ms for Suki's charge across the dojo
+  OPEN: 650,     // its last ms: her opening, when stepping aside works
+  BRUSH: 3.2,    // the brush's radius, in pixels of the portrait
+  // Where the brush has to have been for a coat to count, in pixels of the
+  // 34 x 34 portrait (art/paint-white.png and art/paint-red.png). They all lie
+  // on their coat and spread over the face, so painting all of it is enough.
+  SPOTS: {
+    white: [[13, 11], [17, 10], [21, 12], [11, 17], [22, 17], [16, 14], [13, 21], [20, 21], [17, 24]],
+    red: [[12, 14], [14, 16], [21, 14], [19, 16]],
+  },
+  tok: 0, timers: [], anims: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  enter() {
+    this.stop();
+    this.flips = 0;
+    this.dress('sokka-full');
+    this.stand();
+    $('dojo-face').classList.remove('show');
+    $('dojo-stage').classList.add('blind');
+    narrate($('dojo-text'), 'Warriors drop out of the trees. Before anyone can move, you are all tied up, with blindfolds over your eyes.', () => this.unblind(), 900);
+  },
+  leave() { this.stop(); },
+  stop() {
+    this.tok++; this.charging = false; this.coatName = null;
+    this.timers.forEach(clearTimeout); this.timers = [];
+    this.anims.forEach(a => a.cancel()); this.anims = [];
+    $('dojo-opts').innerHTML = '';
+    $('dojo-suki').classList.remove('open');
+    document.body.classList.remove('shake');
+  },
+  dress(key) { const el = $('dojo-sokka'); el.dataset.art = key; el.innerHTML = art(key); },
+  // both back where they started, on their feet
+  stand() {
+    this.anims.forEach(a => a.cancel()); this.anims = [];
+    $('dojo-sokka').style.left = this.HOME.sokka + '%';
+    $('dojo-suki').style.left = this.HOME.suki + '%';
+    $('dojo-suki').classList.remove('open');
+  },
+  anim(el, frames, ms, easing = 'ease-in-out') {
+    const a = el.animate(frames, { duration: ms, easing, fill: 'forwards' });
+    this.anims.push(a);
+    return a;
+  },
+  // up over his head and flat on his back, from one place to another (in %)
+  throwSokka(from, to) {
+    this.anim($('dojo-sokka'), [
+      { left: from + '%', transform: 'translateX(-50%) rotate(0deg)' },
+      { left: (from + to) / 2 + '%', transform: 'translateX(-50%) translateY(-55%) rotate(-140deg)', offset: .45 },
+      { left: to + '%', transform: 'translateX(-50%) translateY(30%) rotate(-270deg)' },
+    ], 650, 'ease-out');
+    this.later(() => { document.body.classList.add('shake'); beep(70, .3, 'sawtooth'); }, 600);
+    this.later(() => document.body.classList.remove('shake'), 900);
+  },
+  unblind() {
+    $('dojo-stage').classList.remove('blind');
+    narrate($('dojo-text'), 'When the blindfolds come off, you are surrounded.\nSokka: “Where are the men who ambushed us?”\nSuki: “There were no men. We ambushed you.”', () => this.demo(), 900);
+  },
+  demo() {
+    this.stand();
+    $('dojo-text').textContent = 'The next day, in the dojo.\nSuki: “Maybe you\'d be kind enough to give us a little demonstration.”';
+    choices('dojo-opts', ['Attack'], () => this.attack());
+  },
+  // However he goes at her, she ends up standing and he ends up on the floor.
+  attack() {
+    $('dojo-opts').innerHTML = '';
+    const at = this.HOME.suki - this.REACH + 2;
+    this.anim($('dojo-sokka'), [{ left: this.HOME.sokka + '%' }, { left: at + '%' }], 380, 'ease-in');
+    this.later(() => {
+      this.anim($('dojo-suki'), [{ transform: 'translateX(-50%)' }, { transform: 'translateX(-50%) translateY(12%) scaleY(.85)' }, { transform: 'translateX(-50%)' }], 320);
+      this.throwSokka(at, at + 4);
+      beep(140, .25, 'square');
+    }, 380);
+    this.flips++;
+    const line = this.flips === 1 ? 'She ducks under him and pushes him off balance. He lands flat on his back.\nSuki: “Anything else you want to teach us?”'
+      : this.flips === 2 ? 'Flat on his back again.\nSokka: “Of course, I was going easy on you.”\nSuki: “Of course.”'
+      : 'Flat on his back, again. The other warriors giggle.';
+    this.later(() => {
+      $('dojo-text').textContent = line;
+      choices('dojo-opts', ['Again!', 'Sokka: “I would be honored if you would teach me.”'], label =>
+        label === 'Again!' ? this.getUp(() => this.attack()) : this.ask());
+    }, 1300);
+  },
+  getUp(next) {
+    $('dojo-opts').innerHTML = '';
+    this.stand();
+    this.later(next, 300);
+  },
+  ask() {
+    this.getUp(() => say('suki', '“Even if I\'m a girl?”', 'Sokka: “I was ... wrong.”', () =>
+      say('suki', '“All right. But you have to follow all of our traditions.”', 'Sokka: “Of course!”', () => this.paint())));
+  },
+  // Her traditions: the uniform, and the make-up. A coat at a time, the paint
+  // shows wherever the brush goes, and only ever on his face.
+  paint() {
+    this.dress('sokka-dressed');
+    if (!['sokka-dress', 'paint-white', 'paint-red'].every(k => ART_URL[k])) { this.dressed(); return; }   // nothing to paint on
+    const cv = $('dojo-paint');
+    cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+    $('dojo-face-base').src = ART_URL['sokka-dress'];
+    $('dojo-face').classList.add('show');
+    this.coat('white', 'Sokka is in the uniform. Now the face paint: move the brush over his face to paint it white.');
+  },
+  coat(name, text) {
+    $('dojo-text').textContent = text;
+    this.layer = new Image();
+    this.layer.src = ART_URL['paint-' + name];
+    this.coatName = name; this.left = this.SPOTS[name].slice(); this.last = null;
+  },
+  stroke(e) {
+    if (!this.coatName) return;
+    const cv = $('dojo-paint'), r = cv.getBoundingClientRect(), k = cv.width / 34, R = this.BRUSH;
+    const x = (e.clientX - r.left) / r.width * 34, y = (e.clientY - r.top) / r.height * 34;
+    const [fx, fy] = this.last || [x, y];
+    this.last = [x, y];
+    const n = Math.max(1, Math.ceil(Math.hypot(x - fx, y - fy) / (R / 2)));   // dabs close enough to make a line
+    const pts = Array.from({ length: n + 1 }, (_, i) => [fx + (x - fx) * i / n, fy + (y - fy) * i / n]);
+    const ctx = cv.getContext('2d');
+    ctx.save();
+    ctx.beginPath();
+    pts.forEach(([px, py]) => { ctx.moveTo((px + R) * k, py * k); ctx.arc(px * k, py * k, R * k, 0, Math.PI * 2); });
+    ctx.clip();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(this.layer, 0, 0, cv.width, cv.height);
+    ctx.restore();
+    const before = this.left.length;
+    this.left = this.left.filter(([sx, sy]) => pts.every(([px, py]) => Math.hypot(px - sx - .5, py - sy - .5) > R + .5));
+    if (this.left.length < before) beep(520 + 60 * (this.SPOTS[this.coatName].length - this.left.length), .06, 'triangle');
+    if (!this.left.length) this.coatDone();
+  },
+  coatDone() {
+    const cv = $('dojo-paint'), ctx = cv.getContext('2d'), name = this.coatName, layer = this.layer;
+    const fill = () => { ctx.imageSmoothingEnabled = false; ctx.drawImage(layer, 0, 0, cv.width, cv.height); };   // and whatever the brush missed
+    if (layer.complete) fill(); else layer.onload = fill;
+    this.coatName = null;
+    [660, 880].forEach((f, i) => setTimeout(() => beep(f, .15), i * 110));
+    if (name === 'white') this.later(() => this.coat('red', 'Now the red, around his eyes.'), 500);
+    else this.later(() => this.dressed(), 900);
+  },
+  dressed() {
+    say('sokka-kyoshi', '“Do I really have to wear this? It feels a little ... girly.”', 'Suki: “It\'s a warrior\'s uniform, you should be proud.”', () => this.lesson());
+  },
+  lesson() {
+    $('dojo-face').classList.remove('show');
+    this.stand();
+    $('dojo-text').textContent = 'Suki: “It\'s not about strength. Our technique is about using your opponents\' force against them.”\nShe is going to charge at you.';
+    choices('dojo-opts', ['Ready'], () => this.charge());
+  },
+  charge() {
+    this.stand();
+    $('dojo-opts').innerHTML = '';
+    $('dojo-text').textContent = 'Suki: “Wait for an opening and then ...”\nClick the moment she lights up. Not before.';
+    this.t0 = performance.now() + 1000;
+    this.charging = true;
+    const tok = ++this.tok, sk = $('dojo-suki');
+    const frame = now => {
+      if (tok !== this.tok || !this.charging) return;
+      const p = this.at(now);
+      sk.style.left = this.where(p) + '%';
+      if (this.open(p) && !sk.classList.contains('open')) { sk.classList.add('open'); beep(1046, .15, 'triangle'); }   // and a chime, for the ear
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+    this.later(() => { if (this.charging && tok === this.tok) this.caught('late'); }, 1000 + this.RUN);   // nobody moved: she runs straight into him (this charge, not an earlier one)
+  },
+  at(now = performance.now()) { return clamp((now - this.t0) / this.RUN, 0, 1); },
+  where(p) { return this.HOME.suki - (this.HOME.suki - this.HOME.sokka - this.REACH) * p; },
+  open(p) { return p >= 1 - this.OPEN / this.RUN; },
+  // a click anywhere in the dojo while she is coming
+  move() {
+    if (!this.charging) return;
+    const p = this.at();
+    if (p <= 0) return;   // she has not set off yet
+    this.charging = false;
+    $('dojo-suki').style.left = this.where(p) + '%';
+    if (this.open(p)) this.sidestep(); else this.caught('early');
+  },
+  caught(why) {
+    this.charging = false;
+    const sk = $('dojo-suki'), at = this.HOME.sokka + this.REACH;
+    sk.classList.remove('open');
+    if (why === 'early') this.anim(sk, [{ left: sk.style.left }, { left: at + '%' }], 220, 'ease-in');   // she sees it coming, and comes straight at him
+    this.later(() => this.throwSokka(this.HOME.sokka, this.HOME.sokka - 9), why === 'early' ? 220 : 0);
+    $('dojo-text').textContent = why === 'early'
+      ? 'Too soon: she saw that coming, and over he goes.\nWait until she lights up.'
+      : 'Too late: she goes straight through him.\nClick as soon as she lights up.';
+    this.later(() => choices('dojo-opts', ['Again'], () => this.charge()), 1100);
+  },
+  // Out of her way at the last moment, and her own speed does the rest.
+  sidestep() {
+    const sk = $('dojo-suki'), at = sk.style.left;
+    sk.classList.remove('open');
+    this.anim($('dojo-sokka'), [{ transform: 'translateX(-50%)' }, { transform: 'translateX(-50%) translateY(-45%)', offset: .4 }, { transform: 'translateX(-50%)' }], 600);
+    this.anim(sk, [
+      { left: at, transform: 'translateX(-50%)' },
+      { left: '16%', transform: 'translateX(-50%) rotate(-18deg)', offset: .6 },
+      { left: '13%', transform: 'translateX(-50%) translateY(22%) rotate(-8deg) scaleY(.8)' },
+    ], 700, 'ease-out');
+    this.later(() => { document.body.classList.add('shake'); beep(80, .35, 'sawtooth'); }, 650);
+    this.later(() => document.body.classList.remove('shake'), 950);
+    this.later(() => narrate($('dojo-text'), 'She shoots right past him and lands on her behind.\nSuki: “I fell on purpose to make you feel better!”\nSokka: “I got you! Admit I got you!”',
+      () => unlock('suki', () => go('s-map')), 600), 900);
+  },
+};
+SCENES['s-dojo'] = Dojo;
+$('dojo-stage').addEventListener('pointerdown', () => Dojo.move());
+(() => {   // the brush follows the pointer over his face
+  const cv = $('dojo-paint');
+  cv.addEventListener('pointerdown', e => { Dojo.last = null; Dojo.stroke(e); });
+  cv.addEventListener('pointermove', e => Dojo.stroke(e));
+  cv.addEventListener('pointerleave', () => { Dojo.last = null; });
+})();
+
+// ══════════════════════════════════════════════
+// THE BOILING ROCK — the gondola out
+// ══════════════════════════════════════════════
+// Reached through Kyoshi Island once Suki's card and Azula's are both in: the
+// dojo is empty, and the trail leads to the Fire Nation's prison. The escape is
+// "The Boiling Rock, Part 2": the gondola, Ty Lee running along the line after
+// it (the picture on the real card), Suki's rematch with her on the roof, the
+// jam, and Mai.
+
+const Boiling = {
+  // the two lines, in % of the stage (LINE_LO and LINE_HI in tools/make_art.py)
+  LINE: [[22.7, 37.5], [97.2, 10.4]],
+  HI: [[22.7, 32.3], [97.2, 5.2]],
+  START: .06, JAM: .42, END: .93,   // how far along the line the gondola is: setting off, stopped, at the top
+  CRAWL: 14000,  // ms from setting off to where it gets stopped
+  BLOCKS: 6,     // jabs Suki has to stop
+  // Suki's pressure points, in % of her picture: shoulders, arms, middle, legs
+  POINTS: [[25, 46], [75, 46], [17, 58], [83, 58], [50, 55], [38, 80], [62, 80]],
+  timers: [],
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); },
+  at(line, t) { const [[x0, y0], [x1, y1]] = line; return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]; },
+  // puts something on a line, `t` of the way along it, sliding there over `ms`
+  put(el, line, t, ms = 0) {
+    const [x, y] = this.at(line, t);
+    el.style.transition = ms ? `left ${ms}ms linear, top ${ms}ms linear, opacity .5s` : 'opacity .5s';
+    el.style.left = x + '%'; el.style.top = y + '%';
+  },
+  enter() {
+    this.stop();
+    const g = $('gondola');
+    $('boiling-stage').classList.remove('chase');
+    $('duel').classList.remove('show');
+    ['tylee-run', 'azula-line'].forEach(id => { $(id).style.opacity = ''; $(id).classList.remove('back'); });
+    g.classList.remove('swing');
+    this.put(g, this.LINE, this.START);
+    void g.offsetWidth;
+    this.t0 = performance.now();
+    this.put(g, this.LINE, this.JAM, this.CRAWL);   // slowly, up toward the rim
+    narrate($('boiling-text'), 'Suki has captured the warden, and everyone is in the gondola, with him as a hostage.\nSuki: “We\'re on our way!”', () => this.chase(), 800);
+  },
+  leave() { this.stop(); },
+  stop() {
+    this.timers.forEach(clearTimeout); this.timers = [];
+    $('boiling-opts').innerHTML = '';
+    document.querySelectorAll('#duel .chi').forEach(c => c.remove());
+    document.body.classList.remove('shake');
+  },
+  // how far along the gondola is right now
+  now() { return this.START + (this.JAM - this.START) * clamp((performance.now() - this.t0) / this.CRAWL, 0, 1); },
+  // Ty Lee on the line itself, Azula hanging from it by a pair of cuffs.
+  chase() {
+    const run = 2400, g = Math.min(this.JAM, this.now() + (this.JAM - this.START) * run / this.CRAWL);   // where the gondola will be when they get to it
+    const ty = $('tylee-run'), az = $('azula-line');
+    this.put(ty, this.LINE, .01); this.put(az, this.LINE, 0);
+    $('boiling-stage').classList.add('chase');
+    void ty.offsetWidth;
+    this.put(ty, this.LINE, g - .07, run);
+    this.put(az, this.LINE, g - .14, run + 600);
+    narrate($('boiling-text'), 'Hakoda: “Wait! Who\'s that?”\nZuko: “That\'s a problem. It\'s my sister and her friend.”', () => this.duel(), run);
+  },
+  // On the roof: stop every jab before it lands.
+  duel() {
+    $('duel').classList.add('show');
+    this.blocks = 0;
+    $('boiling-text').textContent = 'On the roof, Suki faces Ty Lee.\nSuki: “This is a rematch I\'ve been waiting for.”\nClick each glowing spot before Ty Lee\'s hand gets there.';
+    choices('boiling-opts', ['Ready'], () => { $('boiling-opts').innerHTML = ''; this.jab(); });
+  },
+  jab() {
+    if (this.blocks >= this.BLOCKS) { this.later(() => this.jam(), 600); return; }
+    let i;
+    do i = Math.floor(Math.random() * this.POINTS.length); while (i === this.last);
+    this.last = i;
+    const [x, y] = this.POINTS[i], ms = 1700 - this.blocks * 80;   // a little quicker each time
+    const c = document.createElement('div');
+    c.className = 'chi'; c.style.left = x + '%'; c.style.top = y + '%'; c.style.setProperty('--t', ms + 'ms');
+    $('duel-suki').append(c);
+    const t = setTimeout(() => this.landed(c), ms);
+    this.timers.push(t);
+    c.addEventListener('pointerdown', e => { e.stopPropagation(); clearTimeout(t); this.blocked(c); });
+  },
+  blocked(c) {
+    if (c.classList.contains('gone')) return;
+    c.classList.add('gone', 'blocked');
+    this.blocks++;
+    beep(880, .08, 'square'); beep(1320, .08, 'triangle');
+    $('duel-tylee').animate([{ transform: 'translateX(-50%)' }, { transform: 'translateX(-30%) rotate(6deg)' }, { transform: 'translateX(-50%)' }], 300);
+    $('boiling-text').textContent = this.blocks < this.BLOCKS ? `Blocked! ${this.blocks} of ${this.BLOCKS}.` : `Blocked! ${this.BLOCKS} of ${this.BLOCKS}. Ty Lee cannot get through.`;
+    this.later(() => c.remove(), 300);
+    this.later(() => this.jab(), 450);
+  },
+  landed(c) {
+    c.classList.add('gone');
+    $('duel-tylee').animate([{ transform: 'translateX(-50%)' }, { transform: 'translateX(-95%) rotate(-8deg)' }, { transform: 'translateX(-50%)' }], 320);
+    $('duel-suki').animate([{ transform: 'translateX(-50%)' }, { transform: 'translateX(-56%)' }, { transform: 'translateX(-44%)' }, { transform: 'translateX(-50%)' }], 300);
+    beep(160, .15, 'sawtooth');
+    $('boiling-text').textContent = `Ty Lee got that one! ${this.blocks} of ${this.BLOCKS}.`;
+    this.later(() => c.remove(), 200);
+    this.later(() => this.jab(), 650);
+  },
+  // The guards stop it dead, so they can cut the line.
+  jam() {
+    $('duel').classList.remove('show');
+    const g = $('gondola'), t = this.now();
+    this.put(g, this.LINE, t);
+    this.put($('tylee-run'), this.LINE, t - .04);
+    this.put($('azula-line'), this.LINE, t - .12);
+    g.classList.add('swing');
+    document.body.classList.add('shake'); beep(60, .6, 'sawtooth'); beep(90, .4, 'square');
+    this.later(() => document.body.classList.remove('shake'), 700);
+    narrate($('boiling-text'), 'Warden: “Cut the line!”\nThe guards jam the wheel, and the gondola stops with a jolt.\nTy Lee: “They\'re about to cut the line!”', () => this.off(t), 1200);
+  },
+  // Ty Lee and Azula leave for the other gondola; Mai saves this one.
+  off(t) {
+    const ty = $('tylee-run'), az = $('azula-line');
+    ty.classList.add('back');
+    this.put(ty, this.HI, t - .16, 1400); this.put(az, this.HI, t - .22, 1400);
+    this.later(() => { ty.style.opacity = 0; az.style.opacity = 0; }, 1100);
+    narrate($('boiling-text'), 'Azula: “Then it\'s time to leave.”\nShe and Ty Lee leap across to the other gondola.', () =>
+      narrate($('boiling-text'), 'At the station, the guards have almost cut through the line. Then knives pin them to the wall, one after another.\nMai: “Saving the jerk who dumped me.”', () => this.escape(), 600), 1400);
+  },
+  escape() {
+    const g = $('gondola');
+    g.classList.remove('swing');
+    this.put(g, this.LINE, this.END, 3200);
+    beep(330, .2); beep(495, .3);
+    $('boiling-text').textContent = 'The gondola is moving again, all the way up to the rim.';
+    this.later(() => unlock('fervor', () => go('s-map')), 3600);
+  },
+};
+SCENES['s-boiling'] = Boiling;
 
 // ══════════════════════════════════════════════
 // THE SECRET DANCE PARTY — keeping time

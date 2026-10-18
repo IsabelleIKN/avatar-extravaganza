@@ -3249,6 +3249,412 @@ ART['card-zhao'] = card_zhao()
 ART['card-yue'] = card_yue()
 
 
+# ── Kyoshi Island: Suki's dojo ─────────────────────────────────
+
+def war_fan(r, a0, a1, ribs=5):
+    """A Kyoshi Warrior's war fan, open: a wedge of gold between the angles a0 and
+    a1 (degrees, clockwise from 3 o'clock), cropped to what is drawn."""
+    s = 2 * r + 3
+    im = new(s, s)
+    d = ImageDraw.Draw(im)
+    c = r + 1
+    d.pieslice((c - r, c - r, c + r, c + r), a0, a1, fill=P['a'])
+    for k in range(ribs + 1):
+        a = math.radians(a0 + (a1 - a0) * k / ribs)
+        d.line((c, c, c + r * math.cos(a), c + r * math.sin(a)), fill=P['A'])
+    d.arc((c - r, c - r, c + r, c + r), a0, a1, fill=P['Y'])   # its bright edge
+    dots(im, [(c, c)], P['N'])                                 # the pivot
+    return outline(im.crop(im.getbbox()), P['k'])
+
+
+SUKI_FULL = [                                               # in uniform: headdress, face paint, armour over the green
+    '...a..a..a..a...',
+    '...aaaaaaaaaa...',
+    '..NAAAAAAAAAAN..',
+    '..NwwwwwwwwwwN..',
+    '..NrrrwwwwrrrN..',
+    '..NrDrwwwwrDrN..',
+    '..NwwwwwwwwwwN..',
+    '..NwwwwrrwwwwN..',
+    '..NN.wwwwww.NN..',
+    '.......TT.......',
+    '...eNNNNNNNNe...',
+    '..eeNdNNNNdNee..',
+    '..e.NNNNNNNN.e..',
+    '..T.aaaaaaaa.T..',
+    '....eeeeeeee....',
+    '....eEeeeeEe....',
+    '....eeeeeeee....',
+    '.....dd..dd.....',
+    '.....dd..dd.....',
+    '....NNN..NNN....',
+]
+SOKKA_FULL = [                                              # wolf tail, Water Tribe blue
+    '.......dd.......',
+    '......ddd.......',
+    '.....dddddd.....',
+    '....NSSSSSSN....',
+    '....SSSSSSSS....',
+    '....SDSSSSDS....',
+    '....SSSSSSSS....',
+    '....SSSNNSSS....',
+    '.....SSSSSS.....',
+    '.......SS.......',
+    '...bbbbbbbbbb...',
+    '..bbbbwwwwbbbb..',
+    '..b.bbbBBbbb.b..',
+    '..S.bbbBBbbb.S..',
+    '....BBBBBBBB....',
+    '....bbbbbbbb....',
+    '.....BB..BB.....',
+    '.....BB..BB.....',
+    '.....BB..BB.....',
+    '....NNN..NNN....',
+]
+# the same Sokka once he has followed all of their traditions: the green dress, and the paint
+SOKKA_DRESSED = [r.replace('b', 'e').replace('B', 'E').replace('w', 'a') for r in SOKKA_FULL]
+SOKKA_DRESSED[3:9] = [r.replace('S', 'w') for r in SOKKA_DRESSED[3:9]]
+SOKKA_DRESSED[5] = '....rDrwwrDr....'
+WARRIOR_SMALL = [                                           # one of the others, watching from the back
+    '.a.aa.a.',
+    '.aaaaaa.',
+    'NwwwwwwN',
+    'NrDwwDrN',
+    'NwwrrwwN',
+    '...TT...',
+    '.eNNNNe.',
+    'e.NNNN.e',
+    'T.aaaa.T',
+    '..eeee..',
+    '..eeee..',
+    '..d..d..',
+    '.NN..NN.',
+]
+
+
+def suki_full():
+    im = new(25, 24)
+    put(im, grid(SUKI_FULL), 0, 2)
+    put(im, war_fan(6, 250, 345), 12, 0)                     # held up, ready
+    return im
+
+
+def suki():
+    """Suki in full make-up: white face, red swept up round the eyes, red lips,
+    the gold headdress over her short brown hair, armour over the green."""
+    D, a, r, N = P['D'], P['a'], P['r'], P['N']
+    im, d = bust(P['w'], col('#5b4630'), P['e'], hair=N, hair_box=(7, 3, 24, 18))
+    d.rectangle((7, 10, 8, 21), fill=N)                    # her hair, down to the jaw
+    d.rectangle((23, 10, 24, 21), fill=N)
+    d.polygon([(8, 8), (10, 2), (13, 5), (15, 0), (16, 0), (18, 5), (21, 2), (23, 8)], fill=a)   # the headdress
+    d.line((8, 8, 23, 8), fill=P['A'])
+    d.polygon([(9, 15), (9, 10), (14, 12), (14, 15)], fill=r)              # the paint, swept up to the temples
+    d.polygon([(17, 15), (17, 12), (22, 10), (22, 15)], fill=r)
+    dots(im, [(11, 13), (12, 13), (19, 13), (20, 13)], D)
+    dots(im, [(11, 14), (20, 14)], D)
+    dots(im, [(12, 14), (19, 14)], P['G'])
+    d.line((14, 20, 17, 20), fill=r)                       # red lips
+    dots(im, [(15, 21), (16, 21)], P['R'])
+    d.line((2, 27, 9, 25), fill=col('#3b2a1a'))            # the plates of her armour
+    d.line((29, 27, 22, 25), fill=col('#3b2a1a'))
+    dots(im, [(5, 29), (26, 29)], a)                       # and their gold studs
+    return outline(im, P['k'])
+
+
+# Sokka's face for the make-up lesson, and the two coats that go on it in turn:
+# white wherever there is skin on his face, then red round the eyes. Each coat is
+# a layer of its own, the size of the portrait, so the game can let it show
+# through wherever the brush goes (see PAINT_SPOTS in index.html, which must stay
+# on these layers if they are redrawn).
+def face_paint(base):
+    skin = P['S']
+    white, red, eyes = new(*base.size), new(*base.size), new(*base.size)
+    d = ImageDraw.Draw(eyes)                               # (in the outlined portrait, so one pixel further in)
+    d.polygon([(10, 16), (10, 11), (15, 13), (15, 16)], fill=P['r'])
+    d.polygon([(18, 16), (18, 13), (23, 11), (23, 16)], fill=P['r'])
+    bp, wp, rp, ep = base.load(), white.load(), red.load(), eyes.load()
+    for y in range(base.size[1]):
+        for x in range(base.size[0]):
+            if bp[x, y] == skin:
+                wp[x, y] = P['w']
+                if ep[x, y][3]:
+                    rp[x, y] = P['r']
+    return white, red
+
+
+def stage_dojo():
+    """The Kyoshi Warriors' dojo: a wooden hall with its door open on the snowy
+    trees outside, fans racked on the wall, and the warriors lined up at the back."""
+    im = new(SW, SH)
+    d = ImageDraw.Draw(im)
+    vgrad(im, 0, 66, [col(c) for c in ('#4a2c18', '#7a4c2a', '#9c6a3c')])   # the back wall, dark up under the roof
+    post, post_hi, beam, line = col('#3b2212'), col('#6b4024'), col('#2a170c'), col('#8a6a48')
+    d.rectangle((0, 0, SW, 2), fill=beam)                  # the roof beams, and rafters between them
+    d.rectangle((0, 12, SW, 14), fill=beam)
+    for x in range(-4, SW, 14):
+        d.line((x, 3, x + 8, 11), fill=post)
+    vgrad(im, 20, 52, [col('#9fc4dc'), col('#dcebf2')], 18, 47)   # the open door: a winter sky
+    d.rectangle((18, 52, 46, 65), fill=P['w'])            # and snow
+    for tx, ty in ((25, 30), (39, 35)):                     # pines, snow on their branches
+        d.polygon([(tx, ty), (tx - 7, ty + 19), (tx + 7, ty + 19)], fill=P['E'])
+        d.polygon([(tx, ty), (tx - 3, ty + 6), (tx + 3, ty + 6)], fill=P['w'])
+        d.line((tx - 6, ty + 18, tx + 6, ty + 18), fill=P['w'])
+        d.rectangle((tx - 1, ty + 19, tx, ty + 23), fill=P['N'])
+    d.rectangle((16, 18, 48, 19), fill=post)              # the door frame
+    d.rectangle((16, 18, 17, 65), fill=post)
+    d.rectangle((47, 18, 48, 65), fill=post)
+    d.rectangle((126, 22, 164, 50), fill=col('#e8dcc0'))   # paper screens
+    for x in range(135, 164, 10):
+        d.line((x, 22, x, 50), fill=line)
+    for y in (31, 40):
+        d.line((126, y, 164, y), fill=line)
+    for x in (4, 70, 120, 166):                            # posts
+        d.rectangle((x, 14, x + 4, 65), fill=post)
+        d.line((x + 1, 14, x + 1, 65), fill=post_hi)
+    d.rectangle((78, 30, 112, 31), fill=post)              # a rack of fans
+    fan = war_fan(4, 200, 340, ribs=4)
+    for x in range(79, 110, 8):
+        put(im, fan, x, 24)
+    vgrad(im, 66, SH, [col(c) for c in ('#a8743f', '#c48a52', '#b07a46')])   # the floor, polished
+    d.line((0, 65, SW, 65), fill=post)
+    for k, y in enumerate((71, 79, 89)):
+        d.line((0, y, SW, y), fill=col('#94622f'))
+        for x in range(9 + k * 17, SW, 38):
+            d.line((x, y - (8 if k else 5), x, y), fill=col('#94622f'))
+    small = grid(WARRIOR_SMALL)
+    for x in (54, 62, 96, 104, 136, 144):                  # the others, watching
+        put(im, small, x, 51)
+    return im
+
+
+def card_suki():
+    """After the card: Suki in the dojo, in full make-up, the others behind her."""
+    im, d = scene(('#2a170c', '#7a4c2a', '#9c6a3c'))
+    for x in range(-6, CW, 12):                            # rafters
+        d.line((x, 0, x + 10, 9), fill=col('#3b2212'))
+    d.rectangle((0, 9, CW, 10), fill=col('#2a170c'))
+    small = grid(WARRIOR_SMALL)
+    for x in (1, 9, 42, 50):
+        put(im, small, x, 30)
+    put(im, ART['suki'], 13, 16)
+    put(im, war_fan(6, 250, 345), 36, 22)
+    return im
+
+
+ART['war-fan'] = war_fan(14, 200, 340, ribs=7)              # for the empty dojo
+ART['suki'] = suki()
+ART['suki-full'] = suki_full()
+ART['sokka-full'] = grid(SOKKA_FULL)
+ART['sokka-dressed'] = grid(SOKKA_DRESSED)
+ART['sokka-dress'] = recolor(ART['sokka'], {P['b']: P['E'], P['w']: P['a']})   # in the uniform, face still bare
+ART['paint-white'], ART['paint-red'] = face_paint(ART['sokka-dress'])
+ART['sokka-kyoshi'] = ART['sokka-dress'].copy()
+ART['sokka-kyoshi'].alpha_composite(ART['paint-white'])
+ART['sokka-kyoshi'].alpha_composite(ART['paint-red'])
+ART['stage-dojo'] = stage_dojo()
+ART['card-suki'] = card_suki()
+
+
+# ── the Boiling Rock: the gondola out of the Fire Nation's prison ──
+
+# The two lines from the prison's station up to the crater rim, in backdrop
+# pixels. The escape takes the lower one; the game hangs the gondola from it,
+# so BoilingRock.LINE in index.html has to match it in percent.
+LINE_LO = ((40, 36), (171, 10))
+LINE_HI = ((40, 31), (171, 5))
+
+
+def stage_boiling():
+    """Inside the volcano: the prison on its island in the boiling lake, and the
+    two gondola lines up to the crater rim."""
+    im = new(SW, SH)
+    vgrad(im, 0, 46, [col(c) for c in ('#6f9cc4', '#a8c4dc', '#dfe6e6')])   # sky, hazy with steam
+    rock, rock_hi, rock_lo = col('#8f8a84'), col('#b8b2a8'), col('#5f5a56')
+    ridge(im, 36, 9, rock, 31, top=rock_hi)                # the far crater wall, all the way round
+    d = ImageDraw.Draw(im)
+    vgrad(im, 56, SH, [col(c) for c in ('#b9c8c4', '#8fa8a8', '#6a888c')])   # the boiling lake
+    rnd = random.Random(55)
+    for _ in range(26):                                     # bubbles
+        x, y = rnd.randrange(56, 150), rnd.randrange(60, 94)
+        d.ellipse((x, y, x + 2 + y % 2, y + 2), outline=col('#dfe9e6'))
+    d.polygon([(148, 96), (155, 22), (162, 12), (176, 9), (176, 96)], fill=rock_lo)   # the near rim, where the lines end
+    d.polygon([(155, 22), (162, 12), (168, 11), (160, 40), (152, 60)], fill=rock)
+    d.rectangle((164, 2, 176, 12), fill=col('#4a3a36'))   # and the station up there
+    d.rectangle((164, 2, 176, 3), fill=P['R'])
+    stone, stone_lo, wall = col('#4f4a52'), col('#38343b'), col('#6a6470')
+    d.polygon([(0, 52), (8, 46), (52, 44), (62, 60), (66, 96), (0, 96)], fill=stone_lo)   # the prison island
+    d.rectangle((0, 40, 54, 70), fill=stone)               # its walls
+    d.line((0, 40, 54, 40), fill=wall)
+    for x in range(3, 52, 7):
+        d.rectangle((x, 46, x + 2, 49), fill=P['D'])       # cell windows
+        d.rectangle((x, 56, x + 2, 59), fill=P['D'])
+    d.rectangle((6, 24, 16, 40), fill=stone)               # a watchtower
+    d.polygon([(4, 24), (11, 17), (18, 24)], fill=P['R'])
+    d.rectangle((9, 28, 12, 31), fill=P['D'])
+    d.rectangle((30, 32, 46, 40), fill=col('#4a3a36'))    # the gondola station, and its wheel
+    d.rectangle((30, 31, 46, 32), fill=P['R'])
+    d.ellipse((35, 33, 42, 40), outline=P['G'])
+    d.line((38, 33, 38, 40), fill=P['G'])
+    d.line((35, 36, 42, 36), fill=P['G'])
+    d.line(LINE_HI, fill=P['D'])
+    d.line(LINE_LO, fill=P['D'])
+    return im
+
+
+def gondola():
+    """A long cabin with a dark roof, hanging from an arm that runs on the line.
+    It hangs from the middle of its top row."""
+    im = new(29, 24)
+    d = ImageDraw.Draw(im)
+    metal, metal_lo = col('#9a948a'), col('#5f5a56')
+    d.ellipse((11, 0, 17, 4), fill=metal_lo)               # the wheel on the line
+    d.rectangle((13, 3, 15, 9), fill=metal)                # the arm
+    d.polygon([(3, 10), (25, 10), (28, 13), (0, 13)], fill=col('#5a2a22'))   # roof, flat on top
+    d.line((3, 10, 25, 10), fill=col('#7a3a2e'))
+    d.rectangle((2, 14, 26, 23), fill=col('#c8b896'))      # the cabin
+    for x in range(4, 24, 5):
+        d.rectangle((x, 16, x + 3, 19), fill=P['D'])        # windows
+    d.line((2, 22, 26, 22), fill=P['R'])
+    return outline(im, P['k'])
+
+
+TY_LEE_RUN = [                                              # running along a line, facing right, braid flying
+    '........NNN.....',
+    '.......NNNNN....',
+    'NNN...NNNTTN....',
+    '..NNNNNNNTDT....',
+    '.......NTTTT....',
+    '........TT......',
+    '.......mmmm.TT..',
+    '......TmmmmTT...',
+    '.....TT.TTT.....',
+    '.......mmmm.....',
+    '......mm..mm....',
+    '.....mm....mm...',
+    '....mm......mm..',
+    '...qq........qq.',
+]
+TY_LEE = [                                                  # facing you, on the gondola roof
+    '.....NNNNNN.....',
+    '....NNNNNNNN....',
+    '....NTTTTTTN....',
+    '....TDTTTTDT....',
+    '....TTTTTTTT....',
+    '....TTTmmTTT.N..',
+    '.....TTTTTT..N..',
+    '.......TT....N..',
+    '...TmmmmmmmmTN..',
+    '..TT.mmmmmm.TT..',
+    '..T..mmmmmm..T..',
+    '..T..TTTTTT..T..',
+    '.....qqqqqq.....',
+    '.....mmmmmm.....',
+    '.....mm..mm.....',
+    '.....mm..mm.....',
+    '.....mm..mm.....',
+    '....qqq..qqq....',
+]
+SUKI_PRISON = [                                             # Suki as a prisoner: red shirt, hair loose, no paint
+    '....nnnnnnnn....',
+    '...nnnnnnnnnn...',
+    '...nnTTTTTTnn...',
+    '...nTDTTTTDTn...',
+    '...nTTTTTTTTn...',
+    '...nTTTssTTTn...',
+    '...nn.TTTT.nn...',
+    '.......TT.......',
+    '....rrrrrrrr....',
+    '...rrrrrrrrrr...',
+    '..TT.rrrrrr.TT..',
+    '..T..rrrrrr..T..',
+    '..T..rrrrrr..T..',
+    '.....dddddd.....',
+    '.....dddddd.....',
+    '.....dd..dd.....',
+    '.....dd..dd.....',
+    '.....dd..dd.....',
+    '....NNN..NNN....',
+]
+
+
+def azula_line():
+    """Azula, hanging from the line by a pair of handcuffs, pushed along by her own blue fire."""
+    im = new(16, 18)
+    d = ImageDraw.Draw(im)
+    d.line((8, 0, 8, 3), fill=P['G'])                      # the cuffs
+    d.rectangle((7, 3, 9, 4), fill=P['G'])
+    dots(im, [(7, 5), (9, 5)], P['T'])                     # her hands
+    d.ellipse((5, 5, 11, 10), fill=P['D'])                 # her head, topknot and all
+    d.rectangle((6, 7, 10, 10), fill=P['T'])
+    dots(im, [(9, 8)], P['D'])
+    d.rectangle((6, 10, 10, 15), fill=P['R'])              # red armour
+    d.line((7, 15, 6, 17), fill=P['D'])
+    d.line((9, 15, 10, 17), fill=P['D'])
+    blue = (col('#4fa8ff'), col('#c8e8ff'))
+    d.polygon([(5, 14), (0, 16), (1, 12)], fill=blue[0])   # the blue fire, out behind her
+    dots(im, [(2, 14), (3, 14)], blue[1])
+    return outline(im, P['k'])
+
+
+def duel_bg():
+    """The gondola roof, close up: sky and steam, the crater wall, the line overhead."""
+    im = new(SW, SH)
+    vgrad(im, 0, 70, [col(c) for c in ('#4f86c6', '#8fb8dc', '#d8e6ee')])
+    d = ImageDraw.Draw(im)
+    for cx, cy, w in ((30, 16, 26), (120, 10, 34), (160, 30, 20)):   # clouds
+        d.ellipse((cx - w // 2, cy - 4, cx + w // 2, cy + 4), fill=P['w'])
+        d.ellipse((cx - w // 4, cy - 8, cx + w // 4, cy + 2), fill=P['w'])
+    ridge(im, 66, 8, col('#9a948a'), 44, top=col('#c4beb2'))   # the crater wall
+    d.line((0, 34, SW, 8), fill=P['D'])                    # the line, and the other one
+    d.line((0, 26, SW, 0), fill=P['D'])
+    d.polygon([(0, 80), (SW, 80), (SW, SH), (0, SH)], fill=col('#5a2a22'))   # the roof they are fighting on
+    d.line((0, 80, SW, 80), fill=col('#7a3a2e'))
+    for x in range(8, SW, 22):
+        d.line((x, 81, x - 6, SH), fill=col('#4a2018'))
+    d.rectangle((84, 22, 92, 80), fill=col('#9a948a'))     # the arm up to the line
+    d.line((84, 22, 84, 80), fill=col('#b8b2a8'))
+    d.ellipse((80, 14, 96, 30), fill=col('#5f5a56'))       # and its wheel
+    d.ellipse((85, 19, 91, 25), fill=col('#9a948a'))
+    return im
+
+
+def card_fervor():
+    """After the card: Ty Lee running along the line, high over the crater."""
+    im, d = scene(('#3f7fc6', '#8fb8dc', '#dfeaf0'))
+    for cx, cy, w in ((12, 8, 18), (46, 14, 22)):
+        d.ellipse((cx - w // 2, cy - 3, cx + w // 2, cy + 3), fill=P['w'])
+        d.ellipse((cx - w // 4, cy - 6, cx + w // 4, cy + 1), fill=P['w'])
+    ridge(im, 42, 4, col('#9a948a'), 9, top=col('#c4beb2'))
+    for k in range(3):                                      # the lines, side by side
+        d.line((0, 34 + k * 4, CW, 22 + k * 4), fill=P['D'])
+    put(im, ART['tylee-run'], 26, 14)
+    return im
+
+
+def pin_boiling():
+    """A volcano with steam coming out of it: the lake inside is boiling."""
+    im = new(18, 13)
+    d = ImageDraw.Draw(im)
+    d.polygon([(0, 12), (6, 5), (11, 5), (17, 12)], fill=col('#6e6a68'))
+    d.polygon([(6, 5), (11, 5), (13, 8), (4, 8)], fill=col('#8f8a84'))
+    d.line((6, 5, 11, 5), fill=col('#b9c8c4'))             # the lake, just showing over the rim
+    for x, y, r in ((7, 2.5, 1.6), (10, 1.5, 1.6), (12.5, 3, 1.2)):
+        disc(im, x, y, r, P['w'])                          # steam
+    d.rectangle((0, 11, 17, 12), fill=P['c'])
+    return outline(im, P['N'])
+
+
+ART['pin-boiling'] = pin_boiling()
+ART['gondola'] = gondola()
+ART['tylee-run'] = grid(TY_LEE_RUN)
+ART['tylee'] = grid(TY_LEE)
+ART['suki-prison'] = grid(SUKI_PRISON)
+ART['azula-line'] = azula_line()
+ART['duel-bg'] = duel_bg()
+ART['stage-boiling'] = stage_boiling()
+ART['card-fervor'] = card_fervor()
+
+
 # ── write everything out ────────────────────────────────────────
 
 def main():
